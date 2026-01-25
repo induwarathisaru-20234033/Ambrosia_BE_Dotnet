@@ -2,7 +2,9 @@
 using AMB.Application.Interfaces.Repositories;
 using AMB.Application.Interfaces.Services;
 using AMB.Application.Mappers;
+using AMB.Domain.Enums;
 using FluentValidation;
+using Microsoft.EntityFrameworkCore;
 
 namespace AMB.Application.Services
 {
@@ -25,6 +27,8 @@ namespace AMB.Application.Services
                 await _validator.ValidateAndThrowAsync(request);
 
                 var empModel = request.ToEmployeeEntity();
+
+                empModel.Status = (int)EntityStatus.Active;
 
                 var emp = await _employeeRepository.AddAsync(empModel);
 

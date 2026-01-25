@@ -57,23 +57,21 @@ builder.Services.AddScoped<IEmployeeService, EmployeeService>();
 
 builder.Services.AddValidatorsFromAssemblyContaining<CreateEmployeeValidator>();
 
-//builder.Services.AddAuthentication(options =>
-//{
-//    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-//    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-//})
-//.AddJwtBearer(options =>
-//{
-//    options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
-//    {
-//        ValidateIssuerSigningKey = true,
-//        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Authentication:JwtSecret"]!)),
-//        ValidAudience = builder.Configuration["Authentication:ValidAudience"],
-//        ValidIssuer = builder.Configuration["Authentication:ValidIssuer"]
-//    };
-//});
-
-builder.Services.AddAuthentication();
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Authentication:JwtSecret"]!)),
+        ValidAudience = builder.Configuration["Authentication:ValidAudience"],
+        ValidIssuer = builder.Configuration["Authentication:ValidIssuer"]
+    };
+});
 
 builder.Services.AddAuthorization();
 
