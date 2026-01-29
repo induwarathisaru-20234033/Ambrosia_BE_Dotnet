@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace AMB.Infra.Identity
 {
-    public class SupabaseAuthService : IAuthService
+    public class SupabaseAuthService
     {
         private readonly Supabase.Client _client;
 

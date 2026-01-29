@@ -4,41 +4,39 @@ using AMB.Application.Interfaces.Services;
 using AMB.Application.Mappers;
 using AMB.Domain.Enums;
 using FluentValidation;
-using Microsoft.EntityFrameworkCore;
 
 namespace AMB.Application.Services
 {
     public class EmployeeService : IEmployeeService
     {
         private readonly IEmployeeRepository _employeeRepository;
+        private readonly IAuthHelper _authHelper;
 
         private readonly IValidator<CreateEmployeeRequestDto> _validator;
 
-        public EmployeeService(IEmployeeRepository employeeRepository, IValidator<CreateEmployeeRequestDto> validator)
+        public EmployeeService(IEmployeeRepository employeeRepository, IValidator<CreateEmployeeRequestDto> validator, IAuthHelper authHelper)
         {
             _employeeRepository = employeeRepository;
+            _authHelper = authHelper;
             _validator = validator;
         }
 
         public async Task<EmployeeDto> CreateEmployeeAsync(CreateEmployeeRequestDto request)
         {
-            try
-            {
-                await _validator.ValidateAndThrowAsync(request);
+            await _validator.ValidateAndThrowAsync(request);
 
-                var empModel = request.ToEmployeeEntity();
+            var empModel = request.ToEmployeeEntity();
 
-                empModel.Status = (int)EntityStatus.Active;
+            var authUserId = await _authHelper.CreateUserAsync(request.Username, "qa1234", $"{request.FirstName} {request.LastName}");
 
-                var emp = await _employeeRepository.AddAsync(empModel);
+            empModel.Status = (int)EntityStatus.Active;
+            empModel.UserId = authUserId;
 
-                return emp.ToEmployeeDto();
+            var emp = await _employeeRepository.AddAsync(empModel);
 
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
+            return emp.ToEmployeeDto();
         }
+
+
     }
 }

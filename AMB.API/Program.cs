@@ -10,12 +10,18 @@ using Microsoft.OpenApi.Models;
 using System.Text;
 using FluentValidation;
 using AMB.Application.Validators;
+using AMB.Infra.Identity;
+using AMB.API.Middlewares;
+using AMB.API.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<GlobalExceptionFilter>();
+});
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -52,8 +58,13 @@ builder.Services.AddDbContext<AMBContext>(options => options.UseSqlServer(
     builder.Configuration.GetConnectionString("DefaultConnection"))
 );
 
+builder.Services.AddHttpClient();
+
 builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
 builder.Services.AddScoped<IEmployeeService, EmployeeService>();
+
+builder.Services.AddScoped<IAuthHelper, Auth0Service>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 builder.Services.AddValidatorsFromAssemblyContaining<CreateEmployeeValidator>();
 
@@ -64,12 +75,15 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
+    options.Authority = $"https://{builder.Configuration["Authentication:Domain"]}/";
+    options.Audience = builder.Configuration["Authentication:Audience"];
+
     options.TokenValidationParameters = new TokenValidationParameters
     {
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Authentication:JwtSecret"]!)),
-        ValidAudience = builder.Configuration["Authentication:ValidAudience"],
-        ValidIssuer = builder.Configuration["Authentication:ValidIssuer"]
+        ValidIssuer = $"https://{builder.Configuration["Authentication:Domain"]}/",
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true
     };
 });
 
@@ -105,6 +119,7 @@ app.UseHttpsRedirection();
 app.UseCors("ClientPermission");
 
 app.UseAuthentication();
+app.UseMiddleware<ActiveUserMiddleware>();
 app.UseAuthorization();
 
 app.MapControllers();
