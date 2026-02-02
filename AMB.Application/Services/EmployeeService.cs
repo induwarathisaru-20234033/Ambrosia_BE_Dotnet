@@ -27,7 +27,7 @@ namespace AMB.Application.Services
 
             var empModel = request.ToEmployeeEntity();
 
-            var authUserId = await _authHelper.CreateUserAsync(request.Username, "qa1234", $"{request.FirstName} {request.LastName}");
+            var authUserId = await _authHelper.CreateUserAsync(request.Username, request.Password, $"{request.FirstName} {request.LastName}");
 
             empModel.Status = (int)EntityStatus.Active;
             empModel.UserId = authUserId;

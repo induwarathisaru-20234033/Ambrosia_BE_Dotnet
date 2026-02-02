@@ -21,7 +21,7 @@ namespace AMB.Infra.Identity
         {
             var token = await GetManagementApiTokenAsync();
 
-            var client = new ManagementApiClient(token, new Uri($"https://{_configuration["Auth0:Domain"]}/api/v2/"));
+            var client = new ManagementApiClient(token, new Uri($"https://{_configuration["Authentication:Domain"]}/api/v2/"));
 
             var request = new UserCreateRequest
             {
