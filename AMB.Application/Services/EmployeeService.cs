@@ -4,6 +4,7 @@ using AMB.Application.Interfaces.Services;
 using AMB.Application.Mappers;
 using AMB.Domain.Enums;
 using FluentValidation;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace AMB.Application.Services
 {
@@ -11,19 +12,19 @@ namespace AMB.Application.Services
     {
         private readonly IEmployeeRepository _employeeRepository;
         private readonly IAuthHelper _authHelper;
+        private readonly IServiceProvider _serviceProvider;
 
-        private readonly IValidator<CreateEmployeeRequestDto> _validator;
-
-        public EmployeeService(IEmployeeRepository employeeRepository, IValidator<CreateEmployeeRequestDto> validator, IAuthHelper authHelper)
+        public EmployeeService(IEmployeeRepository employeeRepository, IServiceProvider serviceProvider, IAuthHelper authHelper)
         {
             _employeeRepository = employeeRepository;
             _authHelper = authHelper;
-            _validator = validator;
+            _serviceProvider = serviceProvider;
         }
 
         public async Task<EmployeeDto> CreateEmployeeAsync(CreateEmployeeRequestDto request)
         {
-            await _validator.ValidateAndThrowAsync(request);
+            var validator = _serviceProvider.GetRequiredService<IValidator<CreateEmployeeRequestDto>>();
+            await validator.ValidateAndThrowAsync(request);
 
             var empModel = request.ToEmployeeEntity();
 
