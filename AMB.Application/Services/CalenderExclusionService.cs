@@ -17,17 +17,38 @@ namespace AMB.Application.Services
             _repository = repository; 
         }
 
+        public async Task<CalenderExclusionDto> CreateCalenderExclusionAsync(CreateCalenderExclusionRequestDto request)
+        {
+            var exclusion = request.ToCalenderExclusionEntity();
+            var created = await _repository.AddAsync(exclusion);
+
+            return created.ToCalenderExclusionDto();
+        }
+
         public async Task<PaginatedResultDto<CalenderExclusionDto>> GetPaginatedExclusionsAsync(int pageNumber, int pageSize)
         {
             var allItems = await _repository.GetAllAsync();
             var totalItemCount = allItems.Count;
-            var pageCount = totalItemCount == 0
-                ? 0
-                : (int)Math.Ceiling(totalItemCount / (double)pageSize);
+            int pageCount;
+            var items = allItems;
 
-            var items = allItems
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
+            if (pageSize == 0)
+            {
+                pageCount = totalItemCount == 0 ? 0 : 1;
+            }
+            else
+            {
+                pageCount = totalItemCount == 0
+                    ? 0
+                    : (int)Math.Ceiling(totalItemCount / (double)pageSize);
+
+                items = allItems
+                    .Skip((pageNumber - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToList();
+            }
+
+            var mappedItems = items
                 .Select(item => item.ToCalenderExclusionDto())
                 .ToList();
 
@@ -36,7 +57,7 @@ namespace AMB.Application.Services
                 PageNumber = pageNumber,
                 PageSize = pageSize,
                 PageCount = pageCount,
-                Items = items,
+                Items = mappedItems,
                 TotalItemCount = totalItemCount
             };
         }

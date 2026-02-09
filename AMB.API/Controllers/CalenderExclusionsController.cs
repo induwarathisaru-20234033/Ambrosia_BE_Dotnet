@@ -17,6 +17,18 @@ namespace AMB.API.Controllers
             _calendarExclusionService = calendarExclusionService;
         }
 
+        [HttpPost]
+        public async Task<ActionResult<BaseResponseDto<CalenderExclusionDto>>> Create(
+            CreateCalenderExclusionRequestDto request)
+        {
+            var result = await _calendarExclusionService.CreateCalenderExclusionAsync(request);
+            var response = new BaseResponseDto<CalenderExclusionDto>(
+                result,
+                "Calender exclusion created successfully.");
+
+            return Ok(response);
+        }
+
         [HttpGet]
         public async Task<ActionResult<BaseResponseDto<PaginatedResultDto<CalenderExclusionDto>>>> GetAll(
             [FromQuery] int pageNumber = 1,
