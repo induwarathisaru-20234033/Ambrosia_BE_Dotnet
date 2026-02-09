@@ -19,6 +19,10 @@ namespace AMB.Infra.DBContexts
         public DbSet<Feature> Features { get; set; }
         public DbSet<RolePermissionMap> RolePermissionMaps { get; set; }
         public DbSet<EmployeeRoleMap> EmployeeRoleMaps { get; set; }
+        public DbSet<ReservationSetting> ReservationSettings { get; set; }
+        public DbSet<ServiceHour> ServiceHours { get; set; }
+        public DbSet<Table> Tables { get; set; }
+        public DbSet<CalenderExclusion> CalenderExclusions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -28,6 +32,11 @@ namespace AMB.Infra.DBContexts
             modelBuilder.Entity<Feature>().ToTable(nameof(Features));
             modelBuilder.Entity<RolePermissionMap>().ToTable(nameof(RolePermissionMaps));
             modelBuilder.Entity<EmployeeRoleMap>().ToTable(nameof(EmployeeRoleMaps));
+            modelBuilder.Entity<ReservationSetting>().ToTable(nameof(ReservationSettings));
+            modelBuilder.Entity<ServiceHour>().ToTable(nameof(ServiceHours));
+            modelBuilder.Entity<Table>().ToTable(nameof(Tables));
+            modelBuilder.Entity<CalenderExclusion>().ToTable(nameof(CalenderExclusions));
+
 
             modelBuilder.Entity<Permission>()
                 .HasOne(p => p.Feature)
