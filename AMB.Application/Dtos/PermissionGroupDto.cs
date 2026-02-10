@@ -9,7 +9,7 @@ namespace AMB.Application.Dtos
     public class PermissionGroupDto
     {
         public string Module {  get; set; }
-        public string Featurename { get; set; }
+        public string FeatureName { get; set; }
         public List<PermissionItemDto> Permissions { get; set; } = new List<PermissionItemDto>();
     }
 

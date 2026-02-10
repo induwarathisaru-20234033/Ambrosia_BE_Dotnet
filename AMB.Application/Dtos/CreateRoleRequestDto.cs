@@ -10,9 +10,9 @@ namespace AMB.Application.Dtos
     public class CreateRoleRequestDto
     {
         [Required(ErrorMessage ="Role code is required")]
-        [StringLength(50, MinimumLength = 3, ErrorMessage = "Role ode must be 3-50 characters")]
+        [StringLength(50, MinimumLength = 3, ErrorMessage = "Role code must be 3-50 characters")]
         [RegularExpression(@"^[A-Z0-9_]+$", ErrorMessage = "Only uppercase letters, numbers, and underscores allowed")]
-        public string RoleId { get; set; }
+        public string RoleCode { get; set; }
 
         [Required(ErrorMessage = "Role Name is required")]
         [StringLength(100, MinimumLength = 2, ErrorMessage = "Role Name must be 2-100 characters")]
@@ -25,7 +25,7 @@ namespace AMB.Application.Dtos
         public string Status { get; set; }
 
         [Required(ErrorMessage = "Please select at least one permission for this role")]
-        public List<int> PersmissionIds { get; set; } = new List<int>();
+        public List<int> PermissionIds { get; set; } = new List<int>();
 
     }
 }
