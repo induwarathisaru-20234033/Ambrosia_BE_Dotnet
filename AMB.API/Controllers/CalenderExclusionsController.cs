@@ -19,7 +19,7 @@ namespace AMB.API.Controllers
 
         [HttpPost]
         public async Task<ActionResult<BaseResponseDto<CalenderExclusionDto>>> Create(
-            CreateCalenderExclusionRequestDto request)
+            [FromBody] CreateCalenderExclusionRequestDto request)
         {
             var result = await _calendarExclusionService.CreateCalenderExclusionAsync(request);
             var response = new BaseResponseDto<CalenderExclusionDto>(
