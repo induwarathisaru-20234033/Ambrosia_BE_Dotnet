@@ -6,6 +6,6 @@ namespace AMB.Application.Interfaces.Services
     {
         Task<RoleDto> CreateRoleAsync(CreateRoleRequestDto request);
         Task<bool> CheckRoleCodeExistsAsync(string roleCode);
-        Task<IEnumerable<PermissionGroupDto>> GetPermissionsGroupAsync();
+        Task<List<PermissionGroupDto>> GetPermissionsGroupAsync();
     }
 }

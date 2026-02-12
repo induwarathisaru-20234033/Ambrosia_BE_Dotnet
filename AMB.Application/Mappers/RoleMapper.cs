@@ -1,5 +1,6 @@
 ﻿using AMB.Application.Dtos;
 using AMB.Domain.Entities;
+using AMB.Domain.Enums;
 
 namespace AMB.Application.Mappers
 {
@@ -13,7 +14,7 @@ namespace AMB.Application.Mappers
                 RoleCode = dto.RoleCode,
                 RoleName = dto.Name,
                 Description = dto.Description,
-                Status = dto.Status == "ENABLED" ? 1 : 0
+                Status = dto.Status == "ENABLED" ? (int)EntityStatus.Active : (int)EntityStatus.Inactive
             };
         }
 
@@ -23,10 +24,12 @@ namespace AMB.Application.Mappers
 
             return new RoleDto
             {
+                Id = entity.Id,
                 RoleCode = entity.RoleCode,
                 Name = entity.RoleName,
                 Description = entity.Description,
-                Status = entity.Status == 1 ? "ENABLED" : "DISABLE"
+                Status = entity.Status == (int)EntityStatus.Active ? "ENABLED" : "DISABLED",
+                Permissions = new List<PermissionDto>()
             };
         }
 
@@ -36,6 +39,7 @@ namespace AMB.Application.Mappers
 
             return new PermissionItemDto
             {
+                Id = entity.Id,
                 PermissionCode = entity.PermissionCode,
                 Name = entity.PermissionName
             };

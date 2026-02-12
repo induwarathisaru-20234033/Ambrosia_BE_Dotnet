@@ -5,9 +5,7 @@ using AMB.Application.Mappers;
 using AMB.Domain.Entities;
 using AMB.Domain.Enums;
 using FluentValidation;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 namespace AMB.Application.Services
 {
@@ -16,99 +14,90 @@ namespace AMB.Application.Services
         private readonly IRoleRepository _roleRepository;
         private readonly IPermissionRepository _permissionRepository;
         private readonly IServiceProvider _serviceProvider;
-        private readonly ILogger<RoleService> _logger;
 
         public RoleService(
-            IRoleRepository roleRepository, 
-            IPermissionRepository permissionRepository, 
-            IServiceProvider serviceProvider, 
-            ILogger<RoleService> logger)
+            IRoleRepository roleRepository,
+            IPermissionRepository permissionRepository,
+            IServiceProvider serviceProvider)
         {
             _roleRepository = roleRepository;
             _permissionRepository = permissionRepository;
             _serviceProvider = serviceProvider;
-            _logger = logger;
         }
 
         public async Task<RoleDto> CreateRoleAsync(CreateRoleRequestDto request)
         {
-            try
+            // FluentValidation
+            var validator = _serviceProvider.GetRequiredService<IValidator<CreateRoleRequestDto>>();
+            await validator.ValidateAndThrowAsync(request);
+
+            // Check role code uniqueness is now handled in validator
+            // But keep this as backup? Actually remove it since validator handles it
+
+            // Get selected permissions
+            var permissions = await _permissionRepository.GetByIdsAsync(request.PermissionIds);
+            if (permissions.Count != request.PermissionIds.Count)
             {
-                var validator = _serviceProvider.GetRequiredService<IValidator<CreateRoleRequestDto>>();
-                await validator.ValidateAndThrowAsync(request);
-
-                var existingRole = await _roleRepository.GetByRoleCodeAsync(request.RoleCode);
-                if (existingRole != null)
-                {
-                    throw new InvalidOperationException($"Role Code '{request.RoleCode}' already exists. Please choose a different code.");
-
-                }
-
-                var permissions = await _permissionRepository.GetByIdsAsync(request.PermissionIds);
-                if (permissions.Count() != request.PermissionIds.Count)
-                {
-                    throw new InvalidOperationException("One or more selected permissions are invalid");
-                }
-
-                var role = request.ToRoleEntity();
-                role.Status = (int)EntityStatus.Active;
-                role.CreatedDate = DateTime.UtcNow;
-                role.ModifiedDate = DateTime.UtcNow;
-
-                role.RolePermissions = request.PermissionIds.Select(permissionId => new RolePermissionMap
-                {
-                    Role = role,
-                    PermissionId = permissionId,
-                    CreatedDate = DateTime.UtcNow
-                }).ToList();
-
-                var createdRole = await _roleRepository.AddAsync(role);
-
-                return createdRole.ToRoleDto();
+                throw new InvalidOperationException("One or more selected permissions are invalid.");
             }
-            catch (Exception ex) 
-            {
-                _logger.LogError(ex, "Error creating role with ID: {RoleCode}", request.RoleCode);
-                throw;
-            }
-        }
 
-        public async Task<bool> CheckRoleCodeExistsAsync(string RoleCode)
-        {
-            try
-            {
-                var role = await _roleRepository.GetByRoleCodeAsync(RoleCode);
-                return role != null;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error checking role ID: {RoleCode}", RoleCode);
-                throw;
-            }
-        }
+            // Create role entity from DTO
+            var role = request.ToRoleEntity();
 
-        public async Task<IEnumerable<PermissionGroupDto>> GetPermissionsGroupAsync()
-        {
-            try
-            {
-                var permissions = await _permissionRepository.GetAllAsync();
+            // Set role code to uppercase
+            role.RoleCode = request.RoleCode.ToUpper();
+            role.Status = request.Status == "ENABLED" ? (int)EntityStatus.Active : (int)EntityStatus.Inactive;
 
-                var grouped = permissions
-                    .GroupBy(p => p.Module)
-                    .Select(g => new PermissionGroupDto
+            // Add role permission mappings
+            role.RolePermissionMaps = request.PermissionIds.Select(permissionId => new RolePermissionMap
+            {
+                PermissionId = permissionId,
+                Role = role
+            }).ToList();
+
+            // Save to database
+            var createdRole = await _roleRepository.AddAsync(role);
+
+            // Get full role with permissions for response
+            var roleWithPermissions = await _roleRepository.GetByIdWithPermissionsAsync(createdRole.Id);
+
+            // Map to DTO
+            var roleDto = roleWithPermissions.ToRoleDto();
+
+            // Add permissions to DTO
+            if (roleWithPermissions?.RolePermissionMaps != null)
+            {
+                roleDto.Permissions = roleWithPermissions.RolePermissionMaps
+                    .Where(rpm => rpm.Permission != null)
+                    .Select(rpm => new PermissionDto
                     {
-                        Module = g.key,
-                        FeatureName = g.key,
-                        Permissions = g.Select(p => p.ToPermissionItemDto()).ToList()
+                        Id = rpm.Permission!.Id,
+                        PermissionCode = rpm.Permission.PermissionCode,
+                        Name = rpm.Permission.PermissionName,
+                        FeatureId = rpm.Permission.FeatureId,
+                        FeatureName = rpm.Permission.Feature?.FeatureName ?? string.Empty,
+                        FeatureCode = rpm.Permission.Feature?.FeatureCode ?? string.Empty
                     }).ToList();
-                return grouped;
             }
-            catch (Exception ex) 
-            {
-                _logger.LogError(ex, "Error retrieving permissions");
-                throw;
 
+            return roleDto;
+        }
+
+        public async Task<bool> CheckRoleCodeExistsAsync(string roleCode)
+        {
+            try
+            {
+                return !await _roleRepository.IsRoleCodeUniqueAsync(roleCode.ToUpper());
             }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        public async Task<List<PermissionGroupDto>> GetPermissionsGroupAsync()
+        {
+            return await _permissionRepository.GetPermissionsGroupedByFeatureAsync();
         }
     }
 }

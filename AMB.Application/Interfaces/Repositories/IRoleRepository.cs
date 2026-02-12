@@ -6,9 +6,11 @@ namespace AMB.Application.Interfaces.Repositories
     {
         Task<Role> GetByIdAsync(int  id);
         Task<Role> GetByRoleCodeAsync(string roleId);
-        Task<IEnumerable<Role>> GetAllAsync();
+        Task<List<Role>> GetAllAsync();
         Task<Role> AddAsync(Role role);
         Task<Role> UpdateAsync(Role role);
         Task<Role> DeleteAsync(Role role);
+        Task<Role?> GetByIdWithPermissionsAsync(int id);
+        Task<bool> IsRoleCodeUniqueAsync(string roleCode, int? excludeId = null);
     }
 }
