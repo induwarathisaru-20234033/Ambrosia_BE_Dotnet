@@ -72,36 +72,6 @@ namespace AMB.API.Controllers
             }
         }
 
-        [HttpGet("check-code")]
-        public async Task<ActionResult<BaseResponseDto<bool>>> CheckRoleCodeUnique([FromQuery] string code)
-        {
-            try
-            {
-                if (string.IsNullOrWhiteSpace(code))
-                {
-                    return BadRequest(new BaseResponseDto<bool>(
-                        "Code is required",
-                        new List<string> { "Role code is required" }
-                    ));
-                }
-
-                var exists = await _roleService.CheckRoleCodeExistsAsync(code);
-                var response = new BaseResponseDto<bool>(
-                    !exists,
-                    exists ? "Role code already exists" : "Role code is available"
-                );
-
-                return Ok(response);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error checking role code uniqueness");
-                return StatusCode(500, new BaseResponseDto<bool>(
-                    "Unable to connect to server. Please check your connection.",
-                    new List<string> { "Internal server error" }
-                ));
-            }
-        }
 
         [HttpGet("permissions/grouped")]
         public async Task<ActionResult<BaseResponseDto<List<PermissionGroupDto>>>> GetPermissionsGrouped()

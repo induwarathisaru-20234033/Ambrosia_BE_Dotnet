@@ -74,8 +74,6 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 
 builder.Services.AddValidatorsFromAssemblyContaining<CreateEmployeeValidator>();
 
-builder.Services.AddScoped<IValidator<CreateRoleRequestDto>, CreateRoleRequestValidator>();
-
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;

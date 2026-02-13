@@ -1,5 +1,4 @@
-﻿using AMB.Application.Dtos;
-using AMB.Application.Interfaces.Repositories;
+﻿using AMB.Application.Interfaces.Repositories;
 using AMB.Domain.Entities;
 using AMB.Infra.DBContexts;
 using Microsoft.EntityFrameworkCore;
@@ -43,30 +42,13 @@ namespace AMB.Infra.Repositories
                 .ToListAsync();
         }
 
-        public async Task<List<PermissionGroupDto>> GetPermissionsGroupedByFeatureAsync()
+        public async Task<List<Permission>> GetPermissionsWithFeaturesAsync()
         {
-            var permissions = await _context.Permissions
-                .Include(p => p.Feature)
+            return await _context.Permissions
+                .Include(p => p.Feature)  
                 .OrderBy(p => p.FeatureId)
                 .ThenBy(p => p.PermissionName)
                 .ToListAsync();
-
-            return permissions
-                .GroupBy(p => new { p.FeatureId, p.Feature!.FeatureName, p.Feature.FeatureCode })
-                .Select(g => new PermissionGroupDto
-                {
-                    FeatureId = g.Key.FeatureId,
-                    FeatureName = g.Key.FeatureName,
-                    FeatureCode = g.Key.FeatureCode,
-                    Permissions = g.Select(p => new PermissionItemDto
-                    {
-                        Id = p.Id,
-                        PermissionCode = p.PermissionCode,
-                        Name = p.PermissionName,
-                        Description = p.PermissionName 
-                    }).ToList()
-                })
-                .ToList();
         }
     }
 }

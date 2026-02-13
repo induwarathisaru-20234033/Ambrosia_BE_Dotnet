@@ -13,8 +13,7 @@ namespace AMB.Application.Mappers
             {
                 RoleCode = dto.RoleCode,
                 RoleName = dto.Name,
-                Description = dto.Description,
-                Status = dto.Status == "ENABLED" ? (int)EntityStatus.Active : (int)EntityStatus.Inactive
+                Description = dto.Description
             };
         }
 
@@ -28,7 +27,7 @@ namespace AMB.Application.Mappers
                 RoleCode = entity.RoleCode,
                 Name = entity.RoleName,
                 Description = entity.Description,
-                Status = entity.Status == (int)EntityStatus.Active ? "ENABLED" : "DISABLED",
+                Status = entity.Status,
                 Permissions = new List<PermissionDto>()
             };
         }

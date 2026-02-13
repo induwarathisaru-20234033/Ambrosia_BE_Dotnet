@@ -8,6 +8,6 @@ namespace AMB.Application.Interfaces.Repositories
         Task<Permission> GetByIdAsync(int id);
         Task<List<Permission>> GetAllAsync();
         Task<List<Permission>> GetByIdsAsync(List<int> ids);
-        Task<List<PermissionGroupDto>> GetPermissionsGroupedByFeatureAsync();
+        Task<List<Permission>> GetPermissionsWithFeaturesAsync();
     }
 }

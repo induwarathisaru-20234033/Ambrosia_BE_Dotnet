@@ -9,22 +9,10 @@ namespace AMB.Application.Dtos
 {
     public class CreateRoleRequestDto
     {
-        [Required(ErrorMessage ="Role code is required")]
-        [StringLength(10, MinimumLength = 3, ErrorMessage = "Role code must be 3-50 characters")]
-        [RegularExpression(@"^[A-Z0-9_]+$", ErrorMessage = "Only uppercase letters, numbers, and underscores allowed")]
         public string RoleCode { get; set; }
-
-        [Required(ErrorMessage = "Role Name is required")]
-        [StringLength(25, MinimumLength = 2, ErrorMessage = "Role Name must be 2-100 characters")]
         public string Name { get; set; }
-
-        [StringLength(250, ErrorMessage = "Description cannot exceed 500 characters")]
         public string? Description { get; set; }
-
-        [Required]
-        public string Status { get; set; }
-
-        [Required(ErrorMessage = "Please select at least one permission for this role")]
+        public int Status { get; set; }
         public List<int> PermissionIds { get; set; } = new List<int>();
 
     }

@@ -41,7 +41,7 @@ namespace AMB.Application.Services
             var role = request.ToRoleEntity();
 
             role.RoleCode = request.RoleCode.ToUpper();
-            role.Status = request.Status == "ENABLED" ? (int)EntityStatus.Active : (int)EntityStatus.Inactive;
+            role.Status = request.Status;
 
             // Add role permission mappings
             role.RolePermissionMaps = request.PermissionIds.Select(permissionId => new RolePermissionMap
@@ -90,7 +90,27 @@ namespace AMB.Application.Services
 
         public async Task<List<PermissionGroupDto>> GetPermissionsGroupAsync()
         {
-            return await _permissionRepository.GetPermissionsGroupedByFeatureAsync();
+            var permissions = await _permissionRepository.GetPermissionsWithFeaturesAsync();
+
+            return permissions
+                .GroupBy(p => new {
+                    FeatureId = p.FeatureId,
+                    FeatureName = p.Feature.FeatureName,
+                    FeatureCode = p.Feature.FeatureCode
+                })
+                .Select(g => new PermissionGroupDto
+                {
+                    FeatureId = g.Key.FeatureId,
+                    FeatureName = g.Key.FeatureName, 
+                    FeatureCode = g.Key.FeatureCode,  
+                    Permissions = g.Select(p => new PermissionItemDto
+                    {
+                        Id = p.Id,
+                        PermissionCode = p.PermissionCode,
+                        Name = p.PermissionName
+                    }).ToList()
+                })
+                .ToList();
         }
     }
 }
