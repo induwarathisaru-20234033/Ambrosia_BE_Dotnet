@@ -27,14 +27,10 @@ namespace AMB.Application.Services
 
         public async Task<RoleDto> CreateRoleAsync(CreateRoleRequestDto request)
         {
-            // FluentValidation
             var validator = _serviceProvider.GetRequiredService<IValidator<CreateRoleRequestDto>>();
             await validator.ValidateAndThrowAsync(request);
 
-            // Check role code uniqueness is now handled in validator
-            // But keep this as backup? Actually remove it since validator handles it
 
-            // Get selected permissions
             var permissions = await _permissionRepository.GetByIdsAsync(request.PermissionIds);
             if (permissions.Count != request.PermissionIds.Count)
             {
@@ -44,7 +40,6 @@ namespace AMB.Application.Services
             // Create role entity from DTO
             var role = request.ToRoleEntity();
 
-            // Set role code to uppercase
             role.RoleCode = request.RoleCode.ToUpper();
             role.Status = request.Status == "ENABLED" ? (int)EntityStatus.Active : (int)EntityStatus.Inactive;
 
@@ -55,16 +50,14 @@ namespace AMB.Application.Services
                 Role = role
             }).ToList();
 
-            // Save to database
+            // Save to db
             var createdRole = await _roleRepository.AddAsync(role);
 
-            // Get full role with permissions for response
             var roleWithPermissions = await _roleRepository.GetByIdWithPermissionsAsync(createdRole.Id);
 
             // Map to DTO
             var roleDto = roleWithPermissions.ToRoleDto();
 
-            // Add permissions to DTO
             if (roleWithPermissions?.RolePermissionMaps != null)
             {
                 roleDto.Permissions = roleWithPermissions.RolePermissionMaps
