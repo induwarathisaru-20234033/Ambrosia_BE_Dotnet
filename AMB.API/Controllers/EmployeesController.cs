@@ -7,7 +7,6 @@ namespace AMB.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [EnableAuthorization]
     public class EmployeesController : ControllerBase
     {
         private readonly IEmployeeService _employeeService;

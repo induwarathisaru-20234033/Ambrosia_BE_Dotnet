@@ -75,6 +75,7 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
+    options.SaveToken = true;
     options.Authority = $"https://{builder.Configuration["Authentication:Domain"]}/";
     options.Audience = builder.Configuration["Authentication:Audience"];
 

@@ -36,6 +36,22 @@ namespace AMB.API.Filters
                         "Validation failed.",
                         validationException.Errors.Select(error => error.ErrorMessage).ToList());
 
+                case Auth0Exception auth0Exception:
+                    var auth0StatusCode = auth0Exception.StatusCode ?? StatusCodes.Status400BadRequest;
+                    var auth0Errors = new List<string>();
+                    
+                    if (!string.IsNullOrWhiteSpace(auth0Exception.Auth0Error))
+                    {
+                        auth0Errors.Add(auth0Exception.Auth0Error);
+                    }
+
+                    if (auth0Errors.Count == 0)
+                    {
+                        auth0Errors.Add(auth0Exception.Message);
+                    }
+
+                    return (auth0StatusCode, auth0Exception.Message, auth0Errors);
+
                 case UnauthorizedAccessException unauthorizedAccessException:
                     return (StatusCodes.Status401Unauthorized,
                         unauthorizedAccessException.Message,
