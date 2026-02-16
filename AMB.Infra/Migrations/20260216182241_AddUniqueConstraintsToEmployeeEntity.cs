@@ -36,28 +36,28 @@ namespace AMB.Infra.Migrations
                 oldType: "nvarchar(max)");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Employees_EmployeeId",
+                name: "UX_Employees_EmployeeId_Active",
                 table: "Employees",
                 column: "EmployeeId",
                 unique: true,
                 filter: "[Status] = 1");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Employees_MobileNumber",
+                name: "UX_Employees_MobileNumber_Active",
                 table: "Employees",
                 column: "MobileNumber",
                 unique: true,
                 filter: "[Status] = 1");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Employees_UserId",
+                name: "UX_Employees_UserId_Active",
                 table: "Employees",
                 column: "UserId",
                 unique: true,
                 filter: "[Status] = 1");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Employees_Username",
+                name: "UX_Employees_Username_Active",
                 table: "Employees",
                 column: "Username",
                 unique: true,
@@ -68,19 +68,19 @@ namespace AMB.Infra.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropIndex(
-                name: "IX_Employees_EmployeeId",
+                name: "UX_Employees_EmployeeId_Active",
                 table: "Employees");
 
             migrationBuilder.DropIndex(
-                name: "IX_Employees_MobileNumber",
+                name: "UX_Employees_MobileNumber_Active",
                 table: "Employees");
 
             migrationBuilder.DropIndex(
-                name: "IX_Employees_UserId",
+                name: "UX_Employees_UserId_Active",
                 table: "Employees");
 
             migrationBuilder.DropIndex(
-                name: "IX_Employees_Username",
+                name: "UX_Employees_Username_Active",
                 table: "Employees");
 
             migrationBuilder.AlterColumn<string>(

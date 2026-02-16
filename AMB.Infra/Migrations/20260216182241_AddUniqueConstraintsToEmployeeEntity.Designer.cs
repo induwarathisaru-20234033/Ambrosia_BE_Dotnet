@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AMB.Infra.Migrations
 {
     [DbContext(typeof(AMBContext))]
-    [Migration("20260216181254_AddUniqueConstraintsToEmployeeEntity")]
+    [Migration("20260216182241_AddUniqueConstraintsToEmployeeEntity")]
     partial class AddUniqueConstraintsToEmployeeEntity
     {
         /// <inheritdoc />
@@ -95,18 +95,22 @@ namespace AMB.Infra.Migrations
 
                     b.HasIndex("EmployeeId")
                         .IsUnique()
+                        .HasDatabaseName("UX_Employees_EmployeeId_Active")
                         .HasFilter("[Status] = 1");
 
                     b.HasIndex("MobileNumber")
                         .IsUnique()
+                        .HasDatabaseName("UX_Employees_MobileNumber_Active")
                         .HasFilter("[Status] = 1");
 
                     b.HasIndex("UserId")
                         .IsUnique()
+                        .HasDatabaseName("UX_Employees_UserId_Active")
                         .HasFilter("[Status] = 1");
 
                     b.HasIndex("Username")
                         .IsUnique()
+                        .HasDatabaseName("UX_Employees_Username_Active")
                         .HasFilter("[Status] = 1");
 
                     b.ToTable("Employees", (string)null);
