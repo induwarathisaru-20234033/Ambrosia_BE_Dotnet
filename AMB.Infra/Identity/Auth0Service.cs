@@ -51,6 +51,67 @@ namespace AMB.Infra.Identity
             }
         }
 
+        public async Task DeleteUserAsync(string authId)
+        {
+            if (string.IsNullOrWhiteSpace(authId))
+            {
+                throw new ArgumentException("Auth user id is required.");
+            }
+
+            var token = await GetManagementApiTokenAsync();
+            var client = new ManagementApiClient(token, new Uri($"https://{_configuration["Authentication:Domain"]}/api/v2/"));
+
+            try
+            {
+                await client.Users.DeleteAsync(authId);
+            }
+            catch (Auth0.Core.Exceptions.ApiException apiException)
+            {
+                throw new Auth0Exception(
+                    message: "Failed to delete user in Auth0.",
+                    error: apiException.Message,
+                    errorDescription: apiException?.InnerException?.Message,
+                    statusCode: (int)HttpStatusCode.BadRequest
+                );
+            }
+        }
+
+        public async Task UpdatePasswordAsync(string authUserId, string newPassword)
+        {
+            if (string.IsNullOrWhiteSpace(authUserId))
+            {
+                throw new ArgumentException("Auth user id is required.");
+            }
+
+            if (string.IsNullOrWhiteSpace(newPassword))
+            {
+                throw new ArgumentException("New password is required.");
+            }
+
+            var token = await GetManagementApiTokenAsync();
+            var client = new ManagementApiClient(token, new Uri($"https://{_configuration["Authentication:Domain"]}/api/v2/"));
+
+            var request = new UserUpdateRequest
+            {
+                Password = newPassword,
+                Connection = "Username-Password-Authentication"
+            };
+
+            try
+            {
+                await client.Users.UpdateAsync(authUserId, request);
+            }
+            catch (Auth0.Core.Exceptions.ApiException apiException)
+            {
+                throw new Auth0Exception(
+                    message: "Failed to update password in Auth0.",
+                    error: apiException.Message,
+                    errorDescription: apiException?.InnerException?.Message,
+                    statusCode: (int)HttpStatusCode.BadRequest
+                );
+            }
+        }
+
         private async Task<string> GetManagementApiTokenAsync()
         {
             var client = _httpClientFactory.CreateClient();

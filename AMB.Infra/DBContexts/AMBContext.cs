@@ -1,15 +1,19 @@
 ﻿using AMB.Domain.Entities;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace AMB.Infra.DBContexts
 {
     public class AMBContext: DbContext
     {
+        private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ILogger<AMBContext> _logger;
 
-        public AMBContext(DbContextOptions<AMBContext> options, ILogger<AMBContext> logger) : base(options)
+        public AMBContext(DbContextOptions<AMBContext> options, IHttpContextAccessor httpContextAccessor, ILogger<AMBContext> logger) : base(options)
         {
+            _httpContextAccessor = httpContextAccessor;
             _logger = logger;
         }
 
@@ -59,8 +63,7 @@ namespace AMB.Infra.DBContexts
                 .OnDelete(DeleteBehavior.Cascade);
 
         }
-
-        // Update this method to get the current user from access token 
+ 
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             try
@@ -68,7 +71,7 @@ namespace AMB.Infra.DBContexts
                 var entries = ChangeTracker.Entries()
                     .Where(e => e.State == EntityState.Added || e.State == EntityState.Modified);
 
-                string currentUser = "SYSTEM";
+                string currentUser = await GetCurrentUser();
 
                 foreach (var entry in entries)
                 {
@@ -78,14 +81,14 @@ namespace AMB.Infra.DBContexts
                         {
                             entity.CreatedBy = !string.IsNullOrEmpty(entity.CreatedBy) ? entity.CreatedBy : currentUser;
                             entity.UpdatedBy = !string.IsNullOrEmpty(entity.UpdatedBy) ? entity.UpdatedBy : currentUser;
-                            entity.CreatedDate = DateTime.UtcNow;
+                            entity.CreatedDate = DateTimeOffset.UtcNow;
                         }
                         else
                         {
                             entity.UpdatedBy = currentUser;
                         }
 
-                        entity.UpdatedDate = DateTime.UtcNow;
+                        entity.UpdatedDate = DateTimeOffset.UtcNow;
                     }
                 }
 
@@ -95,6 +98,29 @@ namespace AMB.Infra.DBContexts
             {
                 throw;
             }
+        }
+
+        private async Task<string> GetCurrentUser()
+        {
+            var context = _httpContextAccessor.HttpContext;
+            var accessToken = context?.Request.Headers["Authorization"].FirstOrDefault()?.Replace("Bearer ", "");
+
+            string currentUser = "SYSTEM";
+
+            if (!string.IsNullOrEmpty(accessToken))
+            {
+                var handler = new JwtSecurityTokenHandler();
+                var jsonToken = handler.ReadToken(accessToken) as JwtSecurityToken;
+
+                if (jsonToken != null)
+                {
+                    var sub = jsonToken.Claims.FirstOrDefault(claim => claim.Type == "sub")?.Value;
+                    var emp = await Employees.FirstOrDefaultAsync(e => e.UserId == sub);
+                    currentUser = emp?.Email ?? "SYSTEM";
+                }
+            }
+
+            return currentUser;
         }
     }
 }

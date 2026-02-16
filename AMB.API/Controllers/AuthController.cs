@@ -80,5 +80,15 @@ namespace AMB.API.Controllers
 
             return authorizationHeader.Trim();
         }
+
+        [HttpPut("update-password")]
+        [Authorize]
+        public async Task<ActionResult<BaseResponseDto<object>>> UpdatePassword([FromBody] UpdatePasswordRequestDto request)
+        {
+            await _authService.UpdatePasswordAsync(request);
+            var response = new BaseResponseDto<object>(null, "Password updated successfully.");
+
+            return Ok(response);
+        }
     }
 }

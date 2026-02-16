@@ -8,5 +8,6 @@ namespace AMB.Application.Interfaces.Services
         Task<AuthTokenResponseDto> RefreshTokenAsync(RefreshTokenRequestDto request);
         Task<AuthUserProfileDto> GetUserProfileAsync(string accessToken);
         Task<LogoutResponseDto> BuildLogoutUrlAsync(LogoutRequestDto request);
+        Task UpdatePasswordAsync(UpdatePasswordRequestDto request);
     }
 }

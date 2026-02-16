@@ -59,6 +59,7 @@ builder.Services.AddDbContext<AMBContext>(options => options.UseSqlServer(
 );
 
 builder.Services.AddHttpClient();
+builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
 builder.Services.AddScoped<IEmployeeService, EmployeeService>();

@@ -1,8 +1,10 @@
 ﻿using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using AMB.Application.Dtos;
+using AMB.Application.Interfaces.Repositories;
 using AMB.Application.Interfaces.Services;
 using AMB.Domain.Exceptions;
+using AMB.Domain.Enums;
 using Microsoft.Extensions.Configuration;
 
 namespace AMB.Application.Services
@@ -11,11 +13,15 @@ namespace AMB.Application.Services
     {
         private readonly IConfiguration _configuration;
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IAuthHelper _authHelper;
+        private readonly IEmployeeRepository _employeeRepository;
 
-        public AuthService(IConfiguration configuration, IHttpClientFactory httpClientFactory)
+        public AuthService(IConfiguration configuration, IHttpClientFactory httpClientFactory, IAuthHelper authHelper, IEmployeeRepository employeeRepository)
         {
             _configuration = configuration;
             _httpClientFactory = httpClientFactory;
+            _authHelper = authHelper;
+            _employeeRepository = employeeRepository;
         }
 
         /// <summary>
@@ -30,6 +36,17 @@ namespace AMB.Application.Services
                 throw new ArgumentException("Username and password are required.");
             }
 
+            var employee = await _employeeRepository.GetByUsernameAsync(request.Username);
+            if (employee == null)
+            {
+                throw new UnauthorizedAccessException("We could not find an active account for this username. Please contact support if you believe this is a mistake.");
+            }
+
+            if (employee.Status != (int)EntityStatus.Active)
+            {
+                throw new UnauthorizedAccessException("Your account is not active yet. Please contact support to activate your access.");
+            }
+
             var payload = new
             {
                 grant_type = "password",
@@ -41,7 +58,7 @@ namespace AMB.Application.Services
                 scope = "openid profile email offline_access"
             };
 
-            return await RequestTokenAsync(payload);
+            return await RequestTokenAsync(payload, "Login failed.");
         }
 
         /// <summary>
@@ -119,11 +136,42 @@ namespace AMB.Application.Services
         }
 
         /// <summary>
+        /// Updates the password for a user identified by username.
+        /// </summary>
+        /// <param name="request">Request containing username and new password.</param>
+        /// <returns>Completed task when password is updated.</returns>
+        public async Task UpdatePasswordAsync(UpdatePasswordRequestDto request)
+        {
+            if (string.IsNullOrWhiteSpace(request.Username))
+            {
+                throw new ArgumentException("Username is required.");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.NewPassword))
+            {
+                throw new ArgumentException("New password is required.");
+            }
+
+            var employee = await _employeeRepository.GetByUsernameAsync(request.Username);
+            if (employee == null)
+            {
+                throw new KeyNotFoundException($"Employee with username '{request.Username}' not found.");
+            }
+
+            if (string.IsNullOrWhiteSpace(employee.UserId))
+            {
+                throw new InvalidOperationException($"Employee '{request.Username}' does not have an associated Auth0 user ID.");
+            }
+
+            await _authHelper.UpdatePasswordAsync(employee.UserId, request.NewPassword);
+        }
+
+        /// <summary>
         /// Sends an Auth0 /oauth/token request with the provided payload.
         /// </summary>
         /// <param name="payload">Token request payload (grant type and parameters).</param>
         /// <returns>Auth0 token response.</returns>
-        private async Task<AuthTokenResponseDto> RequestTokenAsync(object payload)
+        private async Task<AuthTokenResponseDto> RequestTokenAsync(object payload, string? errorMsg = "Authorization Failed.")
         {
             var domain = GetRequiredConfig("Authentication:Domain");
             var client = _httpClientFactory.CreateClient();
@@ -137,7 +185,7 @@ namespace AMB.Application.Services
             
             if (!response.IsSuccessStatusCode)
             {
-                await ThrowAuth0ExceptionAsync(response, "Auth0 token request failed.");
+                await ThrowAuth0ExceptionAsync(response, errorMsg);
             }
 
             var token = await response.Content.ReadFromJsonAsync<AuthTokenResponseDto>();
