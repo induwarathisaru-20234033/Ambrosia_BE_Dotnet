@@ -7,5 +7,8 @@ namespace AMB.Application.Interfaces.Repositories
         Task<Employee> AddAsync(Employee employee);
 
         Task<Employee> GetByUserIDAsync(string userId);
+
+        IQueryable<Employee> Query();  //Detuni
+
     }
 }

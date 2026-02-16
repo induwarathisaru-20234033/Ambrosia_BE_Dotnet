@@ -7,7 +7,7 @@ namespace AMB.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [EnableAuthorization]
+    //[EnableAuthorization]
     public class EmployeesController : ControllerBase
     {
         private readonly IEmployeeService _employeeService;
@@ -26,5 +26,19 @@ namespace AMB.API.Controllers
 
             return Ok(response);
         }
+
+        //Detuni
+        [HttpGet]
+        public async Task<ActionResult<BaseResponseDto<PagedResponseDto<EmployeeDto>>>> GetEmployees(
+            [FromQuery] EmployeeFilterRequestDto filter)
+        {
+            var result = await _employeeService.GetEmployeesAsync(filter);
+
+            return Ok(new BaseResponseDto<PagedResponseDto<EmployeeDto>>(
+                result,
+                "Employees retrieved successfully"
+            ));
+        }
+
     }
 }

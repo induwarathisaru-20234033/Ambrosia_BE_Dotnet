@@ -5,5 +5,8 @@ namespace AMB.Application.Interfaces.Services
     public interface IEmployeeService
     {
         Task<EmployeeDto> CreateEmployeeAsync(CreateEmployeeRequestDto request);
+        //Detuni
+        Task<PagedResponseDto<EmployeeDto>> GetEmployeesAsync(EmployeeFilterRequestDto filter);
+
     }
 }

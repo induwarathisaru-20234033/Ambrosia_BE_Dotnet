@@ -31,5 +31,12 @@ namespace AMB.Infra.Repositories
                 .AsNoTracking()
                 .FirstOrDefaultAsync(e => e.UserId == userId);
         }
+
+        //Detuni
+        public IQueryable<Employee> Query()
+        {
+            return _context.Employees.AsNoTracking();
+        }
+
     }
 }
