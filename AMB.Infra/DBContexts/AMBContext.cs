@@ -33,6 +33,26 @@ namespace AMB.Infra.DBContexts
             modelBuilder.Entity<RolePermissionMap>().ToTable(nameof(RolePermissionMaps));
             modelBuilder.Entity<EmployeeRoleMap>().ToTable(nameof(EmployeeRoleMaps));
 
+            modelBuilder.Entity<Employee>()
+                .HasIndex(e => e.EmployeeId)
+                .IsUnique()
+                .HasFilter("[Status] = 1");
+
+            modelBuilder.Entity<Employee>()
+                .HasIndex(e => e.MobileNumber)
+                .IsUnique()
+                .HasFilter("[Status] = 1");
+
+            modelBuilder.Entity<Employee>()
+                .HasIndex(e => e.Username)
+                .IsUnique()
+                .HasFilter("[Status] = 1");
+
+            modelBuilder.Entity<Employee>()
+                .HasIndex(e => e.UserId)
+                .IsUnique()
+                .HasFilter("[Status] = 1");
+
             modelBuilder.Entity<Permission>()
                 .HasOne(p => p.Feature)
                 .WithMany(f => f.Permissions)
