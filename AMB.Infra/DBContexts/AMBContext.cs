@@ -36,22 +36,26 @@ namespace AMB.Infra.DBContexts
             modelBuilder.Entity<Employee>()
                 .HasIndex(e => e.EmployeeId)
                 .IsUnique()
-                .HasFilter("[Status] = 1");
+                .HasFilter("[Status] = 1")
+                .HasDatabaseName("UX_Employees_EmployeeId_Active");
 
             modelBuilder.Entity<Employee>()
                 .HasIndex(e => e.MobileNumber)
                 .IsUnique()
-                .HasFilter("[Status] = 1");
+                .HasFilter("[Status] = 1")
+                .HasDatabaseName("UX_Employees_MobileNumber_Active");
 
             modelBuilder.Entity<Employee>()
                 .HasIndex(e => e.Username)
                 .IsUnique()
-                .HasFilter("[Status] = 1");
+                .HasFilter("[Status] = 1")
+                .HasDatabaseName("UX_Employees_Username_Active");
 
             modelBuilder.Entity<Employee>()
                 .HasIndex(e => e.UserId)
                 .IsUnique()
-                .HasFilter("[Status] = 1");
+                .HasFilter("[Status] = 1")
+                .HasDatabaseName("UX_Employees_UserId_Active");
 
             modelBuilder.Entity<Permission>()
                 .HasOne(p => p.Feature)
