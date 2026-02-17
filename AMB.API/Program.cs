@@ -60,6 +60,7 @@ builder.Services.AddDbContext<AMBContext>(options => options.UseSqlServer(
 );
 
 builder.Services.AddHttpClient();
+builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
 builder.Services.AddScoped<IEmployeeService, EmployeeService>();
@@ -81,6 +82,7 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
+    options.SaveToken = true;
     options.Authority = $"https://{builder.Configuration["Authentication:Domain"]}/";
     options.Audience = builder.Configuration["Authentication:Audience"];
 

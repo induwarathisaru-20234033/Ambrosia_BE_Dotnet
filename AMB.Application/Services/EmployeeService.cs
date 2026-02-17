@@ -29,14 +29,27 @@ namespace AMB.Application.Services
 
             var empModel = request.ToEmployeeEntity();
 
-            var authUserId = await _authHelper.CreateUserAsync(request.Username, request.Password, $"{request.FirstName} {request.LastName}");
+            string? authUserId = null;
 
-            empModel.Status = (int)EntityStatus.Active;
-            empModel.UserId = authUserId;
+            try
+            {
+                authUserId = await _authHelper.CreateUserAsync(request.Email, request.Password, $"{request.FirstName} {request.LastName}");
 
-            var emp = await _employeeRepository.AddAsync(empModel);
+                empModel.Status = (int)EntityStatus.Active;
+                empModel.UserId = authUserId;
+                var emp = await _employeeRepository.AddAsync(empModel);
 
-            return emp.ToEmployeeDto();
+                return emp.ToEmployeeDto();
+            }
+            catch (Exception ex)
+            {
+                if (!string.IsNullOrWhiteSpace(authUserId))
+                {
+                    await _authHelper.DeleteUserAsync(authUserId);
+                }
+                
+                throw ex;
+            }
         }
 
         //Detuni
@@ -82,11 +95,11 @@ namespace AMB.Application.Services
             // get total count for pagination
             var totalCount = await query.CountAsync();
 
-            // fetch actual entities from database
+            
             var employeeEntities = await query
                 .Skip((filter.PageNumber - 1) * filter.PageSize)
                 .Take(filter.PageSize)
-                .ToListAsync(); // ToListAsync works here because these are entities
+                .ToListAsync(); 
 
             // map to DTO in memory
             var employees = employeeEntities

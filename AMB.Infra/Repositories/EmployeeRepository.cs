@@ -32,6 +32,13 @@ namespace AMB.Infra.Repositories
                 .FirstOrDefaultAsync(e => e.UserId == userId);
         }
 
+        public async Task<Employee?> GetByUsernameAsync(string username)
+        {
+            return await _context.Employees
+                .AsNoTracking()
+                .FirstOrDefaultAsync(e => e.Username == username);
+        }
+        
         //Detuni
         public IQueryable<Employee> GetSearchQuery()
         {

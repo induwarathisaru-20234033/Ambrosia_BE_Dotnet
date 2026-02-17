@@ -34,7 +34,8 @@ namespace AMB.Application.Mappers
                 Email = entity.Email,
                 Username = entity.Username,
                 MobileNumber = entity.MobileNumber,
-                Address = entity.Address
+                Address = entity.Address,
+                CreatedDate = entity.CreatedDate,
             };
         }
     }
