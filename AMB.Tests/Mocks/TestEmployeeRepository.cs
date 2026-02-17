@@ -18,5 +18,12 @@ namespace AMB.Tests.Mocks
         {
             return Task.FromResult<Employee>(null!);
         }
+        
+    // <-- Implement the missing interface method
+        public IQueryable<Employee> GetSearchQuery()
+        {
+            var employees = new List<Employee>();
+            return employees.AsQueryable();
+        }
     }
 }
