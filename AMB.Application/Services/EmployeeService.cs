@@ -97,7 +97,10 @@ namespace AMB.Application.Services
             return new PagedResponseDto<EmployeeDto>
             {
                 Items = employees,
-                TotalItemCount = totalCount
+                TotalItemCount = totalCount,
+                PageNumber = filter.PageNumber, // current page requested
+                PageSize = filter.PageSize,     // items per page
+                PageCount = (int)Math.Ceiling((double)totalCount / filter.PageSize) // total pages
             };
 
         }
