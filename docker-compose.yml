@@ -1,17 +1,6 @@
 services:
-  db:
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: amb-sql-server
-    ports:
-      - "1433:1433"
-    environment:
-      - ACCEPT_EULA=Y
-      - MSSQL_SA_PASSWORD=YourStrong!Passw0rd
-    volumes:
-      - sql_data:/var/opt/mssql
-
   api:
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile
     container_name: amb-api
@@ -19,9 +8,5 @@ services:
       - "5000:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Server=db;Database=AMB_DB;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True
-    depends_on:
-      - db
-
-volumes:
-  sql_data:
+      # For Windows/Mac, use 'host.docker.internal' to reach your computer
+      - ConnectionStrings__DefaultConnection=Server=host.docker.internal;Database=AmbrosiaDB;User Id=sa;Password=Root#123;TrustServerCertificate=True
