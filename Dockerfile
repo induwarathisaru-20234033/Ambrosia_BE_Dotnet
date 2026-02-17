@@ -1,11 +1,11 @@
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-COPY["AMB.API/AMB.API.csproj", "AMB.API/"]
-COPY["AMB.Application/AMB.Application.csproj", "AMB.Application/"]
-COPY["AMB.Domain/AMB.Domain.csproj", "AMB.Domain/"]
-COPY["AMB.Infra/AMB.Infra.csproj", "AMB.Infra/"]
-COPY["AMB.Tests/AMB.Tests.csproj", "AMB.Tests/"]
+COPY ["AMB.API/AMB.API.csproj", "AMB.API/"]
+COPY ["AMB.Application/AMB.Application.csproj", "AMB.Application/"]
+COPY ["AMB.Domain/AMB.Domain.csproj", "AMB.Domain/"]
+COPY ["AMB.Infra/AMB.Infra.csproj", "AMB.Infra/"]
+COPY ["AMB.Tests/AMB.Tests.csproj", "AMB.Tests/"]
 
 RUN dotnet restore "AMB.API/AMB.API.csproj"
 
