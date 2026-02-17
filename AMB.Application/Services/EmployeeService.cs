@@ -42,7 +42,7 @@ namespace AMB.Application.Services
         //Detuni
         public async Task<PagedResponseDto<EmployeeDto>> GetEmployeesAsync(EmployeeFilterRequestDto filter)
         {
-            var query = _employeeRepository.Query();
+            var query = _employeeRepository.GetSearchQuery();
 
             if (!string.IsNullOrEmpty(filter.EmployeeId))
                 query = query.Where(e => e.EmployeeId.Contains(filter.EmployeeId));
@@ -97,7 +97,7 @@ namespace AMB.Application.Services
             return new PagedResponseDto<EmployeeDto>
             {
                 Items = employees,
-                TotalCount = totalCount
+                TotalItemCount = totalCount
             };
 
         }

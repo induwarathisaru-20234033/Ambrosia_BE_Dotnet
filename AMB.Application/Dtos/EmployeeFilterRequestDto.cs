@@ -1,6 +1,6 @@
 namespace AMB.Application.Dtos
 {
-    public class EmployeeFilterRequestDto
+    public class EmployeeFilterRequestDto : BaseSearchRequestDto
     {
         public string? EmployeeId { get; set; }
         public string? FirstName { get; set; }
@@ -10,7 +10,7 @@ namespace AMB.Application.Dtos
         public string? MobileNumber { get; set; }
         public string? Address { get; set; }
 
-        public int PageNumber { get; set; } = 1;
-        public int PageSize { get; set; } = 10;
+      
     }
+    
 }

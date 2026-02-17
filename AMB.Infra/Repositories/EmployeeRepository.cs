@@ -33,7 +33,7 @@ namespace AMB.Infra.Repositories
         }
 
         //Detuni
-        public IQueryable<Employee> Query()
+        public IQueryable<Employee> GetSearchQuery()
         {
             return _context.Employees.AsNoTracking();
         }
