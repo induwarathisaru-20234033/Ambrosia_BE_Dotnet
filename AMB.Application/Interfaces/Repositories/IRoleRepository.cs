@@ -12,5 +12,8 @@ namespace AMB.Application.Interfaces.Repositories
         Task<Role> DeleteAsync(Role role);
         Task<Role?> GetByIdWithPermissionsAsync(int id);
         Task<bool> IsRoleCodeUniqueAsync(string roleCode, int? excludeId = null);
+        Task<Role?> GetByIdForUpdateAsync(int id);
+        Task<bool> IsRoleCodeUniqueForUpdateAsync(string roleCode, int roleId);
+        Task<Role> UpdateWithPermissionsAsync(Role role, List<int> newPermissionIds);
     }
 }

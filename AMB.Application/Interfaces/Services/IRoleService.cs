@@ -7,5 +7,7 @@ namespace AMB.Application.Interfaces.Services
         Task<RoleDto> CreateRoleAsync(CreateRoleRequestDto request);
         Task<bool> CheckRoleCodeExistsAsync(string roleCode);
         Task<List<PermissionGroupDto>> GetPermissionsGroupAsync();
+        Task<RoleDetailDto> GetRoleForUpdateAsync(int id);
+        Task<RoleDto> UpdateRoleAsync(EditRoleRequestDto request);
     }
 }

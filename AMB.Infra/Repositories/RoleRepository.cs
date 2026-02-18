@@ -1,6 +1,5 @@
 ﻿using AMB.Application.Interfaces.Repositories;
 using AMB.Domain.Entities;
-using AMB.Domain.Enums;
 using AMB.Infra.DBContexts;
 using Microsoft.EntityFrameworkCore;
 
@@ -78,6 +77,43 @@ namespace AMB.Infra.Repositories
             }
 
             return !await query.AnyAsync();
+        }
+
+        public async Task<Role?> GetByIdForUpdateAsync(int id)
+        {
+            return await _context.Roles
+                .Include(r => r.RolePermissionMaps!) 
+                .FirstOrDefaultAsync(r => r.Id == id);
+        }
+        // Check for uniqueness of role
+        public async Task<bool> IsRoleCodeUniqueForUpdateAsync(string roleCode, int roleId)
+        {
+            return !await _context.Roles
+                .AnyAsync(r => r.RoleCode == roleCode && r.Id != roleId);
+        }
+
+        //Update role with permissions
+        public async Task<Role> UpdateWithPermissionsAsync(Role role, List<int> newPermissionIds)
+        {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+
+            _context.Roles.Update(role);
+
+            var existingMaps = _context.RolePermissionMaps
+                .Where(rpm => rpm.RoleId == role.Id);
+            _context.RolePermissionMaps.RemoveRange(existingMaps);
+
+            var newMaps = newPermissionIds.Select(permissionId => new RolePermissionMap
+            {
+                RoleId = role.Id,
+                PermissionId = permissionId
+            });
+            await _context.RolePermissionMaps.AddRangeAsync(newMaps);
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            return role;
         }
     }
 }
