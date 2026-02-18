@@ -1,6 +1,7 @@
 ﻿using AMB.Application.Dtos;
 using AMB.Application.Interfaces.Repositories;
 using AMB.Application.Validators;
+using AMB.Domain.Enums;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -26,8 +27,8 @@ namespace AMB.Application.Validators
                 .MaximumLength(500).WithMessage("Description cannot exceed 500 characters");
 
             RuleFor(x => x.Status)
-                .Must(x => x == "ENABLED" || x == "DISABLED")
-                .WithMessage("Status must be either ENABLED or DISABLED");
+    .Must(x => x == (int)EntityStatus.Active || x == (int)EntityStatus.Inactive)
+    .WithMessage($"Status must be either {(int)EntityStatus.Active} (Active) or {(int)EntityStatus.Inactive} (Inactive)");
 
             RuleFor(x => x.PermissionIds)
                 .NotEmpty().WithMessage("Please select at least one permission for this role");

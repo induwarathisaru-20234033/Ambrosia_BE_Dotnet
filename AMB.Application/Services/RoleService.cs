@@ -30,7 +30,6 @@ namespace AMB.Application.Services
             var validator = _serviceProvider.GetRequiredService<IValidator<CreateRoleRequestDto>>();
             await validator.ValidateAndThrowAsync(request);
 
-
             var permissions = await _permissionRepository.GetByIdsAsync(request.PermissionIds);
             if (permissions.Count != request.PermissionIds.Count)
             {
@@ -41,7 +40,7 @@ namespace AMB.Application.Services
             var role = request.ToRoleEntity();
 
             role.RoleCode = request.RoleCode.ToUpper();
-            role.Status = request.Status;
+            role.Status = request.Status;  
 
             // Add role permission mappings
             role.RolePermissionMaps = request.PermissionIds.Select(permissionId => new RolePermissionMap
@@ -170,12 +169,14 @@ namespace AMB.Application.Services
             var validator = _serviceProvider.GetRequiredService<IValidator<EditRoleRequestDto>>();
             await validator.ValidateAndThrowAsync(request);
 
+            // Get existing role
             var existingRole = await _roleRepository.GetByIdAsync(request.Id);
             if (existingRole == null)
             {
                 throw new KeyNotFoundException($"Role with ID {request.Id} not found");
             }
 
+            // Validate permissions exist
             var permissions = await _permissionRepository.GetByIdsAsync(request.PermissionIds);
             if (permissions.Count != request.PermissionIds.Count)
             {
@@ -185,12 +186,21 @@ namespace AMB.Application.Services
             // Update role properties
             existingRole.RoleName = request.Name;
             existingRole.Description = request.Description;
-            existingRole.Status = request.Status == "ENABLED"
-                ? (int)EntityStatus.Active
-                : (int)EntityStatus.Inactive;
+            existingRole.Status = request.Status;  
+
+            if (!string.IsNullOrEmpty(request.RoleCode) && existingRole.RoleCode != request.RoleCode.ToUpper())
+            {
+                var isUnique = await _roleRepository.IsRoleCodeUniqueForUpdateAsync(request.RoleCode.ToUpper(), request.Id);
+                if (!isUnique)
+                {
+                    throw new InvalidOperationException($"Role code '{request.RoleCode}' already exists.");
+                }
+                existingRole.RoleCode = request.RoleCode.ToUpper();
+            }
 
             var updatedRole = await _roleRepository.UpdateWithPermissionsAsync(existingRole, request.PermissionIds);
 
+            // Get full role with permissions for response
             var roleWithPermissions = await _roleRepository.GetByIdWithPermissionsAsync(updatedRole.Id);
 
             var roleDto = roleWithPermissions.ToRoleDto();
