@@ -128,4 +128,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+app.MapGet("/", () => "Ambrosia Backend is Live!");
+
 app.Run();
