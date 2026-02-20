@@ -120,7 +120,7 @@ app.UseSwagger();
 
 app.UseHttpsRedirection();
 
-app.UseCors("ClientPermission");
+app.UseCors("AllowAll");
 
 app.UseAuthentication();
 app.UseMiddleware<ActiveUserMiddleware>();
