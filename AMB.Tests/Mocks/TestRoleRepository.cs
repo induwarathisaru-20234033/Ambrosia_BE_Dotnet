@@ -24,7 +24,6 @@ namespace AMB.Tests.Mocks
                     rpm.RoleId = role.Id;
 
                     // For test purposes, also set the Permission navigation property
-                    // This would normally come from EF Include
                     if (rpm.PermissionId > 0 && rpm.PermissionId <= 8)
                     {
                         rpm.Permission = new Permission
@@ -132,24 +131,12 @@ namespace AMB.Tests.Mocks
             return Task.FromResult(role);
         }
 
-        public Task<Role?> GetByIdAsync(int id)
-        {
-            Roles.TryGetValue(id, out var role);
-            return Task.FromResult(role);
-        }
-
-        public Task<Role?> GetByIdForUpdateAsync(int id)
-        {
-            Roles.TryGetValue(id, out var role);
-            return Task.FromResult(role);
-        }
-
-        public Task<Role?> GetByIdWithPermissionsAsync(int id)
+        public Task<Role?> GetByIdAsync(int id, RoleQueryOptions? options = null)
         {
             Roles.TryGetValue(id, out var role);
 
-            // Ensure permissions are loaded with navigation properties
-            if (role != null && role.RolePermissionMaps != null)
+            // If options request permissions, ensure they're loaded
+            if (role != null && options?.IncludePermissions == true && role.RolePermissionMaps != null)
             {
                 foreach (var rpm in role.RolePermissionMaps)
                 {
@@ -182,11 +169,15 @@ namespace AMB.Tests.Mocks
                                 8 => "Delete Role",
                                 _ => "Unknown"
                             },
-                            FeatureId = rpm.PermissionId <= 4 ? 1 : 2,
-                            Feature = rpm.PermissionId <= 4
-                                ? new Feature { Id = 1, FeatureName = "Employee Management", FeatureCode = "EMP_MGMT" }
-                                : new Feature { Id = 2, FeatureName = "Role Management", FeatureCode = "ROLE_MGMT" }
+                            FeatureId = rpm.PermissionId <= 4 ? 1 : 2
                         };
+
+                        if (options.IncludePermissionFeatures)
+                        {
+                            rpm.Permission.Feature = rpm.PermissionId <= 4
+                                ? new Feature { Id = 1, FeatureName = "Employee Management", FeatureCode = "EMP_MGMT" }
+                                : new Feature { Id = 2, FeatureName = "Role Management", FeatureCode = "ROLE_MGMT" };
+                        }
                     }
                 }
             }
@@ -216,14 +207,6 @@ namespace AMB.Tests.Mocks
             var exists = Roles.Values.Any(r =>
                 r.RoleCode == roleCode &&
                 (!excludeId.HasValue || r.Id != excludeId.Value));
-            return Task.FromResult(!exists);
-        }
-
-        public Task<bool> IsRoleCodeUniqueForUpdateAsync(string roleCode, int roleId)
-        {
-            var exists = Roles.Values.Any(r =>
-                r.RoleCode == roleCode &&
-                r.Id != roleId);
             return Task.FromResult(!exists);
         }
     }

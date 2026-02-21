@@ -14,12 +14,27 @@ namespace AMB.Infra.Repositories
             _context = context;
         }
 
-        public async Task<Role> GetByIdAsync(int id)
+        public async Task<Role?> GetByIdAsync(int id, RoleQueryOptions? options = null)
         {
-            var role = await _context.Roles
-                .FirstOrDefaultAsync(r => r.Id == id);
+            options ??= new RoleQueryOptions();
 
-            return role ?? throw new KeyNotFoundException($"Role with ID {id} not found");
+            IQueryable<Role> query = _context.Roles;
+
+            if (options.IncludePermissions)
+            {
+                query = query.Include(r => r.RolePermissionMaps!);
+
+                if (options.IncludePermissionFeatures)
+                {
+                    query = query.Include(r => r.RolePermissionMaps!)
+                        .ThenInclude(rpm => rpm.Permission!)
+                        .ThenInclude(p => p.Feature);
+                }
+            }
+
+            var role = await query.FirstOrDefaultAsync(r => r.Id == id);
+
+            return role;
         }
 
         public async Task<Role> GetByRoleCodeAsync(string roleCode)
@@ -58,14 +73,6 @@ namespace AMB.Infra.Repositories
             return role;
         }
 
-        public async Task<Role?> GetByIdWithPermissionsAsync(int id)
-        {
-            return await _context.Roles
-                .Include(r => r.RolePermissionMaps!)
-                    .ThenInclude(rpm => rpm.Permission!)
-                        .ThenInclude(p => p.Feature)
-                .FirstOrDefaultAsync(r => r.Id == id);
-        }
 
         public async Task<bool> IsRoleCodeUniqueAsync(string roleCode, int? excludeId = null)
         {
@@ -79,18 +86,6 @@ namespace AMB.Infra.Repositories
             return !await query.AnyAsync();
         }
 
-        public async Task<Role?> GetByIdForUpdateAsync(int id)
-        {
-            return await _context.Roles
-                .Include(r => r.RolePermissionMaps!) 
-                .FirstOrDefaultAsync(r => r.Id == id);
-        }
-        // Check for uniqueness of role
-        public async Task<bool> IsRoleCodeUniqueForUpdateAsync(string roleCode, int roleId)
-        {
-            return !await _context.Roles
-                .AnyAsync(r => r.RoleCode == roleCode && r.Id != roleId);
-        }
 
         //Update role with permissions
         public async Task<Role> UpdateWithPermissionsAsync(Role role, List<int> newPermissionIds)

@@ -34,16 +34,16 @@ namespace AMB.Application.Validators
                 .NotEmpty().WithMessage("Please select at least one permission for this role");
 
             RuleFor(x => x.RoleCode)
-                .MustAsync(BeUniqueRoleCodeForUpdate)
+                .MustAsync(BeUniqueRoleCode)
                 .When(x => !string.IsNullOrEmpty(x.RoleCode))
                 .WithMessage("Role Code already exists. Please choose a different code.");
         }
 
-        private async Task<bool> BeUniqueRoleCodeForUpdate(EditRoleRequestDto request, string roleCode, CancellationToken cancellationToken)
+        private async Task<bool> BeUniqueRoleCode(EditRoleRequestDto request, string roleCode, CancellationToken cancellationToken)
         {
             using var scope = _serviceProvider.CreateScope();
             var roleRepository = scope.ServiceProvider.GetRequiredService<IRoleRepository>();
-            return await roleRepository.IsRoleCodeUniqueForUpdateAsync(roleCode.ToUpper(), request.Id);
+            return await roleRepository.IsRoleCodeUniqueAsync(roleCode.ToUpper(), request.Id);
         }
     }
 }

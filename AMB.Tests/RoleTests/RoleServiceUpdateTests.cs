@@ -50,10 +50,10 @@ namespace AMB.Tests.RoleTests
         }
 
         [Fact]
-        public async Task GetRoleForUpdateAsync_WithValidId_ReturnsRoleDetailDto()
+        public async Task GetRoleByIdAsync_WithIncludePermissions_ReturnsRoleDetailDto()
         {
             // Act
-            var result = await _service.GetRoleForUpdateAsync(1);
+            var result = await _service.GetRoleByIdAsync(1, true, true);
 
             // Assert
             Assert.NotNull(result);
@@ -61,7 +61,7 @@ namespace AMB.Tests.RoleTests
             Assert.Equal("FLOOR_MGR", result.RoleCode);
             Assert.Equal("Floor Manager", result.Name);
             Assert.Equal("Original description", result.Description);
-            Assert.Equal(1, result.Status); // Status is int
+            Assert.Equal(1, result.Status);
 
             Assert.Equal(2, result.SelectedPermissionIds.Count);
             Assert.Contains(1, result.SelectedPermissionIds);
@@ -84,15 +84,15 @@ namespace AMB.Tests.RoleTests
         }
 
         [Fact]
-        public async Task GetRoleForUpdateAsync_WithInvalidId_ThrowsKeyNotFoundException()
+        public async Task GetRoleByIdAsync_WithInvalidId_ThrowsKeyNotFoundException()
         {
             // Act & Assert
             await Assert.ThrowsAsync<KeyNotFoundException>(
-                () => _service.GetRoleForUpdateAsync(999));
+                () => _service.GetRoleByIdAsync(999, true, true));
         }
 
         [Fact]
-        public async Task UpdateRoleAsync_WithValidRequest_UpdatesRoleAndReturnsDto()
+        public async Task UpdateRoleAsync_WithValidRequest_UpdatesRoleSuccessfully()
         {
             // Arrange
             var request = new EditRoleRequestDto
@@ -101,12 +101,12 @@ namespace AMB.Tests.RoleTests
                 RoleCode = "FLOOR_MGR",
                 Name = "Senior Floor Manager",
                 Description = "Updated description",
-                Status = 1, // Active (int)
+                Status = 1,
                 PermissionIds = new List<int> { 1, 2, 3, 5 }
             };
 
             // Act
-            var result = await _service.UpdateRoleAsync(request);
+            await _service.UpdateRoleAsync(request);
 
             // Assert
             Assert.NotNull(_roleRepository.LastUpdatedRole);
@@ -114,27 +114,13 @@ namespace AMB.Tests.RoleTests
 
             Assert.Equal("Senior Floor Manager", _roleRepository.LastUpdatedRole!.RoleName);
             Assert.Equal("Updated description", _roleRepository.LastUpdatedRole.Description);
-            Assert.Equal(1, _roleRepository.LastUpdatedRole.Status); // Status is int
+            Assert.Equal(1, _roleRepository.LastUpdatedRole.Status);
 
             Assert.Equal(4, _roleRepository.LastUpdatedPermissionIds!.Count);
             Assert.Contains(1, _roleRepository.LastUpdatedPermissionIds);
             Assert.Contains(2, _roleRepository.LastUpdatedPermissionIds);
             Assert.Contains(3, _roleRepository.LastUpdatedPermissionIds);
             Assert.Contains(5, _roleRepository.LastUpdatedPermissionIds);
-
-            Assert.NotNull(result);
-            Assert.Equal(1, result.Id);
-            Assert.Equal("Senior Floor Manager", result.Name);
-            Assert.Equal("Updated description", result.Description);
-            Assert.Equal(1, result.Status); // Status is int
-
-            // Check permissions in DTO
-            Assert.Equal(4, result.Permissions.Count);
-            var permissionIds = result.Permissions.Select(p => p.Id).ToList();
-            Assert.Contains(1, permissionIds);
-            Assert.Contains(2, permissionIds);
-            Assert.Contains(3, permissionIds);
-            Assert.Contains(5, permissionIds);
         }
 
         [Fact]
@@ -242,17 +228,16 @@ namespace AMB.Tests.RoleTests
             {
                 Id = 1,
                 Name = "Floor Manager",
-                Status = 0, // Inactive
+                Status = 0,
                 PermissionIds = new List<int> { 1, 2 }
             };
 
             // Act
-            var result = await _service.UpdateRoleAsync(request);
+            await _service.UpdateRoleAsync(request);
 
             // Assert
             Assert.NotNull(_roleRepository.LastUpdatedRole);
             Assert.Equal(0, _roleRepository.LastUpdatedRole!.Status);
-            Assert.Equal(0, result.Status);
         }
 
         [Fact]

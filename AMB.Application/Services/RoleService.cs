@@ -3,7 +3,6 @@ using AMB.Application.Interfaces.Repositories;
 using AMB.Application.Interfaces.Services;
 using AMB.Application.Mappers;
 using AMB.Domain.Entities;
-using AMB.Domain.Enums;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -36,25 +35,26 @@ namespace AMB.Application.Services
                 throw new InvalidOperationException("One or more selected permissions are invalid.");
             }
 
-            // Create role entity from DTO
             var role = request.ToRoleEntity();
 
             role.RoleCode = request.RoleCode.ToUpper();
-            role.Status = request.Status;  
+            role.Status = request.Status;
 
-            // Add role permission mappings
             role.RolePermissionMaps = request.PermissionIds.Select(permissionId => new RolePermissionMap
             {
                 PermissionId = permissionId,
                 Role = role
             }).ToList();
 
-            // Save to db
             var createdRole = await _roleRepository.AddAsync(role);
 
-            var roleWithPermissions = await _roleRepository.GetByIdWithPermissionsAsync(createdRole.Id);
+            var options = new RoleQueryOptions
+            {
+                IncludePermissions = true,
+                IncludePermissionFeatures = true
+            };
+            var roleWithPermissions = await _roleRepository.GetByIdAsync(createdRole.Id, options);
 
-            // Map to DTO
             var roleDto = roleWithPermissions.ToRoleDto();
 
             if (roleWithPermissions?.RolePermissionMaps != null)
@@ -112,27 +112,32 @@ namespace AMB.Application.Services
                 .ToList();
         }
 
-        // Get role for editing
-        public async Task<RoleDetailDto> GetRoleForUpdateAsync(int id)
+        public async Task<RoleDetailDto> GetRoleByIdAsync(int id, bool includePermissions = false, bool includeFeatures = false)
         {
-            var role = await _roleRepository.GetByIdForUpdateAsync(id);
+            var options = new RoleQueryOptions
+            {
+                IncludePermissions = includePermissions,
+                IncludePermissionFeatures = includeFeatures
+            };
+
+            var role = await _roleRepository.GetByIdAsync(id, options);
             if (role == null)
             {
                 throw new KeyNotFoundException($"Role with ID {id} not found");
             }
 
-            var permissions = await _permissionRepository.GetPermissionsWithFeaturesAsync();
+            // Permissions for grouping
+            var allPermissions = await _permissionRepository.GetPermissionsWithFeaturesAsync();
 
             var selectedPermissionIds = role.RolePermissionMaps?
                 .Select(rpm => rpm.PermissionId)
                 .ToList() ?? new List<int>();
 
-
-            var permissionGroups = permissions
+            var permissionGroups = allPermissions
                 .GroupBy(p => new {
                     FeatureId = p.FeatureId,
-                    FeatureName = p.Feature?.FeatureName,
-                    FeatureCode = p.Feature?.FeatureCode
+                    FeatureName = p.Feature?.FeatureName ?? "Unknown",
+                    FeatureCode = p.Feature?.FeatureCode ?? "UNKNOWN"
                 })
                 .Select(g => new PermissionGroupDto
                 {
@@ -144,7 +149,7 @@ namespace AMB.Application.Services
                         Id = p.Id,
                         PermissionCode = p.PermissionCode,
                         Name = p.PermissionName,
-                        IsSelected = selectedPermissionIds.Contains(p.Id) 
+                        IsSelected = selectedPermissionIds.Contains(p.Id)
                     }).ToList()
                 })
                 .ToList();
@@ -163,13 +168,14 @@ namespace AMB.Application.Services
             };
         }
 
+
         // Edit Role
-        public async Task<RoleDto> UpdateRoleAsync(EditRoleRequestDto request)
+        public async Task UpdateRoleAsync(EditRoleRequestDto request)
         {
+            // Validate
             var validator = _serviceProvider.GetRequiredService<IValidator<EditRoleRequestDto>>();
             await validator.ValidateAndThrowAsync(request);
 
-            // Get existing role
             var existingRole = await _roleRepository.GetByIdAsync(request.Id);
             if (existingRole == null)
             {
@@ -186,42 +192,10 @@ namespace AMB.Application.Services
             // Update role properties
             existingRole.RoleName = request.Name;
             existingRole.Description = request.Description;
-            existingRole.Status = request.Status;  
+            existingRole.Status = request.Status;
 
-            if (!string.IsNullOrEmpty(request.RoleCode) && existingRole.RoleCode != request.RoleCode.ToUpper())
-            {
-                var isUnique = await _roleRepository.IsRoleCodeUniqueForUpdateAsync(request.RoleCode.ToUpper(), request.Id);
-                if (!isUnique)
-                {
-                    throw new InvalidOperationException($"Role code '{request.RoleCode}' already exists.");
-                }
-                existingRole.RoleCode = request.RoleCode.ToUpper();
-            }
+            await _roleRepository.UpdateWithPermissionsAsync(existingRole, request.PermissionIds);
 
-            var updatedRole = await _roleRepository.UpdateWithPermissionsAsync(existingRole, request.PermissionIds);
-
-            // Get full role with permissions for response
-            var roleWithPermissions = await _roleRepository.GetByIdWithPermissionsAsync(updatedRole.Id);
-
-            var roleDto = roleWithPermissions.ToRoleDto();
-
-            // Add permissions to DTO
-            if (roleWithPermissions?.RolePermissionMaps != null)
-            {
-                roleDto.Permissions = roleWithPermissions.RolePermissionMaps
-                    .Where(rpm => rpm.Permission != null)
-                    .Select(rpm => new PermissionDto
-                    {
-                        Id = rpm.Permission!.Id,
-                        PermissionCode = rpm.Permission.PermissionCode,
-                        Name = rpm.Permission.PermissionName,
-                        FeatureId = rpm.Permission.FeatureId,
-                        FeatureName = rpm.Permission.Feature?.FeatureName ?? string.Empty,
-                        FeatureCode = rpm.Permission.Feature?.FeatureCode ?? string.Empty
-                    }).ToList();
-            }
-
-            return roleDto;
         }
 
     }
