@@ -1,0 +1,12 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: amb-api
+    ports:
+      - "5000:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      # For Windows/Mac, use 'host.docker.internal' to reach your computer
+      - ConnectionStrings__DefaultConnection=Server=host.docker.internal;Database=AmbrosiaDB;User Id=sa;Password=Root#123;TrustServerCertificate=True

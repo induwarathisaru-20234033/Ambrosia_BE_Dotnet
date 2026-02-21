@@ -116,20 +116,19 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 
-app.UseCors("ClientPermission");
+app.UseCors("AllowAll");
 
 app.UseAuthentication();
 app.UseMiddleware<ActiveUserMiddleware>();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapGet("/", () => "Ambrosia Backend is Live!");
 
 app.Run();
