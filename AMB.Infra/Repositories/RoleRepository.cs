@@ -1,6 +1,5 @@
 ﻿using AMB.Application.Interfaces.Repositories;
 using AMB.Domain.Entities;
-using AMB.Domain.Enums;
 using AMB.Infra.DBContexts;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,12 +14,27 @@ namespace AMB.Infra.Repositories
             _context = context;
         }
 
-        public async Task<Role> GetByIdAsync(int id)
+        public async Task<Role?> GetByIdAsync(int id, RoleQueryOptions? options = null)
         {
-            var role = await _context.Roles
-                .FirstOrDefaultAsync(r => r.Id == id);
+            options ??= new RoleQueryOptions();
 
-            return role ?? throw new KeyNotFoundException($"Role with ID {id} not found");
+            IQueryable<Role> query = _context.Roles;
+
+            if (options.IncludePermissions)
+            {
+                query = query.Include(r => r.RolePermissionMaps!);
+
+                if (options.IncludePermissionFeatures)
+                {
+                    query = query.Include(r => r.RolePermissionMaps!)
+                        .ThenInclude(rpm => rpm.Permission!)
+                        .ThenInclude(p => p.Feature);
+                }
+            }
+
+            var role = await query.FirstOrDefaultAsync(r => r.Id == id);
+
+            return role;
         }
 
         public async Task<Role> GetByRoleCodeAsync(string roleCode)
@@ -59,14 +73,6 @@ namespace AMB.Infra.Repositories
             return role;
         }
 
-        public async Task<Role?> GetByIdWithPermissionsAsync(int id)
-        {
-            return await _context.Roles
-                .Include(r => r.RolePermissionMaps!)
-                    .ThenInclude(rpm => rpm.Permission!)
-                        .ThenInclude(p => p.Feature)
-                .FirstOrDefaultAsync(r => r.Id == id);
-        }
 
         public async Task<bool> IsRoleCodeUniqueAsync(string roleCode, int? excludeId = null)
         {
@@ -78,6 +84,31 @@ namespace AMB.Infra.Repositories
             }
 
             return !await query.AnyAsync();
+        }
+
+
+        //Update role with permissions
+        public async Task<Role> UpdateWithPermissionsAsync(Role role, List<int> newPermissionIds)
+        {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+
+            _context.Roles.Update(role);
+
+            var existingMaps = _context.RolePermissionMaps
+                .Where(rpm => rpm.RoleId == role.Id);
+            _context.RolePermissionMaps.RemoveRange(existingMaps);
+
+            var newMaps = newPermissionIds.Select(permissionId => new RolePermissionMap
+            {
+                RoleId = role.Id,
+                PermissionId = permissionId
+            });
+            await _context.RolePermissionMaps.AddRangeAsync(newMaps);
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            return role;
         }
     }
 }

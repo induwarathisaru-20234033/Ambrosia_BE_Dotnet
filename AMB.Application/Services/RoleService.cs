@@ -3,7 +3,6 @@ using AMB.Application.Interfaces.Repositories;
 using AMB.Application.Interfaces.Services;
 using AMB.Application.Mappers;
 using AMB.Domain.Entities;
-using AMB.Domain.Enums;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -30,32 +29,32 @@ namespace AMB.Application.Services
             var validator = _serviceProvider.GetRequiredService<IValidator<CreateRoleRequestDto>>();
             await validator.ValidateAndThrowAsync(request);
 
-
             var permissions = await _permissionRepository.GetByIdsAsync(request.PermissionIds);
             if (permissions.Count != request.PermissionIds.Count)
             {
                 throw new InvalidOperationException("One or more selected permissions are invalid.");
             }
 
-            // Create role entity from DTO
             var role = request.ToRoleEntity();
 
             role.RoleCode = request.RoleCode.ToUpper();
             role.Status = request.Status;
 
-            // Add role permission mappings
             role.RolePermissionMaps = request.PermissionIds.Select(permissionId => new RolePermissionMap
             {
                 PermissionId = permissionId,
                 Role = role
             }).ToList();
 
-            // Save to db
             var createdRole = await _roleRepository.AddAsync(role);
 
-            var roleWithPermissions = await _roleRepository.GetByIdWithPermissionsAsync(createdRole.Id);
+            var options = new RoleQueryOptions
+            {
+                IncludePermissions = true,
+                IncludePermissionFeatures = true
+            };
+            var roleWithPermissions = await _roleRepository.GetByIdAsync(createdRole.Id, options);
 
-            // Map to DTO
             var roleDto = roleWithPermissions.ToRoleDto();
 
             if (roleWithPermissions?.RolePermissionMaps != null)
@@ -112,5 +111,92 @@ namespace AMB.Application.Services
                 })
                 .ToList();
         }
+
+        public async Task<RoleDetailDto> GetRoleByIdAsync(int id, bool includePermissions = false, bool includeFeatures = false)
+        {
+            var options = new RoleQueryOptions
+            {
+                IncludePermissions = includePermissions,
+                IncludePermissionFeatures = includeFeatures
+            };
+
+            var role = await _roleRepository.GetByIdAsync(id, options);
+            if (role == null)
+            {
+                throw new KeyNotFoundException($"Role with ID {id} not found");
+            }
+
+            // Permissions for grouping
+            var allPermissions = await _permissionRepository.GetPermissionsWithFeaturesAsync();
+
+            var selectedPermissionIds = role.RolePermissionMaps?
+                .Select(rpm => rpm.PermissionId)
+                .ToList() ?? new List<int>();
+
+            var permissionGroups = allPermissions
+                .GroupBy(p => new {
+                    FeatureId = p.FeatureId,
+                    FeatureName = p.Feature?.FeatureName ?? "Unknown",
+                    FeatureCode = p.Feature?.FeatureCode ?? "UNKNOWN"
+                })
+                .Select(g => new PermissionGroupDto
+                {
+                    FeatureId = g.Key.FeatureId,
+                    FeatureName = g.Key.FeatureName,
+                    FeatureCode = g.Key.FeatureCode,
+                    Permissions = g.Select(p => new PermissionItemDto
+                    {
+                        Id = p.Id,
+                        PermissionCode = p.PermissionCode,
+                        Name = p.PermissionName,
+                        IsSelected = selectedPermissionIds.Contains(p.Id)
+                    }).ToList()
+                })
+                .ToList();
+
+            return new RoleDetailDto
+            {
+                Id = role.Id,
+                RoleCode = role.RoleCode,
+                Name = role.RoleName,
+                Description = role.Description,
+                Status = role.Status,
+                SelectedPermissionIds = selectedPermissionIds,
+                PermissionGroups = permissionGroups,
+                CreatedDate = role.CreatedDate,
+                UpdatedDate = role.UpdatedDate
+            };
+        }
+
+
+        // Edit Role
+        public async Task UpdateRoleAsync(EditRoleRequestDto request)
+        {
+            // Validate
+            var validator = _serviceProvider.GetRequiredService<IValidator<EditRoleRequestDto>>();
+            await validator.ValidateAndThrowAsync(request);
+
+            var existingRole = await _roleRepository.GetByIdAsync(request.Id);
+            if (existingRole == null)
+            {
+                throw new KeyNotFoundException($"Role with ID {request.Id} not found");
+            }
+
+            // Validate permissions exist
+            var permissions = await _permissionRepository.GetByIdsAsync(request.PermissionIds);
+            if (permissions.Count != request.PermissionIds.Count)
+            {
+                throw new InvalidOperationException("One or more selected permissions are invalid.");
+            }
+
+            // Update role properties
+            existingRole.RoleName = request.Name;
+            existingRole.Description = request.Description;
+            existingRole.Status = request.Status;
+
+            await _roleRepository.UpdateWithPermissionsAsync(existingRole, request.PermissionIds);
+
+        }
+
     }
 }
