@@ -1,8 +1,11 @@
 ﻿using AMB.Application.Interfaces.Services;
+using AMB.Domain.Exceptions;
 using Auth0.ManagementApi;
 using Auth0.ManagementApi.Models;
 using Microsoft.Extensions.Configuration;
 using System.Net.Http.Json;
+using AMB.Application.Dtos;
+using System.Net;
 
 namespace AMB.Infra.Identity
 {
@@ -32,9 +35,81 @@ namespace AMB.Infra.Identity
                 EmailVerified = true // Auto-verify to allow immediate login
             };
 
-            var user = await client.Users.CreateAsync(request);
+            try
+            {
+                var user = await client.Users.CreateAsync(request);
+                return user.UserId;
+            }
+            catch (Auth0.Core.Exceptions.ApiException apiException)
+            {
+                throw new Auth0Exception(
+                    message: "Failed to create user in Auth0.",
+                    error: apiException.Message,
+                    errorDescription: apiException?.InnerException?.Message,
+                    statusCode: (int)HttpStatusCode.BadRequest
+                );
+            }
+        }
 
-            return user.UserId;
+        public async Task DeleteUserAsync(string authId)
+        {
+            if (string.IsNullOrWhiteSpace(authId))
+            {
+                throw new ArgumentException("Auth user id is required.");
+            }
+
+            var token = await GetManagementApiTokenAsync();
+            var client = new ManagementApiClient(token, new Uri($"https://{_configuration["Authentication:Domain"]}/api/v2/"));
+
+            try
+            {
+                await client.Users.DeleteAsync(authId);
+            }
+            catch (Auth0.Core.Exceptions.ApiException apiException)
+            {
+                throw new Auth0Exception(
+                    message: "Failed to delete user in Auth0.",
+                    error: apiException.Message,
+                    errorDescription: apiException?.InnerException?.Message,
+                    statusCode: (int)HttpStatusCode.BadRequest
+                );
+            }
+        }
+
+        public async Task UpdatePasswordAsync(string authUserId, string newPassword)
+        {
+            if (string.IsNullOrWhiteSpace(authUserId))
+            {
+                throw new ArgumentException("Auth user id is required.");
+            }
+
+            if (string.IsNullOrWhiteSpace(newPassword))
+            {
+                throw new ArgumentException("New password is required.");
+            }
+
+            var token = await GetManagementApiTokenAsync();
+            var client = new ManagementApiClient(token, new Uri($"https://{_configuration["Authentication:Domain"]}/api/v2/"));
+
+            var request = new UserUpdateRequest
+            {
+                Password = newPassword,
+                Connection = "Username-Password-Authentication"
+            };
+
+            try
+            {
+                await client.Users.UpdateAsync(authUserId, request);
+            }
+            catch (Auth0.Core.Exceptions.ApiException apiException)
+            {
+                throw new Auth0Exception(
+                    message: "Failed to update password in Auth0.",
+                    error: apiException.Message,
+                    errorDescription: apiException?.InnerException?.Message,
+                    statusCode: (int)HttpStatusCode.BadRequest
+                );
+            }
         }
 
         private async Task<string> GetManagementApiTokenAsync()
@@ -54,10 +129,42 @@ namespace AMB.Infra.Identity
             request.Content = JsonContent.Create(payload);
             
             var response = await client.SendAsync(request);
-            response.EnsureSuccessStatusCode();
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                await ThrowAuth0ExceptionAsync(response, "Failed to obtain Auth0 Management API token.");
+            }
 
             var json = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
             return json.GetProperty("access_token").GetString() ?? "";
+        }
+
+        private async Task ThrowAuth0ExceptionAsync(HttpResponseMessage response, string defaultMessage)
+        {
+            var statusCode = (int)response.StatusCode;
+            Auth0ErrorResponseDto? errorResponse = null;
+
+            try
+            {
+                errorResponse = await response.Content.ReadFromJsonAsync<Auth0ErrorResponseDto>();
+            }
+            catch
+            {
+                // Ignore deserialization errors
+            }
+
+            var error = errorResponse?.Error ?? "auth0_error";
+            var errorDescription = errorResponse?.ErrorDescription 
+                ?? errorResponse?.Message 
+                ?? await response.Content.ReadAsStringAsync() 
+                ?? defaultMessage;
+
+            throw new Auth0Exception(
+                message: defaultMessage,
+                error: error,
+                errorDescription: errorDescription,
+                statusCode: statusCode
+            );
         }
     }
 }

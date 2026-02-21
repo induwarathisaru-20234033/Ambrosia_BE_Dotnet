@@ -36,6 +36,22 @@ namespace AMB.API.Filters
                         "Validation failed.",
                         validationException.Errors.Select(error => error.ErrorMessage).ToList());
 
+                case Auth0Exception auth0Exception:
+                    var auth0StatusCode = auth0Exception.StatusCode ?? StatusCodes.Status400BadRequest;
+                    var auth0Errors = new List<string>();
+                    
+                    if (!string.IsNullOrWhiteSpace(auth0Exception.Auth0Error))
+                    {
+                        auth0Errors.Add(auth0Exception.Auth0Error);
+                    }
+
+                    if (auth0Errors.Count == 0)
+                    {
+                        auth0Errors.Add(auth0Exception.Message);
+                    }
+
+                    return (auth0StatusCode, auth0Exception.Message, auth0Errors);
+
                 case UnauthorizedAccessException unauthorizedAccessException:
                     return (StatusCodes.Status401Unauthorized,
                         unauthorizedAccessException.Message,
@@ -64,6 +80,12 @@ namespace AMB.API.Filters
                         new List<string> { concurrencyException.Message });
 
                 case DbUpdateException dbUpdateException:
+                    var uniqueViolation = TryMapUniqueConstraint(dbUpdateException);
+                    if (uniqueViolation != null)
+                    {
+                        return uniqueViolation.Value;
+                    }
+
                     return (StatusCodes.Status500InternalServerError,
                         "A database update error occurred.",
                         new List<string> { dbUpdateException.Message });
@@ -83,6 +105,49 @@ namespace AMB.API.Filters
                         "An unexpected error occurred.",
                         new List<string> { exception.Message });
             }
+        }
+
+        private static (int statusCode, string message, List<string> errors)? TryMapUniqueConstraint(DbUpdateException exception)
+        {
+            if (exception.InnerException is not SqlException sqlException)
+            {
+                return null;
+            }
+
+            if (sqlException.Number is not (2601 or 2627))
+            {
+                return null;
+            }
+
+            var errorText = sqlException.Message ?? string.Empty;
+            var errors = new List<string>();
+
+            if (errorText.Contains("UX_Employees_EmployeeId_Active", StringComparison.OrdinalIgnoreCase))
+            {
+                errors.Add("Employee ID is already in use by an active employee.");
+            }
+
+            if (errorText.Contains("UX_Employees_MobileNumber_Active", StringComparison.OrdinalIgnoreCase))
+            {
+                errors.Add("Mobile number is already in use by an active employee.");
+            }
+
+            if (errorText.Contains("UX_Employees_Username_Active", StringComparison.OrdinalIgnoreCase))
+            {
+                errors.Add("Username is already in use by an active employee.");
+            }
+
+            if (errorText.Contains("UX_Employees_UserId_Active", StringComparison.OrdinalIgnoreCase))
+            {
+                errors.Add("Auth user ID is already linked to an active employee.");
+            }
+
+            if (errors.Count == 0)
+            {
+                return null;
+            }
+
+            return (StatusCodes.Status409Conflict, "Duplicate employee information.", errors);
         }
     }
 }

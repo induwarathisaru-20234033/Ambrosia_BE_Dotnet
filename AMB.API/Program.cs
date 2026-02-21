@@ -1,18 +1,19 @@
+using AMB.API.Filters;
+using AMB.API.Middlewares;
+using AMB.Application.Dtos;
 using AMB.Application.Interfaces.Repositories;
 using AMB.Application.Interfaces.Services;
 using AMB.Application.Services;
+using AMB.Application.Validators;
 using AMB.Infra.DBContexts;
+using AMB.Infra.Identity;
 using AMB.Infra.Repositories;
+using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
-using FluentValidation;
-using AMB.Application.Validators;
-using AMB.Infra.Identity;
-using AMB.API.Middlewares;
-using AMB.API.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -59,9 +60,15 @@ builder.Services.AddDbContext<AMBContext>(options => options.UseSqlServer(
 );
 
 builder.Services.AddHttpClient();
+builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
 builder.Services.AddScoped<IEmployeeService, EmployeeService>();
+
+builder.Services.AddScoped<IRoleRepository, RoleRepository>();
+builder.Services.AddScoped<IPermissionRepository, PermissionRepository>();
+
+builder.Services.AddScoped<IRoleService, RoleService>();
 
 builder.Services.AddScoped<IAuthHelper, Auth0Service>();
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -84,6 +91,7 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
+    options.SaveToken = true;
     options.Authority = $"https://{builder.Configuration["Authentication:Domain"]}/";
     options.Audience = builder.Configuration["Authentication:Audience"];
 
@@ -117,20 +125,19 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 
-app.UseCors("ClientPermission");
+app.UseCors("AllowAll");
 
 app.UseAuthentication();
 app.UseMiddleware<ActiveUserMiddleware>();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapGet("/", () => "Ambrosia Backend is Live!");
 
 app.Run();
