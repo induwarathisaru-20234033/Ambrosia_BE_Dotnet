@@ -4,6 +4,7 @@ using AMB.Infra.DBContexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AMB.Infra.Migrations
 {
     [DbContext(typeof(AMBContext))]
-    partial class AMBContextModelSnapshot : ModelSnapshot
+    [Migration("20260209151512_AddedReservationConfigEntities")]
+    partial class AddedReservationConfigEntities
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -97,7 +100,7 @@ namespace AMB.Infra.Migrations
 
                     b.Property<string>("EmployeeId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("FirstName")
                         .IsRequired()
@@ -111,7 +114,7 @@ namespace AMB.Infra.Migrations
 
                     b.Property<string>("MobileNumber")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Status")
                         .IsConcurrencyToken()
@@ -124,7 +127,7 @@ namespace AMB.Infra.Migrations
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Username")
                         .IsRequired()
@@ -132,26 +135,6 @@ namespace AMB.Infra.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("EmployeeId")
-                        .IsUnique()
-                        .HasDatabaseName("UX_Employees_EmployeeId_Active")
-                        .HasFilter("[Status] = 1");
-
-                    b.HasIndex("MobileNumber")
-                        .IsUnique()
-                        .HasDatabaseName("UX_Employees_MobileNumber_Active")
-                        .HasFilter("[Status] = 1");
-
-                    b.HasIndex("UserId")
-                        .IsUnique()
-                        .HasDatabaseName("UX_Employees_UserId_Active")
-                        .HasFilter("[Status] = 1");
-
-                    b.HasIndex("Username")
-                        .IsUnique()
-                        .HasDatabaseName("UX_Employees_Username_Active")
-                        .HasFilter("[Status] = 1");
 
                     b.ToTable("Employees", (string)null);
                 });
