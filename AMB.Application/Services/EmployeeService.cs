@@ -78,6 +78,14 @@ namespace AMB.Application.Services
             if (!string.IsNullOrEmpty(filter.Address))
                 query = query.Where(e => e.Address.Contains(filter.Address));
 
+            if (!string.IsNullOrEmpty(filter.Status))
+            {
+                if (filter.Status.Equals("Active", StringComparison.OrdinalIgnoreCase))
+                    query = query.Where(e => e.Status == (int)EntityStatus.Active);
+                else if (filter.Status.Equals("Inactive", StringComparison.OrdinalIgnoreCase))
+                    query = query.Where(e => e.Status == (int)EntityStatus.Inactive);
+            }
+
             //var totalCount = await query.CountAsync();
 
             //var employees = await query
@@ -109,7 +117,7 @@ namespace AMB.Application.Services
             // return paged response
             return new PagedResponseDto<EmployeeDto>
             {
-                Items = employees,
+                    Items = employees,
                 TotalItemCount = totalCount,
                 PageNumber = filter.PageNumber, // current page requested
                 PageSize = filter.PageSize,     // items per page
