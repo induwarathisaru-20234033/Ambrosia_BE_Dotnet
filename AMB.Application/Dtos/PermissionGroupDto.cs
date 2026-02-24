@@ -20,5 +20,6 @@ namespace AMB.Application.Dtos
         public string PermissionCode { get; set; }
         public String Name { get; set; }
         public string? Description { get; set; }
+        public bool IsSelected { get; set; }
     }
 }
