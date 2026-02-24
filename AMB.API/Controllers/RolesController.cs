@@ -2,7 +2,7 @@
 using AMB.Application.Dtos;
 using AMB.Application.Interfaces.Services;
 using AMB.Application.Interfaces.Repositories;
-using FluentValidation; 
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AMB.API.Controllers
@@ -99,36 +99,18 @@ namespace AMB.API.Controllers
 
         [HttpGet("{id}")]
         public async Task<ActionResult<BaseResponseDto<RoleDetailDto>>> GetRoleById(
-        int id,
-        [FromQuery] bool includePermissions = false,
-        [FromQuery] bool includeFeatures = false)
+            int id,
+            [FromQuery] bool includePermissions = false,
+            [FromQuery] bool includeFeatures = false)
         {
-            try
-            {
-                var result = await _roleService.GetRoleByIdAsync(id, includePermissions, includeFeatures);
+            var result = await _roleService.GetRoleByIdAsync(id, includePermissions, includeFeatures);
 
-                var response = new BaseResponseDto<RoleDetailDto>(
-                    result,
-                    "Role retrieved successfully"
-                );
+            var response = new BaseResponseDto<RoleDetailDto>(
+                result,
+                "Role retrieved successfully"
+            );
 
-                return Ok(response);
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new BaseResponseDto<RoleDetailDto>(
-                    ex.Message,
-                    new List<string> { ex.Message }
-                ));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error retrieving role");
-                return StatusCode(500, new BaseResponseDto<RoleDetailDto>(
-                    "Failed to retrieve role",
-                    new List<string> { "Internal server error" }
-                ));
-            }
+            return Ok(response);
         }
 
         [HttpPut("{id}")]

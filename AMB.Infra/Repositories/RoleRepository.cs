@@ -90,25 +90,32 @@ namespace AMB.Infra.Repositories
         //Update role with permissions
         public async Task<Role> UpdateWithPermissionsAsync(Role role, List<int> newPermissionIds)
         {
-            using var transaction = await _context.Database.BeginTransactionAsync();
-
-            _context.Roles.Update(role);
-
-            var existingMaps = _context.RolePermissionMaps
-                .Where(rpm => rpm.RoleId == role.Id);
-            _context.RolePermissionMaps.RemoveRange(existingMaps);
-
-            var newMaps = newPermissionIds.Select(permissionId => new RolePermissionMap
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            try
             {
-                RoleId = role.Id,
-                PermissionId = permissionId
-            });
-            await _context.RolePermissionMaps.AddRangeAsync(newMaps);
+                _context.Roles.Update(role);
 
-            await _context.SaveChangesAsync();
-            await transaction.CommitAsync();
+                var existingMaps = _context.RolePermissionMaps
+                    .Where(rpm => rpm.RoleId == role.Id);
+                _context.RolePermissionMaps.RemoveRange(existingMaps);
 
-            return role;
+                var newMaps = newPermissionIds.Select(permissionId => new RolePermissionMap
+                {
+                    RoleId = role.Id,
+                    PermissionId = permissionId
+                });
+                await _context.RolePermissionMaps.AddRangeAsync(newMaps);
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return role;
+            }
+            catch (Exception)
+            {
+                await transaction.RollbackAsync();
+                throw; 
+            }
         }
     }
 }
