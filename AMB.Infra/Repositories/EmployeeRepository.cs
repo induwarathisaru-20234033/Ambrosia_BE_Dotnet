@@ -1,5 +1,6 @@
 ﻿using AMB.Application.Interfaces.Repositories;
 using AMB.Domain.Entities;
+using AMB.Domain.Enums;
 using AMB.Infra.DBContexts;
 using Microsoft.EntityFrameworkCore;
 
@@ -36,7 +37,7 @@ namespace AMB.Infra.Repositories
         {
             return await _context.Employees
                 .AsNoTracking()
-                .FirstOrDefaultAsync(e => e.Username == username);
+                .FirstOrDefaultAsync(e => e.Username == username && e.Status == (int)EntityStatus.Active);
         }
         
         //Detuni

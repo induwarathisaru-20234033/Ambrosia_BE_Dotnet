@@ -73,6 +73,15 @@ builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IAuthHelper, Auth0Service>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
+builder.Services.AddScoped<ICalenderExclusionRepository, CalenderExclusionRepository>();
+builder.Services.AddScoped<ICalendarExclusionService, CalenderExclusionService>();
+
+builder.Services.AddScoped<ITableRepository, TableRespository>();
+builder.Services.AddScoped<ITableService, TableService>();
+
+builder.Services.AddScoped<IConfigRepository, ConfigRepository>();
+builder.Services.AddScoped<IConfigService, ConfigService>();
+
 builder.Services.AddValidatorsFromAssemblyContaining<CreateEmployeeValidator>();
 
 builder.Services.AddAuthentication(options =>
