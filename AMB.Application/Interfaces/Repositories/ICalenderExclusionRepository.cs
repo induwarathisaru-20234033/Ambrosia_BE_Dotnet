@@ -1,4 +1,5 @@
 ﻿using AMB.Domain.Entities;
+using AMB.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,5 +12,6 @@ namespace AMB.Application.Interfaces.Repositories
     {
         Task<CalenderExclusion> AddAsync(CalenderExclusion exclusion);
         Task<List<CalenderExclusion>> GetAllAsync();
+        Task UpdateStatusAsync(int id, EntityStatus entityStatus);
     }
 }

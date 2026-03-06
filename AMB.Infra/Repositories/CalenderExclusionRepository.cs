@@ -1,5 +1,6 @@
 ﻿using AMB.Application.Interfaces.Repositories;
 using AMB.Domain.Entities;
+using AMB.Domain.Enums;
 using AMB.Infra.DBContexts;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -29,8 +30,21 @@ namespace AMB.Infra.Repositories
         public async Task<List<CalenderExclusion>> GetAllAsync()
         {
             return await _context.CalenderExclusions
+                .Where(ce => ce.Status == (int)EntityStatus.Active)
                 .AsNoTracking()
                 .ToListAsync();
+        }
+
+        public async Task UpdateStatusAsync(int id, EntityStatus entityStatus)
+        {
+            var calenderExclusion = await _context.CalenderExclusions.SingleOrDefaultAsync(t => t.Id == id);
+            if (calenderExclusion == null)
+            {
+                throw new InvalidOperationException($"Exclusion with id {id} not found.");
+            }
+
+            calenderExclusion.Status = (int)entityStatus;
+            await _context.SaveChangesAsync();
         }
     }
 }

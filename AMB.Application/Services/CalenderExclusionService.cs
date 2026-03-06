@@ -2,6 +2,7 @@
 using AMB.Application.Interfaces.Repositories;
 using AMB.Application.Interfaces.Services;
 using AMB.Application.Mappers;
+using AMB.Domain.Enums;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -20,6 +21,7 @@ namespace AMB.Application.Services
         public async Task<CalenderExclusionDto> CreateCalenderExclusionAsync(CreateCalenderExclusionRequestDto request)
         {
             var exclusion = request.ToCalenderExclusionEntity();
+            exclusion.Status = (int)EntityStatus.Active;
             var created = await _repository.AddAsync(exclusion);
 
             return created.ToCalenderExclusionDto();
@@ -62,6 +64,18 @@ namespace AMB.Application.Services
             };
         }
 
+        public async Task<List<CalenderExclusionDto>> GetAllAsync()
+        {
+            var allItems = await _repository.GetAllAsync();
 
+            var allDtos = allItems.Select(item => item.ToCalenderExclusionDto()).ToList();
+
+            return allDtos;
+        }
+
+        public async Task RemoveExclusionAsync(int id)
+        {
+            await _repository.UpdateStatusAsync(id, EntityStatus.Inactive);
+        }
     }
 }

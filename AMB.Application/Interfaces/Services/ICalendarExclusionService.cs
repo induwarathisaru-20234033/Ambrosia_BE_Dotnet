@@ -7,5 +7,7 @@ namespace AMB.Application.Interfaces.Services
     {
         Task<CalenderExclusionDto> CreateCalenderExclusionAsync(CreateCalenderExclusionRequestDto request);
         Task<PaginatedResultDto<CalenderExclusionDto>> GetPaginatedExclusionsAsync(int pageNumber, int pageSize);
+        Task<List<CalenderExclusionDto>> GetAllAsync();
+        Task RemoveExclusionAsync(int id);
     }
 }
