@@ -12,5 +12,6 @@ namespace AMB.Application.Interfaces.Services
         Task<TableDto> CreateTableAsync(CreateTableRequestDto request);
         Task RemoveTableAsync(int id);
         Task<PaginatedResultDto<TableDto>> SearchAsync(SearchTableRequestDto request);
+        Task<List<TableDto>> GetAllAsync();
     }
 }

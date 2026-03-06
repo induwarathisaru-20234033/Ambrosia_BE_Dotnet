@@ -24,7 +24,7 @@ namespace AMB.API.Controllers
             return Ok(response);
         }
 
-        [HttpGet]
+        [HttpGet("search")]
         public async Task<ActionResult<BaseResponseDto<PaginatedResultDto<TableDto>>>> Search([FromQuery] SearchTableRequestDto request)
         {
             if (request.PageNumber < 1)
@@ -39,7 +39,7 @@ namespace AMB.API.Controllers
             var result = await _tableService.SearchAsync(request);
             var response = new BaseResponseDto<PaginatedResultDto<TableDto>>(
                 result,
-                "Calender exclusions retrieved successfully.");
+                "Tables retrieved successfully.");
 
             return Ok(response);
         }
@@ -62,6 +62,14 @@ namespace AMB.API.Controllers
                 null,
                 "Table removed successfully.");
 
+            return Ok(response);
+        }
+
+        [HttpGet]
+        public async Task<ActionResult<BaseResponseDto<List<TableDto>>>> GetAll()
+        {
+            var result = await _tableService.GetAllAsync();
+            var response = new BaseResponseDto<List<TableDto>>(result, "Tables retrieved successfully");
             return Ok(response);
         }
     }

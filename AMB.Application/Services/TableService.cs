@@ -70,5 +70,20 @@ namespace AMB.Application.Services
                 TotalItemCount = totalItemCount
             };
         }
+
+        public async Task<List<TableDto>> GetAllAsync()
+        {
+            var allTables = await _tableRepository.GetAllAsync();
+
+            var dtoModels = new List<TableDto>();
+
+            foreach (var item in allTables)
+            {
+                var dtoModel = item.ToTableDto();
+                dtoModels.Add(dtoModel);
+            }
+
+            return dtoModels;
+        }
     }
 }

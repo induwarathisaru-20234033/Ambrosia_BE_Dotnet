@@ -37,6 +37,7 @@ namespace AMB.Infra.Repositories
         public async Task<List<Table>> GetAllAsync()
         {
             return await _context.Tables
+                .Where(t => t.Status == (int)EntityStatus.Active)
                 .AsNoTracking()
                 .ToListAsync();
         }
