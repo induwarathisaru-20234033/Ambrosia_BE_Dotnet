@@ -22,12 +22,29 @@ namespace AMB.Application.Mappers
 
         public static ServiceHour ToServiceHourEntity(this ServiceShiftPayloadDto dto)
         {
+            TimeOnly? startTime = null;
+            TimeOnly? endTime = null;
+
+            // Only extract time from DateTimeOffset if IsOpen is true and the DateTimeOffset values are not null
+            if (dto.IsOpen)
+            {
+                if (dto.StartTime.HasValue)
+                {
+                    startTime = TimeOnly.FromDateTime(dto.StartTime.Value.UtcDateTime);
+                }
+
+                if (dto.EndTime.HasValue)
+                {
+                    endTime = TimeOnly.FromDateTime(dto.EndTime.Value.UtcDateTime);
+                }
+            }
+
             return new ServiceHour
             {
                 Day = dto.Day,
                 IsOpen = dto.IsOpen,
-                StartTime = dto.StartTime,
-                EndTime = dto.EndTime,
+                StartTime = startTime,
+                EndTime = endTime,
             };
         }
     }

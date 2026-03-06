@@ -11,6 +11,7 @@ namespace AMB.Application.Services
 {
     public class ConfigService : IConfigService
     {
+        private const string TimeFormat = "HH:mm";
         private readonly IConfigRepository _configRepository;
         private readonly IServiceProvider _serviceProvider;
 
@@ -106,12 +107,30 @@ namespace AMB.Application.Services
                 {
                     var hour = serviceHours[i];
 
+                    // Convert TimeOnly back to DateTimeOffset for the response
+                    DateTimeOffset? startTime = null;
+                    DateTimeOffset? endTime = null;
+
+                    if (hour.StartTime.HasValue)
+                    {
+                        var startDateTime = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, DateTime.UtcNow.Day,
+                            hour.StartTime.Value.Hour, hour.StartTime.Value.Minute, hour.StartTime.Value.Second, DateTimeKind.Utc);
+                        startTime = new DateTimeOffset(startDateTime, TimeSpan.Zero);
+                    }
+
+                    if (hour.EndTime.HasValue)
+                    {
+                        var endDateTime = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, DateTime.UtcNow.Day,
+                            hour.EndTime.Value.Hour, hour.EndTime.Value.Minute, hour.EndTime.Value.Second, DateTimeKind.Utc);
+                        endTime = new DateTimeOffset(endDateTime, TimeSpan.Zero);
+                    }
+
                     response.ServiceShiftPayload.Add(new ServiceShiftPayloadDto
                     {
                         Day = hour.Day,
                         IsOpen = hour.IsOpen,
-                        StartTime = hour.StartTime,
-                        EndTime = hour.EndTime
+                        StartTime = startTime,
+                        EndTime = endTime
                     });
                 }
             }
@@ -119,7 +138,7 @@ namespace AMB.Application.Services
             return response;
         }
 
-        
+
         private static void ValidateServiceHours(List<ServiceShiftPayloadDto> serviceHourRequests)
         {
             foreach (var shift in serviceHourRequests)
@@ -144,19 +163,32 @@ namespace AMB.Application.Services
                 {
                     if (!shift.IsOpen)
                     {
-                        if (shift.StartTime != default || shift.EndTime != default)
+                        // When IsOpen is false, both StartTime and EndTime should be null
+                        if ((shift.StartTime.HasValue && shift.StartTime.Value != default) ||
+                            (shift.EndTime.HasValue && shift.EndTime.Value != default))
                         {
+                            var startTimeStr = shift.StartTime.HasValue ? shift.StartTime.Value.UtcDateTime.ToString(TimeFormat) : "null";
+                            var endTimeStr = shift.EndTime.HasValue ? shift.EndTime.Value.UtcDateTime.ToString(TimeFormat) : "null";
                             throw new ArgumentException(
-                                $"{dayLabel} is closed but has service times {shift.StartTime:HH:mm}-{shift.EndTime:HH:mm}.");
+                                $"{dayLabel} is closed but has service times {startTimeStr}-{endTimeStr}.");
                         }
 
                         continue;
                     }
 
-                    if (shift.EndTime <= shift.StartTime)
+                    // When IsOpen is true, both StartTime and EndTime must be provided
+                    if (!shift.StartTime.HasValue || !shift.EndTime.HasValue)
                     {
                         throw new ArgumentException(
-                            $"{dayLabel} has invalid service time {shift.StartTime:HH:mm}-{shift.EndTime:HH:mm}. EndTime must be after StartTime.");
+                            $"{dayLabel} is open but is missing StartTime or EndTime.");
+                    }
+
+                    if (shift.EndTime <= shift.StartTime)
+                    {
+                        var startTimeStr = shift.StartTime.Value.UtcDateTime.ToString(TimeFormat);
+                        var endTimeStr = shift.EndTime.Value.UtcDateTime.ToString(TimeFormat);
+                        throw new ArgumentException(
+                            $"{dayLabel} has invalid service time {startTimeStr}-{endTimeStr}. EndTime must be after StartTime.");
                     }
 
                     openShifts.Add(shift);
@@ -176,8 +208,12 @@ namespace AMB.Application.Services
 
                     if (current.StartTime < previous.EndTime)
                     {
+                        var prevStartStr = previous.StartTime.Value.UtcDateTime.ToString(TimeFormat);
+                        var prevEndStr = previous.EndTime.Value.UtcDateTime.ToString(TimeFormat);
+                        var currStartStr = current.StartTime.Value.UtcDateTime.ToString(TimeFormat);
+                        var currEndStr = current.EndTime.Value.UtcDateTime.ToString(TimeFormat);
                         throw new ArgumentException(
-                            $"Service hours overlap on {dayLabel}: {previous.StartTime:HH:mm}-{previous.EndTime:HH:mm} and {current.StartTime:HH:mm}-{current.EndTime:HH:mm}.");
+                            $"Service hours overlap on {dayLabel}: {prevStartStr}-{prevEndStr} and {currStartStr}-{currEndStr}.");
                     }
                 }
             }

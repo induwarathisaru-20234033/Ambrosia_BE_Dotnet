@@ -2,8 +2,8 @@
 {
     public class UpdateServiceRulesRequestDto
     {
-        public UpdateTimeSlotLogicRequestDto UpdatedTimeSlotLogic {  get; set; }
-        public List<UpdateServiceShiftPayloadDto> UpdatedServiceShiftPayload { get; set; }
+        public UpdateTimeSlotLogicRequestDto? UpdatedTimeSlotLogic {  get; set; }
+        public List<UpdateServiceShiftPayloadDto>? UpdatedServiceShiftPayload { get; set; }
     }
 
     public class UpdateTimeSlotLogicRequestDto : TimeSlotLogicRequestDto
