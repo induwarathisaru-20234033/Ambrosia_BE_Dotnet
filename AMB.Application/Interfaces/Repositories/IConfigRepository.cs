@@ -12,5 +12,8 @@ namespace AMB.Application.Interfaces.Repositories
         Task AddServiceHoursAsync(List<ServiceHour> serviceHours);
         Task RemoveServiceHoursAsync();
         Task<List<ServiceHour>> GetAllServiceHoursAsync();
+        Task AddBookingSlotsAsync(List<BookingSlot> bookingSlots);
+        Task RemoveBookingSlotsAsync();
+        Task<List<BookingSlot>> GetAllBookingSlotsAsync();
     }
 }

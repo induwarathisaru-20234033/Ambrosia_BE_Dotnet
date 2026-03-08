@@ -64,5 +64,38 @@ namespace AMB.Infra.Repositories
         {
             return await _context.ServiceHours.AsNoTracking().ToListAsync();
         }
+
+        public async Task AddBookingSlotsAsync(List<BookingSlot> bookingSlots)
+        {
+            var existingSlots = await _context.BookingSlots.ToListAsync();
+
+            if (existingSlots.Count > 0)
+            {
+                _context.BookingSlots.RemoveRange(existingSlots);
+            }
+
+            if (bookingSlots != null && bookingSlots.Count > 0)
+            {
+                _context.BookingSlots.AddRange(bookingSlots);
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task RemoveBookingSlotsAsync()
+        {
+            var existingSlots = await _context.BookingSlots.ToListAsync();
+
+            if (existingSlots.Count > 0)
+            {
+                _context.BookingSlots.RemoveRange(existingSlots);
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        public async Task<List<BookingSlot>> GetAllBookingSlotsAsync()
+        {
+            return await _context.BookingSlots.AsNoTracking().ToListAsync();
+        }
     }
 }
