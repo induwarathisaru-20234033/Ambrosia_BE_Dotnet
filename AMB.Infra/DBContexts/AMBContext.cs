@@ -6,7 +6,7 @@ using System.IdentityModel.Tokens.Jwt;
 
 namespace AMB.Infra.DBContexts
 {
-    public class AMBContext: DbContext
+    public class AMBContext : DbContext
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ILogger<AMBContext> _logger;
@@ -27,6 +27,9 @@ namespace AMB.Infra.DBContexts
         public DbSet<ServiceHour> ServiceHours { get; set; }
         public DbSet<Table> Tables { get; set; }
         public DbSet<CalenderExclusion> CalenderExclusions { get; set; }
+        public DbSet<BookingSlot> BookingSlots { get; set; }
+        public DbSet<CustomerDetail> CustomerDetails { get; set; }
+        public DbSet<Reservation> Reservations { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -40,6 +43,9 @@ namespace AMB.Infra.DBContexts
             modelBuilder.Entity<ServiceHour>().ToTable(nameof(ServiceHours));
             modelBuilder.Entity<Table>().ToTable(nameof(Tables));
             modelBuilder.Entity<CalenderExclusion>().ToTable(nameof(CalenderExclusions));
+            modelBuilder.Entity<BookingSlot>().ToTable(nameof(BookingSlots));
+            modelBuilder.Entity<CustomerDetail>().ToTable(nameof(CustomerDetails));
+            modelBuilder.Entity<Reservation>().ToTable(nameof(Reservations));
 
 
             modelBuilder.Entity<Employee>()
@@ -95,8 +101,61 @@ namespace AMB.Infra.DBContexts
                 .HasForeignKey(erm => erm.RoleId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // Reservation relationships
+            modelBuilder.Entity<Reservation>()
+                .HasOne(r => r.CustomerDetail)
+                .WithMany()
+                .HasForeignKey(r => r.CustomerDetailId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Reservation>()
+                .HasOne(r => r.BookingSlot)
+                .WithMany()
+                .HasForeignKey(r => r.BookingSlotId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Reservation>()
+                .HasOne(r => r.Table)
+                .WithMany()
+                .HasForeignKey(r => r.TableId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Reservation configuration
+            modelBuilder.Entity<Reservation>()
+                .HasIndex(r => r.ReservationCode)
+                .IsUnique();
+
+            modelBuilder.Entity<Reservation>()
+                .Property(r => r.ReservationCode)
+                .IsRequired()
+                .HasMaxLength(50);
+
+            modelBuilder.Entity<Reservation>()
+                .Property(r => r.PartySize)
+                .IsRequired();
+
+            modelBuilder.Entity<Reservation>()
+                .Property(r => r.ReservationStatus)
+                .IsRequired();
+
+            // CustomerDetail configuration
+            modelBuilder.Entity<CustomerDetail>()
+                .Property(c => c.Name)
+                .IsRequired()
+                .HasMaxLength(200);
+
+            modelBuilder.Entity<CustomerDetail>()
+                .Property(c => c.Email)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            modelBuilder.Entity<CustomerDetail>()
+                .Property(c => c.PhoneNumber)
+                .IsRequired()
+                .HasMaxLength(20);
+
         }
- 
+
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             try
