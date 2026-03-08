@@ -12,5 +12,6 @@ namespace AMB.Application.Dtos
         public string TableName { get; set; }
         public int Capacity { get; set; }
         public bool IsOnlineBookingEnabled { get; set; }
+        public int ExistingAllocations { get; set; }
     }
 }
