@@ -1,6 +1,7 @@
 using AMB.Application.Dtos;
 using AMB.Application.Interfaces.Repositories;
 using AMB.Application.Interfaces.Services;
+using AMB.Application.Mappers;
 using AMB.Domain.Entities;
 using AMB.Domain.Enums;
 using System;
@@ -67,31 +68,31 @@ namespace AMB.Application.Services
             };
 
             var createdReservation = await _reservationRepository.AddReservationAsync(reservation);
-            return MapToDto(createdReservation);
+            return createdReservation.ToReservationDto();
         }
 
         public async Task<ReservationDto?> GetReservationByIdAsync(int id)
         {
             var reservation = await _reservationRepository.GetReservationByIdAsync(id);
-            return reservation == null ? null : MapToDto(reservation);
+            return reservation?.ToReservationDto();
         }
 
         public async Task<ReservationDto?> GetReservationByCodeAsync(string reservationCode)
         {
             var reservation = await _reservationRepository.GetReservationByCodeAsync(reservationCode);
-            return reservation == null ? null : MapToDto(reservation);
+            return reservation?.ToReservationDto();
         }
 
         public async Task<List<ReservationDto>> GetAllReservationsAsync()
         {
             var reservations = await _reservationRepository.GetAllReservationsAsync();
-            return reservations.Select(MapToDto).ToList();
+            return reservations.Select(r => r.ToReservationDto()).ToList();
         }
 
         public async Task<List<ReservationDto>> GetReservationsByDateAsync(DateOnly date)
         {
             var reservations = await _reservationRepository.GetReservationsByDateAsync(date);
-            return reservations.Select(MapToDto).ToList();
+            return reservations.Select(r => r.ToReservationDto()).ToList();
         }
 
         /// <summary>
@@ -136,13 +137,13 @@ namespace AMB.Application.Services
         public async Task<List<ReservationDto>> GetBookingSlotReservationsAsync(int bookingSlotId, DateOnly date)
         {
             var reservations = await _reservationRepository.GetBookingSlotReservationsByDateAsync(bookingSlotId, date);
-            return reservations.Select(MapToDto).ToList();
+            return reservations.Select(r => r.ToReservationDto()).ToList();
         }
 
         public async Task<List<ReservationDto>> GetTableReservationsAsync(int tableId, DateOnly date)
         {
             var reservations = await _reservationRepository.GetTableReservationsByDateAsync(tableId, date);
-            return reservations.Select(MapToDto).ToList();
+            return reservations.Select(r => r.ToReservationDto()).ToList();
         }
 
         public async Task<ReservationDto?> CancelReservationAsync(int reservationId)
@@ -206,46 +207,7 @@ namespace AMB.Application.Services
             validateTransition(existing);
 
             var updated = await applyStatusChange(reservationId, DateTimeOffset.UtcNow);
-            return updated == null ? null : MapToDto(updated);
-        }
-
-        private static ReservationDto MapToDto(Reservation reservation)
-        {
-            return new ReservationDto
-            {
-                Id = reservation.Id,
-                ReservationCode = reservation.ReservationCode,
-                PartySize = reservation.PartySize,
-                ReservationStatus = reservation.ReservationStatus,
-                ReservationDate = reservation.ReservationDate,
-                Occasion = reservation.Occasion,
-                SpecialRequests = reservation.SpecialRequests,
-                ArrivedAt = reservation.ArrivedAt,
-                NoShowMarkedAt = reservation.NoShowMarkedAt,
-                CancelledAt = reservation.CancelledAt,
-                CustomerDetail = reservation.CustomerDetail == null ? null : new CustomerDetailDto
-                {
-                    Id = reservation.CustomerDetail.Id,
-                    Name = reservation.CustomerDetail.Name,
-                    Email = reservation.CustomerDetail.Email,
-                    PhoneNumber = reservation.CustomerDetail.PhoneNumber
-                },
-                BookingSlot = reservation.BookingSlot == null ? null : new BookingSlotDto
-                {
-                    Id = reservation.BookingSlot.Id,
-                    SlotId = reservation.BookingSlot.SlotId,
-                    StartTime = reservation.BookingSlot.StartTime,
-                    EndTime = reservation.BookingSlot.EndTime,
-                    Day = reservation.BookingSlot.Day
-                },
-                Table = reservation.Table == null ? null : new TableDto
-                {
-                    Id = reservation.Table.Id,
-                    TableName = reservation.Table.TableName,
-                    Capacity = reservation.Table.Capacity,
-                    IsOnlineBookingEnabled = reservation.Table.IsOnlineBookingEnabled
-                }
-            };
+            return updated?.ToReservationDto();
         }
 
         private static string GenerateReservationCode()
