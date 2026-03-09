@@ -7,7 +7,8 @@ namespace AMB.Application.Interfaces.Services
         Task<RoleDto> CreateRoleAsync(CreateRoleRequestDto request);
         Task<bool> CheckRoleCodeExistsAsync(string roleCode);
         Task<List<PermissionGroupDto>> GetPermissionsGroupAsync();
+        Task<PaginatedResultDto<RoleDto>> GetAllRolesAsync(RoleFilterRequestDto filter);
         Task UpdateRoleAsync(EditRoleRequestDto request);
-        Task<RoleDetailDto> GetRoleByIdAsync(int id, bool includePermissions = false, bool includeFeatures = false); 
+        Task<RoleDetailDto> GetRoleByIdAsync(int id, bool includePermissions = false, bool includeFeatures = false);
     }
 }

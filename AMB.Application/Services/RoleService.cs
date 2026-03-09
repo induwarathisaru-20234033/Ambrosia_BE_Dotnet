@@ -113,6 +113,11 @@ namespace AMB.Application.Services
                 .ToList();
         }
 
+        public async Task<PaginatedResultDto<RoleDto>> GetAllRolesAsync(RoleFilterRequestDto filter)
+        {
+            return await _roleRepository.GetAllRolesAsync(filter);
+        }
+
         public async Task<RoleDetailDto> GetRoleByIdAsync(int id, bool includePermissions = false, bool includeFeatures = false)
         {
             var options = new RoleQueryOptions
