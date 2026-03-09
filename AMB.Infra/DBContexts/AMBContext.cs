@@ -6,7 +6,7 @@ using System.IdentityModel.Tokens.Jwt;
 
 namespace AMB.Infra.DBContexts
 {
-    public class AMBContext: DbContext
+    public class AMBContext : DbContext
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ILogger<AMBContext> _logger;
@@ -109,10 +109,16 @@ namespace AMB.Infra.DBContexts
                 .HasOne(erm => erm.Role)
                 .WithMany(r => r.EmployeeRoleMaps)
                 .HasForeignKey(erm => erm.RoleId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<EmployeeRoleMap>()
+                .HasOne(erm => erm.CustomRole)
+                .WithMany()
+                .HasForeignKey(erm => erm.CustomRoleId)
+                .OnDelete(DeleteBehavior.Restrict);
 
         }
- 
+
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             try

@@ -47,7 +47,7 @@ namespace AMB.Application.Services
                 {
                     await _authHelper.DeleteUserAsync(authUserId);
                 }
-                
+
                 throw ex;
             }
         }
@@ -95,11 +95,11 @@ namespace AMB.Application.Services
             // get total count for pagination
             var totalCount = await query.CountAsync();
 
-            
+
             var employeeEntities = await query
                 .Skip((filter.PageNumber - 1) * filter.PageSize)
                 .Take(filter.PageSize)
-                .ToListAsync(); 
+                .ToListAsync();
 
             // map to DTO in memory
             var employees = employeeEntities
@@ -116,6 +116,51 @@ namespace AMB.Application.Services
                 PageCount = (int)Math.Ceiling((double)totalCount / filter.PageSize) // total pages
             };
 
+        }
+
+        public async Task AssignRolesAsync(AssignEmployeeRolesRequestDto request)
+        {
+            if (request.EmployeeId <= 0)
+            {
+                throw new ArgumentException("Valid EmployeeId is required.");
+            }
+
+            var roleIds = request.RoleIds?
+                .Where(id => id > 0)
+                .Distinct()
+                .ToList() ?? new List<int>();
+
+            var customRoleIds = request.CustomRoleIds?
+                .Where(id => id > 0)
+                .Distinct()
+                .ToList() ?? new List<int>();
+
+            if (!roleIds.Any() && !customRoleIds.Any())
+            {
+                throw new ArgumentException("At least one role or custom role id is required.");
+            }
+
+            var employee = await _employeeRepository.GetByIdAsync(request.EmployeeId);
+            if (employee == null)
+            {
+                throw new KeyNotFoundException($"Employee with ID {request.EmployeeId} not found.");
+            }
+
+            var existingRoleIds = await _employeeRepository.GetExistingRoleIdsAsync(roleIds);
+            var missingRoleIds = roleIds.Except(existingRoleIds).ToList();
+            if (missingRoleIds.Any())
+            {
+                throw new KeyNotFoundException($"Invalid role ids: {string.Join(", ", missingRoleIds)}");
+            }
+
+            var existingCustomRoleIds = await _employeeRepository.GetExistingCustomRoleIdsAsync(customRoleIds);
+            var missingCustomRoleIds = customRoleIds.Except(existingCustomRoleIds).ToList();
+            if (missingCustomRoleIds.Any())
+            {
+                throw new KeyNotFoundException($"Invalid custom role ids: {string.Join(", ", missingCustomRoleIds)}");
+            }
+
+            await _employeeRepository.AssignRolesAsync(request.EmployeeId, roleIds, customRoleIds);
         }
 
 
