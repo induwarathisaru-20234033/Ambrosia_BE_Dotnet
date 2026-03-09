@@ -7,6 +7,7 @@ namespace AMB.Tests.Mocks
     internal sealed class TestRoleRepository : IRoleRepository
     {
         public Role? LastAddedRole { get; private set; }
+        public CustomRole? LastAddedCustomRole { get; private set; }
         public Role? LastUpdatedRole { get; private set; }
         public List<int>? LastUpdatedPermissionIds { get; private set; }
         public Dictionary<int, Role> Roles { get; } = new();
@@ -72,6 +73,87 @@ namespace AMB.Tests.Mocks
             Roles[role.Id] = role;
             LastUpdatedRole = role;
             return Task.FromResult(role);
+        }
+
+        public Task<CustomRole> AddCustomRoleAsync(CustomRole role)
+        {
+            role.Id = Roles.Count + 1;
+
+            if (role.CustomRolePermissionMaps != null)
+            {
+                foreach (var rpm in role.CustomRolePermissionMaps)
+                {
+                    rpm.Id = (role.CustomRolePermissionMaps.IndexOf(rpm) + 1) * 100 + role.Id;
+                    rpm.CustomRoleId = role.Id;
+
+                    if (rpm.PermissionId > 0 && rpm.PermissionId <= 8)
+                    {
+                        rpm.Permission = new Permission
+                        {
+                            Id = rpm.PermissionId,
+                            PermissionCode = rpm.PermissionId switch
+                            {
+                                1 => "VIEW_EMP",
+                                2 => "CREATE_EMP",
+                                3 => "EDIT_EMP",
+                                4 => "DELETE_EMP",
+                                5 => "VIEW_ROLES",
+                                6 => "CREATE_ROLE",
+                                7 => "EDIT_ROLE",
+                                8 => "DELETE_ROLE",
+                                _ => "UNKNOWN"
+                            },
+                            PermissionName = rpm.PermissionId switch
+                            {
+                                1 => "View Employees",
+                                2 => "Create Employee",
+                                3 => "Edit Employee",
+                                4 => "Delete Employee",
+                                5 => "View Roles",
+                                6 => "Create Role",
+                                7 => "Edit Role",
+                                8 => "Delete Role",
+                                _ => "Unknown"
+                            },
+                            FeatureId = rpm.PermissionId <= 4 ? 1 : 2,
+                            Feature = rpm.PermissionId <= 4
+                                ? new Feature { Id = 1, FeatureName = "Employee Management", FeatureCode = "EMP_MGMT" }
+                                : new Feature { Id = 2, FeatureName = "Role Management", FeatureCode = "ROLE_MGMT" }
+                        };
+                    }
+                }
+            }
+
+            LastAddedCustomRole = role;
+
+            // Keep existing dictionary behavior for tests that read roles by id via GetByIdAsync.
+            Roles[role.Id] = new Role
+            {
+                Id = role.Id,
+                RoleCode = role.RoleCode,
+                RoleName = role.RoleName,
+                Description = role.Description,
+                Status = role.Status,
+                RolePermissionMaps = role.CustomRolePermissionMaps?.Select(m => new RolePermissionMap
+                {
+                    Id = m.Id,
+                    RoleId = role.Id,
+                    PermissionId = m.PermissionId,
+                    Permission = m.Permission
+                }).ToList()
+            };
+
+            return Task.FromResult(role);
+        }
+
+        public Task<CustomRole?> GetCustomRoleByIdAsync(int id, RoleQueryOptions options = null)
+        {
+            if (LastAddedCustomRole?.Id == id)
+            {
+                return Task.FromResult<CustomRole?>(LastAddedCustomRole);
+            }
+
+            return Task.FromResult<CustomRole?>(null);
         }
 
         public Task<Role> UpdateWithPermissionsAsync(Role role, List<int> newPermissionIds)
