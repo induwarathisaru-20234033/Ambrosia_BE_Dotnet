@@ -40,5 +40,16 @@ namespace AMB.API.Controllers
             ));
         }
 
+        [HttpPost("assign-roles")]
+        public async Task<ActionResult<BaseResponseDto<object>>> AssignRoles([FromBody] AssignEmployeeRolesRequestDto request)
+        {
+            await _employeeService.AssignRolesAsync(request);
+
+            return Ok(new BaseResponseDto<object>(
+                null,
+                "Roles assigned successfully"
+            ));
+        }
+
     }
 }
