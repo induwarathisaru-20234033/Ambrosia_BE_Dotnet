@@ -1,4 +1,6 @@
-﻿using AMB.Application.Interfaces.Repositories;
+﻿using AMB.Application.Dtos;
+using AMB.Application.Interfaces.Repositories;
+using AMB.Application.Mappers;
 using AMB.Domain.Entities;
 using AMB.Infra.DBContexts;
 using Microsoft.EntityFrameworkCore;
@@ -50,6 +52,59 @@ namespace AMB.Infra.Repositories
             return await _context.Roles
                 .OrderByDescending(r => r.CreatedDate)
                 .ToListAsync();
+        }
+
+        public async Task<PaginatedResultDto<RoleDto>> GetAllRolesAsync(RoleFilterRequestDto filter)
+        {
+            // Get all system roles
+            var systemRoles = await _context.Roles
+                .Select(r => r.ToRoleDto())
+                .ToListAsync();
+
+            // Get all custom roles
+            var customRoles = await _context.CustomRoles
+                .Select(r => r.ToRoleDto())
+                .ToListAsync();
+
+            // Concatenate both lists
+            var allRoles = systemRoles.Concat(customRoles)
+                .OrderByDescending(r => r.CreatedDate)
+                .ToList();
+
+            // Apply filters
+            if (!string.IsNullOrWhiteSpace(filter.RoleName))
+            {
+                allRoles = allRoles.Where(r =>
+                    r.Name.Contains(filter.RoleName, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
+
+            if (!string.IsNullOrWhiteSpace(filter.Description))
+            {
+                allRoles = allRoles.Where(r =>
+                    !string.IsNullOrEmpty(r.Description) &&
+                    r.Description.Contains(filter.Description, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
+
+            // Calculate pagination
+            var totalCount = allRoles.Count;
+            var pageCount = (int)Math.Ceiling(totalCount / (double)filter.PageSize);
+
+            // Apply pagination
+            var pagedRoles = allRoles
+                .Skip((filter.PageNumber - 1) * filter.PageSize)
+                .Take(filter.PageSize)
+                .ToList();
+
+            return new PaginatedResultDto<RoleDto>
+            {
+                PageNumber = filter.PageNumber,
+                PageSize = filter.PageSize,
+                PageCount = pageCount,
+                TotalItemCount = totalCount,
+                Items = pagedRoles
+            };
         }
 
         public async Task<Role> AddAsync(Role role)

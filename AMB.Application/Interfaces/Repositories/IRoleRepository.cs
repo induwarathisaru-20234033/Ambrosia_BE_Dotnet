@@ -1,4 +1,5 @@
-﻿using AMB.Domain.Entities;
+﻿using AMB.Application.Dtos;
+using AMB.Domain.Entities;
 
 namespace AMB.Application.Interfaces.Repositories
 {
@@ -7,6 +8,7 @@ namespace AMB.Application.Interfaces.Repositories
         Task<Role?> GetByIdAsync(int id, RoleQueryOptions? options = null);
         Task<Role> GetByRoleCodeAsync(string roleId);
         Task<List<Role>> GetAllAsync();
+        Task<PaginatedResultDto<RoleDto>> GetAllRolesAsync(RoleFilterRequestDto filter);
         Task<Role> AddAsync(Role role);
         Task<CustomRole> AddCustomRoleAsync(CustomRole role);
         Task<CustomRole?> GetCustomRoleByIdAsync(int id, RoleQueryOptions? options = null);
