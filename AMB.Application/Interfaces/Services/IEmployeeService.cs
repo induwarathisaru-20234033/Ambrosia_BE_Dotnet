@@ -7,6 +7,7 @@ namespace AMB.Application.Interfaces.Services
         Task<EmployeeDto> CreateEmployeeAsync(CreateEmployeeRequestDto request);
         //Detuni
         Task<PagedResponseDto<EmployeeDto>> GetEmployeesAsync(EmployeeFilterRequestDto filter);
+        Task AssignRolesAsync(AssignEmployeeRolesRequestDto request);
 
     }
 }

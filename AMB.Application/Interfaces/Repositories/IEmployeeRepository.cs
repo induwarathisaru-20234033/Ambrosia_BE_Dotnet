@@ -9,6 +9,10 @@ namespace AMB.Application.Interfaces.Repositories
         Task<Employee> GetByUserIDAsync(string userId);
 
         Task<Employee?> GetByUsernameAsync(string username);
+        Task<Employee?> GetByIdAsync(int id);
+        Task<List<int>> GetExistingRoleIdsAsync(List<int> roleIds);
+        Task<List<int>> GetExistingCustomRoleIdsAsync(List<int> customRoleIds);
+        Task AssignRolesAsync(int employeeId, List<int> roleIds, List<int> customRoleIds);
       
         IQueryable<Employee> GetSearchQuery();  //Detuni
 

@@ -87,5 +87,43 @@ namespace AMB.Tests.EmployeeTests
             // Act/Assert: validation should throw before any persistence.
             await Assert.ThrowsAsync<ValidationException>(() => service.CreateEmployeeAsync(request));
         }
+
+        [Fact]
+        public async Task AssignRolesAsync_WithValidRequest_SavesMappings()
+        {
+            var repository = new TestEmployeeRepository();
+            repository.Employees[7] = new AMB.Domain.Entities.Employee
+            {
+                Id = 7,
+                EmployeeId = "EMP-007",
+                FirstName = "John",
+                LastName = "Doe",
+                MobileNumber = "0770000000",
+                Username = "john.doe@example.com",
+                Email = "john.doe@example.com",
+                Address = "Address",
+                Status = 1
+            };
+
+            var authHelper = new TestAuthHelper("auth-123");
+            var serviceProvider = new ServiceCollection()
+                .AddScoped<IValidator<CreateEmployeeRequestDto>, CreateEmployeeValidator>()
+                .BuildServiceProvider();
+
+            var service = new EmployeeService(repository, serviceProvider, authHelper);
+
+            var request = new AssignEmployeeRolesRequestDto
+            {
+                EmployeeId = 7,
+                RoleIds = new List<int> { 1, 2 },
+                CustomRoleIds = new List<int> { 10 }
+            };
+
+            await service.AssignRolesAsync(request);
+
+            Assert.Equal(3, repository.EmployeeRoleMaps.Count);
+            Assert.Equal(2, repository.EmployeeRoleMaps.Count(x => x.RoleId.HasValue));
+            Assert.Equal(1, repository.EmployeeRoleMaps.Count(x => x.CustomRoleId.HasValue));
+        }
     }
 }
