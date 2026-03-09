@@ -59,6 +59,35 @@ namespace AMB.Infra.Repositories
             return role;
         }
 
+        public async Task<CustomRole> AddCustomRoleAsync(CustomRole role)
+        {
+            await _context.CustomRoles.AddAsync(role);
+            await _context.SaveChangesAsync();
+            return role;
+        }
+
+        public async Task<CustomRole?> GetCustomRoleByIdAsync(int id, RoleQueryOptions? options = null)
+        {
+            options ??= new RoleQueryOptions();
+
+            IQueryable<CustomRole> query = _context.CustomRoles;
+
+            if (options.IncludePermissions)
+            {
+                query = query.Include(r => r.CustomRolePermissionMaps!);
+
+                if (options.IncludePermissionFeatures)
+                {
+                    query = query
+                        .Include(r => r.CustomRolePermissionMaps!)
+                        .ThenInclude(rpm => rpm.Permission!)
+                        .ThenInclude(p => p.Feature);
+                }
+            }
+
+            return await query.FirstOrDefaultAsync(r => r.Id == id);
+        }
+
         public async Task<Role> UpdateAsync(Role role)
         {
             _context.Roles.Update(role);
@@ -77,13 +106,15 @@ namespace AMB.Infra.Repositories
         public async Task<bool> IsRoleCodeUniqueAsync(string roleCode, int? excludeId = null)
         {
             var query = _context.Roles.Where(r => r.RoleCode == roleCode);
+            var customRoleQuery = _context.CustomRoles.Where(r => r.RoleCode == roleCode);
 
             if (excludeId.HasValue)
             {
                 query = query.Where(r => r.Id != excludeId.Value);
+                customRoleQuery = customRoleQuery.Where(r => r.Id != excludeId.Value);
             }
 
-            return !await query.AnyAsync();
+            return !await query.AnyAsync() && !await customRoleQuery.AnyAsync();
         }
 
 
@@ -114,7 +145,7 @@ namespace AMB.Infra.Repositories
             catch (Exception)
             {
                 await transaction.RollbackAsync();
-                throw; 
+                throw;
             }
         }
     }

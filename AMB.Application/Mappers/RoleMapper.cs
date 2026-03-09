@@ -17,6 +17,17 @@ namespace AMB.Application.Mappers
             };
         }
 
+        public static CustomRole ToCustomRoleEntity(this CreateRoleRequestDto dto)
+        {
+            if (dto == null) return null;
+            return new CustomRole
+            {
+                RoleCode = dto.RoleCode,
+                RoleName = dto.Name,
+                Description = dto.Description
+            };
+        }
+
         public static RoleDto ToRoleDto(this Role entity)
         {
             if (entity == null) return null;
@@ -28,6 +39,23 @@ namespace AMB.Application.Mappers
                 Name = entity.RoleName,
                 Description = entity.Description,
                 Status = entity.Status,
+                CreatedDate = entity.CreatedDate,
+                Permissions = new List<PermissionDto>()
+            };
+        }
+
+        public static RoleDto ToRoleDto(this CustomRole entity)
+        {
+            if (entity == null) return null;
+
+            return new RoleDto
+            {
+                Id = entity.Id,
+                RoleCode = entity.RoleCode,
+                Name = entity.RoleName,
+                Description = entity.Description,
+                Status = entity.Status,
+                CreatedDate = entity.CreatedDate,
                 Permissions = new List<PermissionDto>()
             };
         }
