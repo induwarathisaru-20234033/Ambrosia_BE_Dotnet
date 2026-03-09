@@ -19,9 +19,11 @@ namespace AMB.Infra.DBContexts
 
         public DbSet<Employee> Employees { get; set; }
         public DbSet<Role> Roles { get; set; }
+        public DbSet<CustomRole> CustomRoles { get; set; }
         public DbSet<Permission> Permissions { get; set; }
         public DbSet<Feature> Features { get; set; }
         public DbSet<RolePermissionMap> RolePermissionMaps { get; set; }
+        public DbSet<CustomRolePermissionMap> CustomRolePermissionMaps { get; set; }
         public DbSet<EmployeeRoleMap> EmployeeRoleMaps { get; set; }
         public DbSet<ReservationSetting> ReservationSettings { get; set; }
         public DbSet<ServiceHour> ServiceHours { get; set; }
@@ -32,9 +34,11 @@ namespace AMB.Infra.DBContexts
         {
             modelBuilder.Entity<Employee>().ToTable(nameof(Employees));
             modelBuilder.Entity<Role>().ToTable(nameof(Roles));
+            modelBuilder.Entity<CustomRole>().ToTable(nameof(CustomRoles));
             modelBuilder.Entity<Permission>().ToTable(nameof(Permissions));
             modelBuilder.Entity<Feature>().ToTable(nameof(Features));
             modelBuilder.Entity<RolePermissionMap>().ToTable(nameof(RolePermissionMaps));
+            modelBuilder.Entity<CustomRolePermissionMap>().ToTable(nameof(CustomRolePermissionMaps));
             modelBuilder.Entity<EmployeeRoleMap>().ToTable(nameof(EmployeeRoleMaps));
             modelBuilder.Entity<ReservationSetting>().ToTable(nameof(ReservationSettings));
             modelBuilder.Entity<ServiceHour>().ToTable(nameof(ServiceHours));
@@ -81,6 +85,18 @@ namespace AMB.Infra.DBContexts
                 .HasOne(rpm => rpm.Permission)
                 .WithMany(p => p.RolePermissionMaps)
                 .HasForeignKey(rpm => rpm.PermissionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<CustomRolePermissionMap>()
+                .HasOne(crpm => crpm.CustomRole)
+                .WithMany(cr => cr.CustomRolePermissionMaps)
+                .HasForeignKey(crpm => crpm.CustomRoleId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<CustomRolePermissionMap>()
+                .HasOne(crpm => crpm.Permission)
+                .WithMany()
+                .HasForeignKey(crpm => crpm.PermissionId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<EmployeeRoleMap>()
