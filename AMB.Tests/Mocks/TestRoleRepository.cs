@@ -1,4 +1,6 @@
-﻿using AMB.Application.Interfaces.Repositories;
+﻿using AMB.Application.Dtos;
+using AMB.Application.Interfaces.Repositories;
+using AMB.Application.Mappers;
 using AMB.Domain.Entities;
 using AMB.Domain.Enums;
 
@@ -11,6 +13,7 @@ namespace AMB.Tests.Mocks
         public Role? LastUpdatedRole { get; private set; }
         public List<int>? LastUpdatedPermissionIds { get; private set; }
         public Dictionary<int, Role> Roles { get; } = new();
+        public Dictionary<int, CustomRole> CustomRoles { get; } = new();
 
         public Task<Role> AddAsync(Role role)
         {
@@ -125,6 +128,7 @@ namespace AMB.Tests.Mocks
             }
 
             LastAddedCustomRole = role;
+            CustomRoles[role.Id] = role;
 
             // Keep existing dictionary behavior for tests that read roles by id via GetByIdAsync.
             Roles[role.Id] = new Role
@@ -146,14 +150,10 @@ namespace AMB.Tests.Mocks
             return Task.FromResult(role);
         }
 
-        public Task<CustomRole?> GetCustomRoleByIdAsync(int id, RoleQueryOptions options = null)
+        public Task<CustomRole?> GetCustomRoleByIdAsync(int id, RoleQueryOptions? options = null)
         {
-            if (LastAddedCustomRole?.Id == id)
-            {
-                return Task.FromResult<CustomRole?>(LastAddedCustomRole);
-            }
-
-            return Task.FromResult<CustomRole?>(null);
+            CustomRoles.TryGetValue(id, out var customRole);
+            return Task.FromResult(customRole);
         }
 
         public Task<Role> UpdateWithPermissionsAsync(Role role, List<int> newPermissionIds)
@@ -278,6 +278,55 @@ namespace AMB.Tests.Mocks
             return Task.FromResult(Roles.Values.ToList());
         }
 
+        public Task<PaginatedResultDto<RoleDto>> GetAllRolesAsync(RoleFilterRequestDto filter)
+        {
+            // Get all system roles as DTOs
+            var systemRoles = Roles.Values.Select(r => r.ToRoleDto()).ToList();
+
+            // Get all custom roles as DTOs
+            var customRoles = CustomRoles.Values.Select(r => r.ToRoleDto()).ToList();
+
+            // Concatenate both lists
+            var allRoles = systemRoles.Concat(customRoles)
+                .OrderByDescending(r => r.CreatedDate)
+                .ToList();
+
+            // Apply filters
+            if (!string.IsNullOrWhiteSpace(filter.RoleName))
+            {
+                allRoles = allRoles.Where(r =>
+                    r.Name.Contains(filter.RoleName, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
+
+            if (!string.IsNullOrWhiteSpace(filter.Description))
+            {
+                allRoles = allRoles.Where(r =>
+                    !string.IsNullOrEmpty(r.Description) &&
+                    r.Description.Contains(filter.Description, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
+
+            // Calculate pagination
+            var totalCount = allRoles.Count;
+            var pageCount = (int)Math.Ceiling(totalCount / (double)filter.PageSize);
+
+            // Apply pagination
+            var pagedRoles = allRoles
+                .Skip((filter.PageNumber - 1) * filter.PageSize)
+                .Take(filter.PageSize)
+                .ToList();
+
+            return Task.FromResult(new PaginatedResultDto<RoleDto>
+            {
+                PageNumber = filter.PageNumber,
+                PageSize = filter.PageSize,
+                PageCount = pageCount,
+                TotalItemCount = totalCount,
+                Items = pagedRoles
+            });
+        }
+
         public Task<Role> DeleteAsync(Role role)
         {
             Roles.Remove(role.Id);
@@ -286,10 +335,15 @@ namespace AMB.Tests.Mocks
 
         public Task<bool> IsRoleCodeUniqueAsync(string roleCode, int? excludeId = null)
         {
-            var exists = Roles.Values.Any(r =>
+            var existsInRoles = Roles.Values.Any(r =>
                 r.RoleCode == roleCode &&
                 (!excludeId.HasValue || r.Id != excludeId.Value));
-            return Task.FromResult(!exists);
+
+            var existsInCustomRoles = CustomRoles.Values.Any(r =>
+                r.RoleCode == roleCode &&
+                (!excludeId.HasValue || r.Id != excludeId.Value));
+
+            return Task.FromResult(!existsInRoles && !existsInCustomRoles);
         }
     }
 }
