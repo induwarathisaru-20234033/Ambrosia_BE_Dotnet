@@ -122,6 +122,8 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddScoped<IMenuService, MenuService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
