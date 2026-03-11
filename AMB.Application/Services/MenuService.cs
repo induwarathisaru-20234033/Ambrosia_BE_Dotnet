@@ -12,9 +12,29 @@ namespace AMB.Application.Services
             menuItems.Add(menuItemDto);
         }
 
-        public async Task<List<MenuItemDto>> GetMenuItems()
+        public async Task<List<MenuItemDto>> GetMenuItems(
+            string? category,
+            string? name,
+            bool? isAvailable)
         {
-            return menuItems;
+            var query = menuItems.AsQueryable();
+
+            if (!string.IsNullOrEmpty(category))
+            {
+                query = query.Where(x => x.Category == category);
+            }
+
+            if (!string.IsNullOrEmpty(name))
+            {
+                query = query.Where(x => x.Name.ToLower().Contains(name.ToLower()));
+            }
+
+            if (isAvailable.HasValue)
+            {
+                query = query.Where(x => x.IsAvailable == isAvailable.Value);
+            }
+
+            return query.ToList();
         }
     }
 }
