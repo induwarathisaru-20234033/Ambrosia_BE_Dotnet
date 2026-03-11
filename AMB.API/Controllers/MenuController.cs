@@ -24,9 +24,13 @@ namespace AMB.API.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetMenuItems()
+        public async Task<IActionResult> GetMenuItems(
+                [FromQuery] string? category,
+                [FromQuery] string? name,
+                [FromQuery] bool? isAvailable
+            )
         {
-            var items = await _menuService.GetMenuItems();
+            var items = await _menuService.GetMenuItems(category, name, isAvailable);
 
             return Ok(items);
         }
