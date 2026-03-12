@@ -1,6 +1,7 @@
 using AMB.Domain.Entities;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace AMB.Application.Interfaces.Repositories
@@ -22,5 +23,6 @@ namespace AMB.Application.Interfaces.Repositories
         Task<Reservation?> MarkAsCancelledAsync(int reservationId, DateTimeOffset cancelledAt);
         Task<Reservation?> MarkAsArrivedAsync(int reservationId, DateTimeOffset arrivedAt);
         Task<Reservation?> MarkAsNoShowAsync(int reservationId, DateTimeOffset noShowMarkedAt);
+        IQueryable<Reservation> GetSearchQuery();
     }
 }
