@@ -4,6 +4,7 @@ using AMB.Application.Interfaces.Services;
 using AMB.Application.Mappers;
 using AMB.Domain.Entities;
 using AMB.Domain.Enums;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -93,6 +94,64 @@ namespace AMB.Application.Services
         {
             var reservations = await _reservationRepository.GetReservationsByDateAsync(date);
             return reservations.Select(r => r.ToReservationDto()).ToList();
+        }
+
+        public async Task<PagedResponseDto<ReservationDto>> GetReservationsPagedAsync(ReservationFilterRequestDto filter)
+        {
+            var query = _reservationRepository.GetSearchQuery();
+
+            // Apply filters
+            if (!string.IsNullOrEmpty(filter.ReservationCode))
+                query = query.Where(r => r.ReservationCode.Contains(filter.ReservationCode));
+
+            if (!string.IsNullOrEmpty(filter.CustomerName))
+                query = query.Where(r => r.CustomerDetail.Name.Contains(filter.CustomerName));
+
+            if (!string.IsNullOrEmpty(filter.CustomerEmail))
+                query = query.Where(r => r.CustomerDetail.Email.Contains(filter.CustomerEmail));
+
+            if (!string.IsNullOrEmpty(filter.CustomerPhone))
+                query = query.Where(r => r.CustomerDetail.PhoneNumber.Contains(filter.CustomerPhone));
+
+            if (!string.IsNullOrEmpty(filter.Table))
+                query = query.Where(r => r.Table.TableName.Contains(filter.Table));
+
+            if (filter.ReservationDateFrom.HasValue)
+                query = query.Where(r => r.ReservationDate >= filter.ReservationDateFrom);
+
+            if (filter.ReservationDateTo.HasValue)
+                query = query.Where(r => r.ReservationDate <= filter.ReservationDateTo);
+
+            if (filter.CreatedDateFrom.HasValue)
+                query = query.Where(r => r.CreatedDate >= filter.CreatedDateFrom);
+
+            if (filter.CreatedDateTo.HasValue)
+                query = query.Where(r => r.CreatedDate <= filter.CreatedDateTo);
+
+            // Get total count for pagination
+            var totalCount = await query.CountAsync();
+
+            // Apply pagination
+            var reservationEntities = await query
+                .OrderByDescending(r => r.CreatedDate)
+                .Skip((filter.PageNumber - 1) * filter.PageSize)
+                .Take(filter.PageSize)
+                .ToListAsync();
+
+            // Map to DTO
+            var reservations = reservationEntities
+                .Select(r => r.ToReservationDto())
+                .ToList();
+
+            // Return paged response
+            return new PagedResponseDto<ReservationDto>
+            {
+                Items = reservations,
+                TotalItemCount = totalCount,
+                PageNumber = filter.PageNumber,
+                PageSize = filter.PageSize,
+                PageCount = (int)Math.Ceiling((double)totalCount / filter.PageSize)
+            };
         }
 
         /// <summary>

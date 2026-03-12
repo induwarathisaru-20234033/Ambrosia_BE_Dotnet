@@ -205,5 +205,15 @@ namespace AMB.Infra.Repositories
 
             return reservation;
         }
+
+        public IQueryable<Reservation> GetSearchQuery()
+        {
+            return _context.Reservations
+                .Include(r => r.CustomerDetail)
+                .Include(r => r.BookingSlot)
+                .Include(r => r.Table)
+                .Where(r => r.Status == (int)EntityStatus.Active)
+                .AsNoTracking();
+        }
     }
 }
