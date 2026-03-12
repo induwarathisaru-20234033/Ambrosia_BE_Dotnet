@@ -10,6 +10,7 @@
         public string Username { get; set; }
         public string? Email { get; set; }
         public string Address { get; set; }
+        public int Status { get; set; }
         public DateTimeOffset CreatedDate { get; set; }
     }
 }

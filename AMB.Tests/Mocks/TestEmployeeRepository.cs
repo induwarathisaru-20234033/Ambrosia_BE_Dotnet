@@ -34,6 +34,17 @@ namespace AMB.Tests.Mocks
             return Task.FromResult(employee);
         }
 
+        public Task<Employee?> UpdateAsync(Employee employee)
+        {
+            if (!Employees.ContainsKey(employee.Id))
+            {
+                return Task.FromResult<Employee?>(null);
+            }
+
+            Employees[employee.Id] = employee;
+            return Task.FromResult<Employee?>(employee);
+        }
+
         public Task<List<int>> GetExistingRoleIdsAsync(List<int> roleIds)
         {
             // Assume all provided role ids exist in test defaults.
@@ -72,8 +83,7 @@ namespace AMB.Tests.Mocks
         // <-- Implement the missing interface method
         public IQueryable<Employee> GetSearchQuery()
         {
-            var employees = new List<Employee>();
-            return employees.AsQueryable();
+            return Employees.Values.AsQueryable();
         }
     }
 }

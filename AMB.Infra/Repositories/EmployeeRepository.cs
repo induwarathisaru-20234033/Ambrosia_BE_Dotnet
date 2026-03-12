@@ -51,6 +51,27 @@ namespace AMB.Infra.Repositories
                 .FirstOrDefaultAsync(e => e.Id == id);
         }
 
+        public async Task<Employee?> UpdateAsync(Employee employee)
+        {
+            var existingEmployee = await _context.Employees.FirstOrDefaultAsync(e => e.Id == employee.Id);
+            if (existingEmployee == null)
+            {
+                return null;
+            }
+
+            existingEmployee.FirstName = employee.FirstName;
+            existingEmployee.LastName = employee.LastName;
+            existingEmployee.Email = employee.Email;
+            existingEmployee.Username = employee.Username;
+            existingEmployee.MobileNumber = employee.MobileNumber;
+            existingEmployee.Address = employee.Address;
+            existingEmployee.Status = employee.Status;
+
+            _context.Employees.Update(existingEmployee);
+            await _context.SaveChangesAsync();
+            return existingEmployee;
+        }
+
         public async Task<List<int>> GetExistingRoleIdsAsync(List<int> roleIds)
         {
             if (!roleIds.Any())

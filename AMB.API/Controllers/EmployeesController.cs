@@ -40,6 +40,23 @@ namespace AMB.API.Controllers
             ));
         }
 
+        [HttpGet("{id}")]
+        public async Task<ActionResult<BaseResponseDto<EmployeeDto>>> GetEmployeeById(int id)
+        {
+            var result = await _employeeService.GetEmployeeByIdAsync(id);
+
+            return Ok(new BaseResponseDto<EmployeeDto>(result, "Employee retrieved successfully"));
+        }
+
+        [HttpPut("{id}")]
+        public async Task<ActionResult<BaseResponseDto<EmployeeDto>>> UpdateEmployee(int id, [FromBody] UpdateEmployeeRequestDto dto)
+        {
+            dto.Id = id;
+            var result = await _employeeService.UpdateEmployeeAsync(dto);
+
+            return Ok(new BaseResponseDto<EmployeeDto>(result, "Employee updated successfully"));
+        }
+
         [HttpPost("assign-roles")]
         public async Task<ActionResult<BaseResponseDto<object>>> AssignRoles([FromBody] AssignEmployeeRolesRequestDto request)
         {
