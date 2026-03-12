@@ -118,6 +118,51 @@ namespace AMB.Application.Services
 
         }
 
+        public async Task<EmployeeDto> GetEmployeeByIdAsync(int id)
+        {
+            var employee = await _employeeRepository.GetByIdAsync(id);
+            if (employee == null)
+            {
+                throw new KeyNotFoundException($"Employee with ID {id} not found.");
+            }
+
+            return employee.ToEmployeeDto();
+        }
+
+        public async Task<EmployeeDto?> UpdateEmployeeAsync(UpdateEmployeeRequestDto request)
+        {
+            var validator = _serviceProvider.GetRequiredService<IValidator<UpdateEmployeeRequestDto>>();
+            await validator.ValidateAndThrowAsync(request);
+
+            var employee = await _employeeRepository.GetByIdAsync(request.Id);
+            if (employee == null)
+            {
+                throw new KeyNotFoundException($"Employee with ID {request.Id} not found.");
+            }
+
+            employee.FirstName = request.FirstName;
+            employee.LastName = request.LastName;
+            employee.Email = request.Email;
+            employee.Username = request.Username;
+            employee.MobileNumber = request.MobileNumber;
+            employee.Address = request.Address;
+            employee.Status = (int)request.Status;
+
+            var updatedEmployee = await _employeeRepository.UpdateAsync(employee);
+
+            if (!string.IsNullOrWhiteSpace(request.Password))
+            {
+                if (string.IsNullOrWhiteSpace(employee.UserId))
+                {
+                    throw new InvalidOperationException($"Employee with ID {request.Id} does not have an associated Auth0 user ID.");
+                }
+
+                await _authHelper.UpdatePasswordAsync(employee.UserId, request.Password);
+            }
+
+            return updatedEmployee?.ToEmployeeDto();
+        }
+
         public async Task AssignRolesAsync(AssignEmployeeRolesRequestDto request)
         {
             if (request.EmployeeId <= 0)
