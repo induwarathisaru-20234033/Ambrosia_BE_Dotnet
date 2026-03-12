@@ -95,9 +95,19 @@ namespace AMB.API.Controllers
                 ? "Slot and table are available"
                 : $"Not available. Slot has {availability.ExistingReservationsForSlot} reservations, " +
                   $"Table has {availability.ExistingReservationsForTable} reservations in this time slot";
-            
+
             var response = new BaseResponseDto<ReservationAvailabilityDto>(availability, message);
             return Ok(response);
+        }
+
+        [HttpGet]
+        public async Task<ActionResult<BaseResponseDto<PagedResponseDto<ReservationDto>>>> GetReservations([FromQuery] ReservationFilterRequestDto filter)
+        {
+            var result = await _reservationService.GetReservationsPagedAsync(filter);
+            return Ok(new BaseResponseDto<PagedResponseDto<ReservationDto>>(
+                result,
+                "Reservations retrieved successfully"
+            ));
         }
 
         [HttpGet("slot/{bookingSlotId}/date/{date}")]
