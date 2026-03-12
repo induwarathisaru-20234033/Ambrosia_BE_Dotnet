@@ -182,5 +182,10 @@ namespace AMB.Tests.Mocks
             LastUpdatedReservation = reservation;
             return Task.FromResult<Reservation?>(reservation);
         }
+
+        public IQueryable<Reservation> GetSearchQuery()
+        {
+            throw new NotImplementedException();
+        }
     }
 }
