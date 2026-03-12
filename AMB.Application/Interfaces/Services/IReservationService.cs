@@ -12,6 +12,7 @@ namespace AMB.Application.Interfaces.Services
         Task<ReservationDto?> GetReservationByCodeAsync(string reservationCode);
         Task<List<ReservationDto>> GetAllReservationsAsync();
         Task<List<ReservationDto>> GetReservationsByDateAsync(DateOnly date);
+        Task<PagedResponseDto<ReservationDto>> GetReservationsPagedAsync(ReservationFilterRequestDto filter);
         Task<ReservationAvailabilityDto> CheckAvailabilityAsync(int bookingSlotId, int tableId, DateOnly date);
         Task<List<ReservationDto>> GetBookingSlotReservationsAsync(int bookingSlotId, DateOnly date);
         Task<List<ReservationDto>> GetTableReservationsAsync(int tableId, DateOnly date);
