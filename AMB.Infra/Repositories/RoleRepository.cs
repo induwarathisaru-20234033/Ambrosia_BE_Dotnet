@@ -1,4 +1,6 @@
-﻿using AMB.Application.Interfaces.Repositories;
+﻿using AMB.Application.Dtos;
+using AMB.Application.Interfaces.Repositories;
+using AMB.Application.Mappers;
 using AMB.Domain.Entities;
 using AMB.Infra.DBContexts;
 using Microsoft.EntityFrameworkCore;
@@ -52,11 +54,93 @@ namespace AMB.Infra.Repositories
                 .ToListAsync();
         }
 
+        public async Task<PaginatedResultDto<RoleDto>> GetAllRolesAsync(RoleFilterRequestDto filter)
+        {
+            // Get all system roles
+            var systemRoles = await _context.Roles
+                .Select(r => r.ToRoleDto())
+                .ToListAsync();
+
+            // Get all custom roles
+            var customRoles = await _context.CustomRoles
+                .Select(r => r.ToRoleDto())
+                .ToListAsync();
+
+            // Concatenate both lists
+            var allRoles = systemRoles.Concat(customRoles)
+                .OrderByDescending(r => r.CreatedDate)
+                .ToList();
+
+            // Apply filters
+            if (!string.IsNullOrWhiteSpace(filter.RoleName))
+            {
+                allRoles = allRoles.Where(r =>
+                    r.Name.Contains(filter.RoleName, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
+
+            if (!string.IsNullOrWhiteSpace(filter.Description))
+            {
+                allRoles = allRoles.Where(r =>
+                    !string.IsNullOrEmpty(r.Description) &&
+                    r.Description.Contains(filter.Description, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
+
+            // Calculate pagination
+            var totalCount = allRoles.Count;
+            var pageCount = (int)Math.Ceiling(totalCount / (double)filter.PageSize);
+
+            // Apply pagination
+            var pagedRoles = allRoles
+                .Skip((filter.PageNumber - 1) * filter.PageSize)
+                .Take(filter.PageSize)
+                .ToList();
+
+            return new PaginatedResultDto<RoleDto>
+            {
+                PageNumber = filter.PageNumber,
+                PageSize = filter.PageSize,
+                PageCount = pageCount,
+                TotalItemCount = totalCount,
+                Items = pagedRoles
+            };
+        }
+
         public async Task<Role> AddAsync(Role role)
         {
             await _context.Roles.AddAsync(role);
             await _context.SaveChangesAsync();
             return role;
+        }
+
+        public async Task<CustomRole> AddCustomRoleAsync(CustomRole role)
+        {
+            await _context.CustomRoles.AddAsync(role);
+            await _context.SaveChangesAsync();
+            return role;
+        }
+
+        public async Task<CustomRole?> GetCustomRoleByIdAsync(int id, RoleQueryOptions? options = null)
+        {
+            options ??= new RoleQueryOptions();
+
+            IQueryable<CustomRole> query = _context.CustomRoles;
+
+            if (options.IncludePermissions)
+            {
+                query = query.Include(r => r.CustomRolePermissionMaps!);
+
+                if (options.IncludePermissionFeatures)
+                {
+                    query = query
+                        .Include(r => r.CustomRolePermissionMaps!)
+                        .ThenInclude(rpm => rpm.Permission!)
+                        .ThenInclude(p => p.Feature);
+                }
+            }
+
+            return await query.FirstOrDefaultAsync(r => r.Id == id);
         }
 
         public async Task<Role> UpdateAsync(Role role)
@@ -77,13 +161,15 @@ namespace AMB.Infra.Repositories
         public async Task<bool> IsRoleCodeUniqueAsync(string roleCode, int? excludeId = null)
         {
             var query = _context.Roles.Where(r => r.RoleCode == roleCode);
+            var customRoleQuery = _context.CustomRoles.Where(r => r.RoleCode == roleCode);
 
             if (excludeId.HasValue)
             {
                 query = query.Where(r => r.Id != excludeId.Value);
+                customRoleQuery = customRoleQuery.Where(r => r.Id != excludeId.Value);
             }
 
-            return !await query.AnyAsync();
+            return !await query.AnyAsync() && !await customRoleQuery.AnyAsync();
         }
 
 
@@ -114,7 +200,7 @@ namespace AMB.Infra.Repositories
             catch (Exception)
             {
                 await transaction.RollbackAsync();
-                throw; 
+                throw;
             }
         }
     }

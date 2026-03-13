@@ -39,19 +39,19 @@ namespace AMB.Tests.RoleTests
             var result = await service.CreateRoleAsync(request);
 
             // Assert
-            Assert.NotNull(roleRepository.LastAddedRole);
+            Assert.NotNull(roleRepository.LastAddedCustomRole);
 
-            Assert.Equal("FLOOR_MGR", roleRepository.LastAddedRole!.RoleCode);
-            Assert.Equal("Floor Manager", roleRepository.LastAddedRole.RoleName);
-            Assert.Equal("Manages floor operations", roleRepository.LastAddedRole.Description);
-            Assert.Equal(1, roleRepository.LastAddedRole.Status); // Status is int
+            Assert.Equal("FLOOR_MGR", roleRepository.LastAddedCustomRole!.RoleCode);
+            Assert.Equal("Floor Manager", roleRepository.LastAddedCustomRole.RoleName);
+            Assert.Equal("Manages floor operations", roleRepository.LastAddedCustomRole.Description);
+            Assert.Equal(1, roleRepository.LastAddedCustomRole.Status); // Status is int
 
             // Check permission mappings were created
-            Assert.NotNull(roleRepository.LastAddedRole.RolePermissionMaps);
-            Assert.Equal(4, roleRepository.LastAddedRole.RolePermissionMaps!.Count);
+            Assert.NotNull(roleRepository.LastAddedCustomRole.CustomRolePermissionMaps);
+            Assert.Equal(4, roleRepository.LastAddedCustomRole.CustomRolePermissionMaps!.Count);
 
             // Get the actual permission IDs from the maps
-            var actualPermissionIds = roleRepository.LastAddedRole.RolePermissionMaps
+            var actualPermissionIds = roleRepository.LastAddedCustomRole.CustomRolePermissionMaps
                 .Select(rpm => rpm.PermissionId).ToList();
 
             Assert.Contains(1, actualPermissionIds);
@@ -60,7 +60,7 @@ namespace AMB.Tests.RoleTests
             Assert.Contains(6, actualPermissionIds);
 
             Assert.NotNull(result);
-            Assert.Equal(roleRepository.LastAddedRole.Id, result.Id);
+            Assert.Equal(roleRepository.LastAddedCustomRole.Id, result.Id);
             Assert.Equal("FLOOR_MGR", result.RoleCode);
             Assert.Equal("Floor Manager", result.Name);
             Assert.Equal("Manages floor operations", result.Description);
@@ -185,8 +185,8 @@ namespace AMB.Tests.RoleTests
             var result = await service.CreateRoleAsync(request);
 
             // Assert
-            Assert.NotNull(roleRepository.LastAddedRole);
-            Assert.Equal(0, roleRepository.LastAddedRole!.Status);
+            Assert.NotNull(roleRepository.LastAddedCustomRole);
+            Assert.Equal(0, roleRepository.LastAddedCustomRole!.Status);
             Assert.Equal(0, result.Status);
         }
     }

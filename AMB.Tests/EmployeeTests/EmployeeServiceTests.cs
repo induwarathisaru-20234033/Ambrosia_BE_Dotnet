@@ -87,5 +87,190 @@ namespace AMB.Tests.EmployeeTests
             // Act/Assert: validation should throw before any persistence.
             await Assert.ThrowsAsync<ValidationException>(() => service.CreateEmployeeAsync(request));
         }
+
+        [Fact]
+        public async Task GetEmployeeByIdAsync_WithExistingEmployee_ReturnsDtoWithStatus()
+        {
+            var repository = new TestEmployeeRepository();
+            repository.Employees[5] = new AMB.Domain.Entities.Employee
+            {
+                Id = 5,
+                EmployeeId = "EMP-005",
+                FirstName = "Mia",
+                LastName = "Perera",
+                Email = "mia.perera@example.com",
+                Username = "mia.perera@example.com",
+                MobileNumber = "0711111111",
+                Address = "45 Lake Road",
+                Status = (int)EntityStatus.Inactive,
+                CreatedDate = DateTimeOffset.UtcNow
+            };
+
+            var authHelper = new TestAuthHelper("auth-123");
+            var serviceProvider = new ServiceCollection()
+                .AddScoped<IValidator<CreateEmployeeRequestDto>, CreateEmployeeValidator>()
+                .AddScoped<IValidator<UpdateEmployeeRequestDto>, UpdateEmployeeValidator>()
+                .BuildServiceProvider();
+
+            var service = new EmployeeService(repository, serviceProvider, authHelper);
+
+            var result = await service.GetEmployeeByIdAsync(5);
+
+            Assert.Equal(5, result.Id);
+            Assert.Equal("EMP-005", result.EmployeeId);
+            Assert.Equal("Mia", result.FirstName);
+            Assert.Equal("Perera", result.LastName);
+            Assert.Equal("mia.perera@example.com", result.Email);
+            Assert.Equal("mia.perera@example.com", result.Username);
+            Assert.Equal("0711111111", result.MobileNumber);
+            Assert.Equal("45 Lake Road", result.Address);
+            Assert.Equal((int)EntityStatus.Inactive, result.Status);
+        }
+
+        [Fact]
+        public async Task GetEmployeeByIdAsync_WithMissingEmployee_ThrowsKeyNotFoundException()
+        {
+            var repository = new TestEmployeeRepository();
+            var authHelper = new TestAuthHelper("auth-123");
+            var serviceProvider = new ServiceCollection()
+                .AddScoped<IValidator<CreateEmployeeRequestDto>, CreateEmployeeValidator>()
+                .AddScoped<IValidator<UpdateEmployeeRequestDto>, UpdateEmployeeValidator>()
+                .BuildServiceProvider();
+
+            var service = new EmployeeService(repository, serviceProvider, authHelper);
+
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => service.GetEmployeeByIdAsync(999));
+        }
+
+        [Fact]
+        public async Task UpdateEmployeeAsync_WithValidRequest_UpdatesEmployeeStatusAndPassword()
+        {
+            var repository = new TestEmployeeRepository();
+            repository.Employees[7] = new AMB.Domain.Entities.Employee
+            {
+                Id = 7,
+                EmployeeId = "EMP-007",
+                FirstName = "John",
+                LastName = "Doe",
+                MobileNumber = "0770000000",
+                Username = "john.doe@example.com",
+                Email = "john.doe@example.com",
+                Address = "Old Address",
+                Status = (int)EntityStatus.Active,
+                UserId = "auth0|employee-7",
+                CreatedDate = DateTimeOffset.UtcNow
+            };
+
+            var authHelper = new TestAuthHelper("auth-123");
+            var serviceProvider = new ServiceCollection()
+                .AddScoped<IValidator<CreateEmployeeRequestDto>, CreateEmployeeValidator>()
+                .AddScoped<IValidator<UpdateEmployeeRequestDto>, UpdateEmployeeValidator>()
+                .BuildServiceProvider();
+
+            var service = new EmployeeService(repository, serviceProvider, authHelper);
+            var request = new UpdateEmployeeRequestDto
+            {
+                Id = 7,
+                EmployeeId = "EMP-007",
+                FirstName = "Jane",
+                LastName = "Doe",
+                Email = "jane.doe@example.com",
+                Username = "jane.doe@example.com",
+                MobileNumber = "0771234567",
+                Address = "New Address",
+                Password = "N3wP@ssw0rd!",
+                Status = EntityStatus.Inactive
+            };
+
+            var result = await service.UpdateEmployeeAsync(request);
+
+            Assert.NotNull(result);
+            Assert.Equal(7, result!.Id);
+            Assert.Equal("Jane", result.FirstName);
+            Assert.Equal("Doe", result.LastName);
+            Assert.Equal("jane.doe@example.com", result.Email);
+            Assert.Equal("jane.doe@example.com", result.Username);
+            Assert.Equal("0771234567", result.MobileNumber);
+            Assert.Equal("New Address", result.Address);
+            Assert.Equal((int)EntityStatus.Inactive, result.Status);
+
+            var updatedEmployee = repository.Employees[7];
+            Assert.Equal("Jane", updatedEmployee.FirstName);
+            Assert.Equal("Doe", updatedEmployee.LastName);
+            Assert.Equal("jane.doe@example.com", updatedEmployee.Email);
+            Assert.Equal("jane.doe@example.com", updatedEmployee.Username);
+            Assert.Equal("0771234567", updatedEmployee.MobileNumber);
+            Assert.Equal("New Address", updatedEmployee.Address);
+            Assert.Equal((int)EntityStatus.Inactive, updatedEmployee.Status);
+            Assert.Equal("auth0|employee-7", authHelper.LastUpdatedUserId);
+            Assert.Equal("N3wP@ssw0rd!", authHelper.LastUpdatedPassword);
+        }
+
+        [Fact]
+        public async Task UpdateEmployeeAsync_WithMissingEmployee_ThrowsKeyNotFoundException()
+        {
+            var repository = new TestEmployeeRepository();
+            var authHelper = new TestAuthHelper("auth-123");
+            var serviceProvider = new ServiceCollection()
+                .AddScoped<IValidator<CreateEmployeeRequestDto>, CreateEmployeeValidator>()
+                .AddScoped<IValidator<UpdateEmployeeRequestDto>, UpdateEmployeeValidator>()
+                .BuildServiceProvider();
+
+            var service = new EmployeeService(repository, serviceProvider, authHelper);
+            var request = new UpdateEmployeeRequestDto
+            {
+                Id = 999,
+                EmployeeId = "EMP-999",
+                FirstName = "Ghost",
+                LastName = "User",
+                Email = "ghost.user@example.com",
+                Username = "ghost.user@example.com",
+                MobileNumber = "0712345678",
+                Address = "Unknown",
+                Password = "P@ssw0rd!",
+                Status = EntityStatus.Active
+            };
+
+            await Assert.ThrowsAsync<KeyNotFoundException>(() => service.UpdateEmployeeAsync(request));
+        }
+
+        [Fact]
+        public async Task AssignRolesAsync_WithValidRequest_SavesMappings()
+        {
+            var repository = new TestEmployeeRepository();
+            repository.Employees[7] = new AMB.Domain.Entities.Employee
+            {
+                Id = 7,
+                EmployeeId = "EMP-007",
+                FirstName = "John",
+                LastName = "Doe",
+                MobileNumber = "0770000000",
+                Username = "john.doe@example.com",
+                Email = "john.doe@example.com",
+                Address = "Address",
+                Status = 1
+            };
+
+            var authHelper = new TestAuthHelper("auth-123");
+            var serviceProvider = new ServiceCollection()
+                .AddScoped<IValidator<CreateEmployeeRequestDto>, CreateEmployeeValidator>()
+                .AddScoped<IValidator<UpdateEmployeeRequestDto>, UpdateEmployeeValidator>()
+                .BuildServiceProvider();
+
+            var service = new EmployeeService(repository, serviceProvider, authHelper);
+
+            var request = new AssignEmployeeRolesRequestDto
+            {
+                EmployeeId = 7,
+                RoleIds = new List<int> { 1, 2 },
+                CustomRoleIds = new List<int> { 10 }
+            };
+
+            await service.AssignRolesAsync(request);
+
+            Assert.Equal(3, repository.EmployeeRoleMaps.Count);
+            Assert.Equal(2, repository.EmployeeRoleMaps.Count(x => x.RoleId.HasValue));
+            Assert.Equal(1, repository.EmployeeRoleMaps.Count(x => x.CustomRoleId.HasValue));
+        }
     }
 }

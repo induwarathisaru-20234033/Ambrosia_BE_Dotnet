@@ -35,31 +35,31 @@ namespace AMB.Application.Services
                 throw new InvalidOperationException("One or more selected permissions are invalid.");
             }
 
-            var role = request.ToRoleEntity();
+            var role = request.ToCustomRoleEntity();
 
             role.RoleCode = request.RoleCode.ToUpper();
             role.Status = request.Status;
 
-            role.RolePermissionMaps = request.PermissionIds.Select(permissionId => new RolePermissionMap
+            role.CustomRolePermissionMaps = request.PermissionIds.Select(permissionId => new CustomRolePermissionMap
             {
                 PermissionId = permissionId,
-                Role = role
+                CustomRole = role
             }).ToList();
 
-            var createdRole = await _roleRepository.AddAsync(role);
+            var createdRole = await _roleRepository.AddCustomRoleAsync(role);
 
             var options = new RoleQueryOptions
             {
                 IncludePermissions = true,
                 IncludePermissionFeatures = true
             };
-            var roleWithPermissions = await _roleRepository.GetByIdAsync(createdRole.Id, options);
+            var roleWithPermissions = await _roleRepository.GetCustomRoleByIdAsync(createdRole.Id, options);
 
             var roleDto = roleWithPermissions.ToRoleDto();
 
-            if (roleWithPermissions?.RolePermissionMaps != null)
+            if (roleWithPermissions?.CustomRolePermissionMaps != null)
             {
-                roleDto.Permissions = roleWithPermissions.RolePermissionMaps
+                roleDto.Permissions = roleWithPermissions.CustomRolePermissionMaps
                     .Where(rpm => rpm.Permission != null)
                     .Select(rpm => new PermissionDto
                     {
@@ -92,7 +92,8 @@ namespace AMB.Application.Services
             var permissions = await _permissionRepository.GetPermissionsWithFeaturesAsync();
 
             return permissions
-                .GroupBy(p => new {
+                .GroupBy(p => new
+                {
                     FeatureId = p.FeatureId,
                     FeatureName = p.Feature.FeatureName,
                     FeatureCode = p.Feature.FeatureCode
@@ -100,8 +101,8 @@ namespace AMB.Application.Services
                 .Select(g => new PermissionGroupDto
                 {
                     FeatureId = g.Key.FeatureId,
-                    FeatureName = g.Key.FeatureName, 
-                    FeatureCode = g.Key.FeatureCode,  
+                    FeatureName = g.Key.FeatureName,
+                    FeatureCode = g.Key.FeatureCode,
                     Permissions = g.Select(p => new PermissionItemDto
                     {
                         Id = p.Id,
@@ -110,6 +111,11 @@ namespace AMB.Application.Services
                     }).ToList()
                 })
                 .ToList();
+        }
+
+        public async Task<PaginatedResultDto<RoleDto>> GetAllRolesAsync(RoleFilterRequestDto filter)
+        {
+            return await _roleRepository.GetAllRolesAsync(filter);
         }
 
         public async Task<RoleDetailDto> GetRoleByIdAsync(int id, bool includePermissions = false, bool includeFeatures = false)
@@ -134,7 +140,8 @@ namespace AMB.Application.Services
                 .ToList() ?? new List<int>();
 
             var permissionGroups = allPermissions
-                .GroupBy(p => new {
+                .GroupBy(p => new
+                {
                     FeatureId = p.FeatureId,
                     FeatureName = p.Feature?.FeatureName ?? "Unknown",
                     FeatureCode = p.Feature?.FeatureCode ?? "UNKNOWN"
