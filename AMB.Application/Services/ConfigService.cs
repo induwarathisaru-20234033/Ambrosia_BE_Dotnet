@@ -13,12 +13,14 @@ namespace AMB.Application.Services
     {
         private const string TimeFormat = "HH:mm";
         private readonly IConfigRepository _configRepository;
+        private readonly IReservationRepository _reservationRepository;
         private readonly IServiceProvider _serviceProvider;
 
-        public ConfigService(IConfigRepository configRepository, IServiceProvider serviceProvider)
+        public ConfigService(IConfigRepository configRepository, IServiceProvider serviceProvider, IReservationRepository reservationRepository)
         {
             _configRepository = configRepository;
             _serviceProvider = serviceProvider;
+            _reservationRepository = reservationRepository;
         }
 
         public async Task AddConfigurationsAsync(CreateServiceRulesRequestDto request)
@@ -64,19 +66,6 @@ namespace AMB.Application.Services
             }
 
             var reservationSettingModel = request.UpdatedTimeSlotLogic.ToReservationSettingEntity();
-            var reservationSettingId = request.UpdatedTimeSlotLogic.Id;
-
-            if (reservationSettingId <= 0)
-            {
-                var existingSetting = await _configRepository.GetReservationSettingAsync();
-
-                if (existingSetting == null)
-                {
-                    throw new InvalidOperationException("Reservation settings not found to update.");
-                }
-
-                reservationSettingId = existingSetting.Id;
-            }
 
             var serviceHourRequests = request.UpdatedServiceShiftPayload.Cast<ServiceShiftPayloadDto>().ToList();
             ValidateServiceHours(serviceHourRequests);
@@ -90,7 +79,11 @@ namespace AMB.Application.Services
                 serviceHourModels.Add(model);
             }
 
-            await _configRepository.UpdateReservationSettingAsync(reservationSettingId, reservationSettingModel);
+            await _configRepository.RemoveBookingSlotsAsync();
+            await _configRepository.RemoveServiceHoursAsync();
+            await _configRepository.RemoveReservationSettingAsync();
+
+            await _configRepository.AddReservationSettingAsync(reservationSettingModel);
             await _configRepository.AddServiceHoursAsync(serviceHourModels);
 
             // Generate and save booking slots based on the updated configuration
@@ -340,20 +333,29 @@ namespace AMB.Application.Services
             }
         }
 
-        public async Task<List<BookingSlotDto>> GetBookingSlotsWithAllocationsAsync(DateOnly? date = null)
+        public async Task<List<BookingSlotDto>> GetBookingSlotsWithAllocationsAsync(DateTimeOffset? dateTime = null)
         {
-            var bookingSlots = await _configRepository.GetAllBookingSlotsAsync();
-            var reservationRepository = _serviceProvider.GetRequiredService<IReservationRepository>();
+            DateOnly? date = dateTime.HasValue ? DateOnly.FromDateTime(dateTime.Value.Date) : null;
+            int? dayOfWeek = dateTime.HasValue ? (int)Enum.Parse<Day>(dateTime.Value.DayOfWeek.ToString()) : null;
+
+            var bookingSlots = dayOfWeek.HasValue
+                ? await _configRepository.GetBookingSlotsByDayAsync(dayOfWeek.Value)
+                : await _configRepository.GetAllBookingSlotsAsync();
 
             var bookingSlotDtos = new List<BookingSlotDto>();
 
             foreach (var slot in bookingSlots)
             {
                 var allocationCount = 0;
+                var allocatedTableIds = new List<int>();
                 if (date.HasValue)
                 {
-                    // Count allocations for specific date
-                    allocationCount = (await reservationRepository.GetBookingSlotReservationsByDateAsync(slot.Id, date.Value)).Count;
+                    var slotReservations = await _reservationRepository.GetBookingSlotReservationsByDateAsync(slot.Id, date.Value);
+                    allocationCount = slotReservations.Count;
+                    allocatedTableIds = slotReservations
+                        .Select(reservation => reservation.TableId)
+                        .Distinct()
+                        .ToList();
                 }
 
                 bookingSlotDtos.Add(new BookingSlotDto
@@ -363,7 +365,8 @@ namespace AMB.Application.Services
                     StartTime = slot.StartTime,
                     EndTime = slot.EndTime,
                     Day = slot.Day,
-                    ExistingAllocations = allocationCount
+                    ExistingAllocations = allocationCount,
+                    AllocatedTableIds = allocatedTableIds 
                 });
             }
 

@@ -10,6 +10,6 @@ namespace AMB.Application.Interfaces.Services
         Task AddConfigurationsAsync(CreateServiceRulesRequestDto request);
         Task UpdateConfigurationsAsync(UpdateServiceRulesRequestDto request);
         Task<ServiceRulesResponseDto?> GetConfigurationsAsync();
-        Task<List<BookingSlotDto>> GetBookingSlotsWithAllocationsAsync(DateOnly? date = null);
+        Task<List<BookingSlotDto>> GetBookingSlotsWithAllocationsAsync(DateTimeOffset? dateTime = null);
     }
 }
