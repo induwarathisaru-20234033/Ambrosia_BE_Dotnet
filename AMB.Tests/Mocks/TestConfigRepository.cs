@@ -60,6 +60,12 @@ namespace AMB.Tests.Mocks
             return Task.CompletedTask;
         }
 
+        public Task RemoveReservationSettingAsync()
+        {
+            ReservationSetting = null;
+            return Task.CompletedTask;
+        }
+
         public Task RemoveServiceHoursAsync()
         {
             ServiceHours.Clear();
@@ -70,6 +76,11 @@ namespace AMB.Tests.Mocks
         {
             BookingSlots.Clear();
             return Task.CompletedTask;
+        }
+
+        public Task<List<BookingSlot>> GetBookingSlotsByDayAsync(int day)
+        {
+            return Task.FromResult(BookingSlots.Values.Where(s => s.Day == day).ToList());
         }
     }
 }
