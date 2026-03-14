@@ -13,5 +13,6 @@ namespace AMB.Application.Interfaces.Services
         Task RemoveTableAsync(int id);
         Task<PaginatedResultDto<TableDto>> SearchAsync(SearchTableRequestDto request);
         Task<List<TableDto>> GetAllAsync();
+        Task<List<TableDto>> GetTablesWithAllocationsAsync(DateOnly? date = null);
     }
 }

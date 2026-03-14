@@ -27,6 +27,17 @@ namespace AMB.Infra.Repositories
             await _context.SaveChangesAsync();
         }
 
+        public async Task RemoveReservationSettingAsync()
+        {
+            var existingSettings = await _context.ReservationSettings.ToListAsync();
+
+            if (existingSettings.Count > 0)
+            {
+                _context.ReservationSettings.RemoveRange(existingSettings);
+                await _context.SaveChangesAsync();
+            }
+        }
+
         public async Task<ReservationSetting?> GetReservationSettingAsync()
         {
             return await _context.ReservationSettings.AsNoTracking().FirstOrDefaultAsync();
@@ -63,6 +74,44 @@ namespace AMB.Infra.Repositories
         public async Task<List<ServiceHour>> GetAllServiceHoursAsync()
         {
             return await _context.ServiceHours.AsNoTracking().ToListAsync();
+        }
+
+        public async Task AddBookingSlotsAsync(List<BookingSlot> bookingSlots)
+        {
+            var existingSlots = await _context.BookingSlots.ToListAsync();
+
+            if (existingSlots.Count > 0)
+            {
+                _context.BookingSlots.RemoveRange(existingSlots);
+            }
+
+            if (bookingSlots != null && bookingSlots.Count > 0)
+            {
+                _context.BookingSlots.AddRange(bookingSlots);
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task RemoveBookingSlotsAsync()
+        {
+            var existingSlots = await _context.BookingSlots.ToListAsync();
+
+            if (existingSlots.Count > 0)
+            {
+                _context.BookingSlots.RemoveRange(existingSlots);
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        public async Task<List<BookingSlot>> GetAllBookingSlotsAsync()
+        {
+            return await _context.BookingSlots.AsNoTracking().ToListAsync();
+        }
+
+        public async Task<List<BookingSlot>> GetBookingSlotsByDayAsync(int day)
+        {
+            return await _context.BookingSlots.AsNoTracking().Where(s => s.Day == day).ToListAsync();
         }
     }
 }

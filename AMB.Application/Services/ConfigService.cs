@@ -13,12 +13,14 @@ namespace AMB.Application.Services
     {
         private const string TimeFormat = "HH:mm";
         private readonly IConfigRepository _configRepository;
+        private readonly IReservationRepository _reservationRepository;
         private readonly IServiceProvider _serviceProvider;
 
-        public ConfigService(IConfigRepository configRepository, IServiceProvider serviceProvider)
+        public ConfigService(IConfigRepository configRepository, IServiceProvider serviceProvider, IReservationRepository reservationRepository)
         {
             _configRepository = configRepository;
             _serviceProvider = serviceProvider;
+            _reservationRepository = reservationRepository;
         }
 
         public async Task AddConfigurationsAsync(CreateServiceRulesRequestDto request)
@@ -30,6 +32,7 @@ namespace AMB.Application.Services
 
             var serviceHourRequests = request.ServiceShiftPayload;
             ValidateServiceHours(serviceHourRequests);
+            ValidateShiftsWithBufferTime(serviceHourRequests, reservationSettingModel.BufferTime);
 
             var serviceHourModels = new List<ServiceHour>();
 
@@ -42,6 +45,9 @@ namespace AMB.Application.Services
             await _configRepository.AddReservationSettingAsync(reservationSettingModel);
 
             await _configRepository.AddServiceHoursAsync(serviceHourModels);
+
+            // Generate and save booking slots based on the configuration
+            await GenerateAndSaveBookingSlotsAsync(serviceHourModels, reservationSettingModel);
         }
 
         public async Task UpdateConfigurationsAsync(UpdateServiceRulesRequestDto request)
@@ -49,23 +55,21 @@ namespace AMB.Application.Services
             var validator = _serviceProvider.GetRequiredService<IValidator<UpdateServiceRulesRequestDto>>();
             await validator.ValidateAndThrowAsync(request);
 
-            var reservationSettingModel = request.UpdatedTimeSlotLogic.ToReservationSettingEntity();
-            var reservationSettingId = request.UpdatedTimeSlotLogic.Id;
-
-            if (reservationSettingId <= 0)
+            if (request.UpdatedTimeSlotLogic == null)
             {
-                var existingSetting = await _configRepository.GetReservationSettingAsync();
-
-                if (existingSetting == null)
-                {
-                    throw new InvalidOperationException("Reservation settings not found to update.");
-                }
-
-                reservationSettingId = existingSetting.Id;
+                throw new ArgumentException("Updated time slot logic is required.");
             }
 
-            var serviceHourRequests = request.UpdatedServiceShiftPayload;
-            ValidateServiceHours(serviceHourRequests.Cast<ServiceShiftPayloadDto>().ToList());
+            if (request.UpdatedServiceShiftPayload == null)
+            {
+                throw new ArgumentException("Updated service shifts are required.");
+            }
+
+            var reservationSettingModel = request.UpdatedTimeSlotLogic.ToReservationSettingEntity();
+
+            var serviceHourRequests = request.UpdatedServiceShiftPayload.Cast<ServiceShiftPayloadDto>().ToList();
+            ValidateServiceHours(serviceHourRequests);
+            ValidateShiftsWithBufferTime(serviceHourRequests, reservationSettingModel.BufferTime);
 
             var serviceHourModels = new List<ServiceHour>();
 
@@ -75,8 +79,15 @@ namespace AMB.Application.Services
                 serviceHourModels.Add(model);
             }
 
-            await _configRepository.UpdateReservationSettingAsync(reservationSettingId, reservationSettingModel);
+            await _configRepository.RemoveBookingSlotsAsync();
+            await _configRepository.RemoveServiceHoursAsync();
+            await _configRepository.RemoveReservationSettingAsync();
+
+            await _configRepository.AddReservationSettingAsync(reservationSettingModel);
             await _configRepository.AddServiceHoursAsync(serviceHourModels);
+
+            // Generate and save booking slots based on the updated configuration
+            await GenerateAndSaveBookingSlotsAsync(serviceHourModels, reservationSettingModel);
         }
 
         public async Task<ServiceRulesResponseDto?> GetConfigurationsAsync()
@@ -138,6 +149,68 @@ namespace AMB.Application.Services
             return response;
         }
 
+
+        private async Task GenerateAndSaveBookingSlotsAsync(List<ServiceHour> serviceHours, ReservationSetting reservationSetting)
+        {
+            var generatedSlots = new List<BookingSlot>();
+
+            foreach (var shift in serviceHours)
+            {
+                // Skip if the shift is not open or has no start/end time
+                if (!shift.IsOpen || !shift.StartTime.HasValue || !shift.EndTime.HasValue)
+                {
+                    continue;
+                }
+
+                var shiftStart = shift.StartTime.Value;
+                var shiftEnd = shift.EndTime.Value;
+                var turnTime = reservationSetting.TurnTime;
+                var bufferTime = reservationSetting.BufferTime;
+                var interval = reservationSetting.BookingInterval;
+
+                // Initialize the current pointer to the shift start time
+                var currentPointer = shiftStart;
+
+                // Generate slots while the mathematical rule is satisfied
+                // Rule: current_pointer + TurnTime <= Shift.End
+                while (AddMinutes(currentPointer, turnTime) <= shiftEnd)
+                {
+                    var slotStartTime = currentPointer;
+                    var slotEndTime = AddMinutes(currentPointer, turnTime);
+
+                    // Dynamic blackout: table remains unavailable until turn time + buffer time.
+                    // If blackout extends past shift end, this slot is not valid.
+                    var tableReleaseTime = AddMinutes(slotEndTime, bufferTime);
+                    if (tableReleaseTime > shiftEnd)
+                    {
+                        currentPointer = AddMinutes(currentPointer, interval);
+                        continue;
+                    }
+
+                    var bookingSlot = new BookingSlot
+                    {
+                        SlotId = Guid.NewGuid(),
+                        StartTime = slotStartTime,
+                        EndTime = slotEndTime,
+                        Day = shift.Day,
+                        ShiftId = shift.Id
+                    };
+
+                    generatedSlots.Add(bookingSlot);
+
+                    // Increment the pointer by the interval
+                    currentPointer = AddMinutes(currentPointer, interval);
+                }
+            }
+
+            // Save all generated slots to the database
+            await _configRepository.AddBookingSlotsAsync(generatedSlots);
+        }
+
+        private static TimeOnly AddMinutes(TimeOnly time, int minutes)
+        {
+            return time.Add(TimeSpan.FromMinutes(minutes));
+        }
 
         private static void ValidateServiceHours(List<ServiceShiftPayloadDto> serviceHourRequests)
         {
@@ -217,6 +290,87 @@ namespace AMB.Application.Services
                     }
                 }
             }
+        }
+
+        private static void ValidateShiftsWithBufferTime(List<ServiceShiftPayloadDto> serviceHourRequests, int bufferTime)
+        {
+            if (bufferTime <= 0)
+            {
+                return;
+            }
+
+            var groupedByDay = serviceHourRequests.GroupBy(shift => shift.Day);
+
+            foreach (var dayGroup in groupedByDay)
+            {
+                var dayLabel = Enum.IsDefined(typeof(Day), dayGroup.Key)
+                    ? ((Day)dayGroup.Key).ToString()
+                    : $"Day {dayGroup.Key}";
+
+                var orderedOpenShifts = dayGroup
+                    .Where(shift => shift.IsOpen && shift.StartTime.HasValue && shift.EndTime.HasValue)
+                    .OrderBy(shift => shift.StartTime)
+                    .ToList();
+
+                for (var i = 1; i < orderedOpenShifts.Count; i++)
+                {
+                    var previous = orderedOpenShifts[i - 1];
+                    var current = orderedOpenShifts[i];
+
+                    var previousEndWithBuffer = previous.EndTime!.Value.AddMinutes(bufferTime);
+                    if (previousEndWithBuffer > current.StartTime!.Value)
+                    {
+                        var previousEndStr = previous.EndTime.Value.UtcDateTime.ToString(TimeFormat);
+                        var requiredStartStr = previousEndWithBuffer.UtcDateTime.ToString(TimeFormat);
+                        var currentStartStr = current.StartTime.Value.UtcDateTime.ToString(TimeFormat);
+
+                        throw new ArgumentException(
+                            $"Split shifts on {dayLabel} are too close for the configured buffer time. " +
+                            $"After a shift ending at {previousEndStr} with {bufferTime} minutes buffer, " +
+                            $"the next shift must start at or after {requiredStartStr}, but starts at {currentStartStr}.");
+                    }
+                }
+            }
+        }
+
+        public async Task<List<BookingSlotDto>> GetBookingSlotsWithAllocationsAsync(DateTimeOffset? dateTime = null)
+        {
+            DateOnly? date = dateTime.HasValue ? DateOnly.FromDateTime(dateTime.Value.Date) : null;
+            int? dayOfWeek = dateTime.HasValue ? (int)Enum.Parse<Day>(dateTime.Value.DayOfWeek.ToString()) : null;
+
+            var bookingSlots = dayOfWeek.HasValue
+                ? await _configRepository.GetBookingSlotsByDayAsync(dayOfWeek.Value)
+                : await _configRepository.GetAllBookingSlotsAsync();
+
+            var bookingSlotDtos = new List<BookingSlotDto>();
+
+            foreach (var slot in bookingSlots)
+            {
+                var allocationCount = 0;
+                var allocatedTableIds = new List<int>();
+                if (date.HasValue)
+                {
+                    var slotReservations = await _reservationRepository.GetBookingSlotReservationsByDateAsync(slot.Id, date.Value);
+                    allocationCount = slotReservations.Count;
+                    allocatedTableIds = slotReservations
+                        .Select(reservation => reservation.TableId)
+                        .Distinct()
+                        .ToList();
+                }
+
+                bookingSlotDtos.Add(new BookingSlotDto
+                {
+                    Id = slot.Id,
+                    SlotId = slot.SlotId,
+                    StartTime = slot.StartTime,
+                    EndTime = slot.EndTime,
+                    Day = slot.Day,
+                    ExistingAllocations = allocationCount,
+                    AllocatedTableIds = allocatedTableIds 
+                });
+            }
+
+            return bookingSlotDtos;
         }
     }
 }

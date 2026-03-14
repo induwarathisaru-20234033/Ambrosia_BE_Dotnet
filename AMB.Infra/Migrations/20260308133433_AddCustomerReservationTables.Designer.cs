@@ -4,6 +4,7 @@ using AMB.Infra.DBContexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AMB.Infra.Migrations
 {
     [DbContext(typeof(AMBContext))]
-    partial class AMBContextModelSnapshot : ModelSnapshot
+    [Migration("20260308133433_AddCustomerReservationTables")]
+    partial class AddCustomerReservationTables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -119,57 +122,6 @@ namespace AMB.Infra.Migrations
                 });
 
             modelBuilder.Entity("AMB.Domain.Entities.CustomerDetail", b =>
-                            {
-                                b.Property<int>("Id")
-                                    .ValueGeneratedOnAdd()
-                                    .HasColumnType("int");
-
-                                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                                b.Property<string>("CreatedBy")
-                                    .IsRequired()
-                                    .HasColumnType("nvarchar(max)");
-
-                                b.Property<DateTimeOffset>("CreatedDate")
-                                    .HasColumnType("datetimeoffset");
-
-                                b.Property<string>("DeletedBy")
-                                    .HasColumnType("nvarchar(max)");
-
-                                b.Property<DateTimeOffset?>("DeletedDate")
-                                    .HasColumnType("datetimeoffset");
-
-                                b.Property<string>("Email")
-                                    .IsRequired()
-                                    .HasMaxLength(100)
-                                    .HasColumnType("nvarchar(100)");
-
-                                b.Property<string>("Name")
-                                    .IsRequired()
-                                    .HasMaxLength(200)
-                                    .HasColumnType("nvarchar(200)");
-
-                                b.Property<string>("PhoneNumber")
-                                    .IsRequired()
-                                    .HasMaxLength(20)
-                                    .HasColumnType("nvarchar(20)");
-
-                                b.Property<int>("Status")
-                                    .IsConcurrencyToken()
-                                    .HasColumnType("int");
-
-                                b.Property<string>("UpdatedBy")
-                                    .HasColumnType("nvarchar(max)");
-
-                                b.Property<DateTimeOffset?>("UpdatedDate")
-                                    .HasColumnType("datetimeoffset");
-
-                                b.HasKey("Id");
-
-                                b.ToTable("CustomerDetails", (string)null);
-                            });
-
-            modelBuilder.Entity("AMB.Domain.Entities.CustomRole", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -190,17 +142,20 @@ namespace AMB.Infra.Migrations
                     b.Property<DateTimeOffset?>("DeletedDate")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<string>("Description")
+                    b.Property<string>("Email")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
-                    b.Property<string>("RoleCode")
+                    b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
-                    b.Property<string>("RoleName")
+                    b.Property<string>("PhoneNumber")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<int>("Status")
                         .IsConcurrencyToken()
@@ -214,53 +169,7 @@ namespace AMB.Infra.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("CustomRoles", (string)null);
-                });
-
-            modelBuilder.Entity("AMB.Domain.Entities.CustomRolePermissionMap", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTimeOffset>("CreatedDate")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<int>("CustomRoleId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("DeletedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTimeOffset?>("DeletedDate")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<int>("PermissionId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Status")
-                        .IsConcurrencyToken()
-                        .HasColumnType("int");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTimeOffset?>("UpdatedDate")
-                        .HasColumnType("datetimeoffset");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CustomRoleId");
-
-                    b.HasIndex("PermissionId");
-
-                    b.ToTable("CustomRolePermissionMaps", (string)null);
+                    b.ToTable("CustomerDetails", (string)null);
                 });
 
             modelBuilder.Entity("AMB.Domain.Entities.Employee", b =>
@@ -369,9 +278,6 @@ namespace AMB.Infra.Migrations
                     b.Property<DateTimeOffset>("CreatedDate")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<int?>("CustomRoleId")
-                        .HasColumnType("int");
-
                     b.Property<string>("DeletedBy")
                         .HasColumnType("nvarchar(max)");
 
@@ -381,7 +287,7 @@ namespace AMB.Infra.Migrations
                     b.Property<int>("EmployeeId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("RoleId")
+                    b.Property<int>("RoleId")
                         .HasColumnType("int");
 
                     b.Property<int>("Status")
@@ -395,8 +301,6 @@ namespace AMB.Infra.Migrations
                         .HasColumnType("datetimeoffset");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("CustomRoleId");
 
                     b.HasIndex("EmployeeId");
 
@@ -833,32 +737,8 @@ namespace AMB.Infra.Migrations
                     b.Navigation("Shift");
                 });
 
-            modelBuilder.Entity("AMB.Domain.Entities.CustomRolePermissionMap", b =>
-                {
-                    b.HasOne("AMB.Domain.Entities.CustomRole", "CustomRole")
-                        .WithMany("CustomRolePermissionMaps")
-                        .HasForeignKey("CustomRoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("AMB.Domain.Entities.Permission", "Permission")
-                        .WithMany()
-                        .HasForeignKey("PermissionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("CustomRole");
-
-                    b.Navigation("Permission");
-                });
-
             modelBuilder.Entity("AMB.Domain.Entities.EmployeeRoleMap", b =>
                 {
-                    b.HasOne("AMB.Domain.Entities.CustomRole", "CustomRole")
-                        .WithMany()
-                        .HasForeignKey("CustomRoleId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("AMB.Domain.Entities.Employee", "Employee")
                         .WithMany("EmployeeRoleMaps")
                         .HasForeignKey("EmployeeId")
@@ -868,9 +748,8 @@ namespace AMB.Infra.Migrations
                     b.HasOne("AMB.Domain.Entities.Role", "Role")
                         .WithMany("EmployeeRoleMaps")
                         .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("CustomRole");
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Employee");
 
@@ -932,11 +811,6 @@ namespace AMB.Infra.Migrations
                     b.Navigation("Permission");
 
                     b.Navigation("Role");
-                });
-
-            modelBuilder.Entity("AMB.Domain.Entities.CustomRole", b =>
-                {
-                    b.Navigation("CustomRolePermissionMaps");
                 });
 
             modelBuilder.Entity("AMB.Domain.Entities.Employee", b =>
