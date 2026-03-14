@@ -53,6 +53,7 @@ namespace AMB.Application.Dtos
         public TimeOnly EndTime { get; set; }
         public int Day { get; set; }
         public int ExistingAllocations { get; set; }
+        public List<int> AllocatedTableIds { get; set; } = [];
     }
 
     public class ReservationAvailabilityDto
