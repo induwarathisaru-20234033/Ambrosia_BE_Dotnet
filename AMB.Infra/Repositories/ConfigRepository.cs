@@ -27,6 +27,17 @@ namespace AMB.Infra.Repositories
             await _context.SaveChangesAsync();
         }
 
+        public async Task RemoveReservationSettingAsync()
+        {
+            var existingSettings = await _context.ReservationSettings.ToListAsync();
+
+            if (existingSettings.Count > 0)
+            {
+                _context.ReservationSettings.RemoveRange(existingSettings);
+                await _context.SaveChangesAsync();
+            }
+        }
+
         public async Task<ReservationSetting?> GetReservationSettingAsync()
         {
             return await _context.ReservationSettings.AsNoTracking().FirstOrDefaultAsync();
@@ -96,6 +107,11 @@ namespace AMB.Infra.Repositories
         public async Task<List<BookingSlot>> GetAllBookingSlotsAsync()
         {
             return await _context.BookingSlots.AsNoTracking().ToListAsync();
+        }
+
+        public async Task<List<BookingSlot>> GetBookingSlotsByDayAsync(int day)
+        {
+            return await _context.BookingSlots.AsNoTracking().Where(s => s.Day == day).ToListAsync();
         }
     }
 }
