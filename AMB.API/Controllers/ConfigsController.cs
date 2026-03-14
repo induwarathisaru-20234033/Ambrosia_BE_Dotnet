@@ -52,9 +52,9 @@ namespace AMB.API.Controllers
         }
 
         [HttpGet("booking-slots")]
-        public async Task<ActionResult<BaseResponseDto<List<BookingSlotDto>>>> GetBookingSlots([FromQuery] DateOnly? date = null)
+        public async Task<ActionResult<BaseResponseDto<List<BookingSlotDto>>>> GetBookingSlots([FromQuery] DateTimeOffset? dateTime = null)
         {
-            var result = await _configService.GetBookingSlotsWithAllocationsAsync(date);
+            var result = await _configService.GetBookingSlotsWithAllocationsAsync(dateTime);
             var response = new BaseResponseDto<List<BookingSlotDto>>(result, "Booking slots retrieved successfully");
             return Ok(response);
         }
