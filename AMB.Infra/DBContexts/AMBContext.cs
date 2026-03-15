@@ -29,16 +29,18 @@ namespace AMB.Infra.DBContexts
         public DbSet<ServiceHour> ServiceHours { get; set; }
         public DbSet<Table> Tables { get; set; }
         public DbSet<CalenderExclusion> CalenderExclusions { get; set; }
-<<<<<<< HEAD
+
+        // Menu Item
         public DbSet<MenuItem> MenuItems { get; set; }
-=======
+
+        //Reservation Entities
         public DbSet<BookingSlot> BookingSlots { get; set; }
         public DbSet<CustomerDetail> CustomerDetails { get; set; }
         public DbSet<Reservation> Reservations { get; set; }
         public DbSet<InventoryItem> InventoryItems { get; set; }
         public DbSet<UnitOfMeasure> UnitsOfMeasure { get; set; }
         public DbSet<Currency> Currencies { get; set; }
->>>>>>> origin/main
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -54,16 +56,15 @@ namespace AMB.Infra.DBContexts
             modelBuilder.Entity<ServiceHour>().ToTable(nameof(ServiceHours));
             modelBuilder.Entity<Table>().ToTable(nameof(Tables));
             modelBuilder.Entity<CalenderExclusion>().ToTable(nameof(CalenderExclusions));
-<<<<<<< HEAD
+
             modelBuilder.Entity<MenuItem>().ToTable(nameof(MenuItems));
-=======
+
             modelBuilder.Entity<BookingSlot>().ToTable(nameof(BookingSlots));
             modelBuilder.Entity<CustomerDetail>().ToTable(nameof(CustomerDetails));
             modelBuilder.Entity<Reservation>().ToTable(nameof(Reservations));
             modelBuilder.Entity<InventoryItem>().ToTable(nameof(InventoryItems));
             modelBuilder.Entity<UnitOfMeasure>().ToTable(nameof(UnitsOfMeasure));
             modelBuilder.Entity<Currency>().ToTable(nameof(Currencies));
->>>>>>> origin/main
 
 
             modelBuilder.Entity<Employee>()
@@ -137,11 +138,11 @@ namespace AMB.Infra.DBContexts
                 .HasForeignKey(erm => erm.CustomRoleId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-<<<<<<< HEAD
+
             modelBuilder.Entity<MenuItem>()
                 .Property(m => m.Price)
                 .HasPrecision(18, 2); // precision 18, scale 2
-=======
+
             // Reservation relationships
             modelBuilder.Entity<Reservation>()
                 .HasOne(r => r.CustomerDetail)
@@ -198,7 +199,6 @@ namespace AMB.Infra.DBContexts
             modelBuilder.Entity<InventoryItem>()
                 .Property(item => item.UnitPrice)
                 .HasPrecision(18, 2);
->>>>>>> origin/main
 
         }
 
