@@ -4,7 +4,7 @@
     {
         public int? TableId { get; set; }
         public List<OrderItemDto> Items { get; set; } = new();
-        public bool IsDraft { get; set; }
+        public bool IsDraft { get; set; } // true = Draft, false = Fire
     }
 
     public class OrderItemDto
