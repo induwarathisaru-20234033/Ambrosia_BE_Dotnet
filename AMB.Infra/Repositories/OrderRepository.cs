@@ -96,5 +96,49 @@ namespace AMB.Infra.Repositories
             await _context.SaveChangesAsync();
             return true;
         }
+
+        public async Task<List<Order>> GetOrdersByStatusAsync(string status)
+        {
+            return await _context.Orders
+                .Where(o => o.OrderStatus == status && o.Status == 1)
+                .Include(o => o.OrderItems!)
+                    .ThenInclude(oi => oi.MenuItem)
+                .Include(o => o.Table)
+                .OrderBy(o => o.CreatedDate)
+                .ToListAsync();
+        }
+
+        public async Task<List<Order>> GetKitchenOrdersAsync()
+        {
+            var kitchenStatuses = new[] { "Sent to KDS", "Preparing", "On Hold" };
+
+            return await _context.Orders
+                .Where(o => kitchenStatuses.Contains(o.OrderStatus) && o.Status == 1)
+                .Include(o => o.OrderItems!)
+                    .ThenInclude(oi => oi.MenuItem)
+                .Include(o => o.Table)
+                .OrderBy(o => o.CreatedDate)
+                .ToListAsync();
+        }
+
+        public async Task<bool> UpdateOrderStatusAsync(int orderId, string newStatus, string? reason = null)
+        {
+            var order = await _context.Orders.FindAsync(orderId);
+            if (order == null) return false;
+
+            order.OrderStatus = newStatus;
+            order.UpdatedDate = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<Order?> GetOrderWithDetailsAsync(int id)
+        {
+            return await _context.Orders
+                .Include(o => o.OrderItems!)
+                    .ThenInclude(oi => oi.MenuItem)
+                .Include(o => o.Table)
+                .FirstOrDefaultAsync(o => o.Id == id && o.Status == 1);
+        }
     }
 }
