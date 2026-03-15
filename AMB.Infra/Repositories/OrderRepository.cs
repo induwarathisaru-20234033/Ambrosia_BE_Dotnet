@@ -78,5 +78,23 @@ namespace AMB.Infra.Repositories
             var lastNumber = int.Parse(lastOrderToday.OrderNumber.Split('-')[1]);
             return $"{today}-{(lastNumber + 1):D3}";
         }
+
+        public async Task<bool> SendDraftToKdsAsync(int orderId, int? tableId = null)
+        {
+            var order = await _context.Orders.FindAsync(orderId);
+            if (order == null) return false;
+
+            order.OrderStatus = "Sent to KDS";
+            order.SentToKitchenAt = DateTime.UtcNow;
+            order.UpdatedDate = DateTime.UtcNow;
+
+            if (tableId.HasValue && tableId.Value > 0)
+            {
+                order.TableId = tableId.Value;
+            }
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
     }
 }

@@ -62,5 +62,29 @@ namespace AMB.API.Controllers
 
             return Ok(response);
         }
+
+        // Send a draft order to KDS
+        [HttpPost("{id}/send-to-kds")]
+        public async Task<ActionResult<BaseResponseDto<OrderResponseDto>>> SendDraftToKds(
+            int id,
+            [FromBody] SendOrderToKdsDto dto)
+        {
+            if (id != dto.OrderId)
+            {
+                return BadRequest(new BaseResponseDto<OrderResponseDto>(
+                    "ID mismatch",
+                    new List<string> { "URL ID does not match request body ID" }
+                ));
+            }
+
+            var result = await _orderService.SendDraftToKdsAsync(dto);
+
+            var response = new BaseResponseDto<OrderResponseDto>(
+                result,
+                "Order sent to KDS successfully"
+            );
+
+            return Ok(response);
+        }
     }
 }

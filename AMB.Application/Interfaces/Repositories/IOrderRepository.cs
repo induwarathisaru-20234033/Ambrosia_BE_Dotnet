@@ -9,6 +9,7 @@ namespace AMB.Application.Interfaces.Repositories
         Task<Order> UpdateAsync(Order order);
         Task<List<Order>> GetDraftOrdersByTableAsync(int tableId);
         Task<string> GenerateOrderNumberAsync();
+        Task<bool> SendDraftToKdsAsync(int orderId, int? tableId = null);
     }
 
     public class OrderQueryOptions

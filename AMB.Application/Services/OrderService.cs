@@ -149,5 +149,32 @@ namespace AMB.Application.Services
                 IsAvailable = m.IsAvailable
             }).ToList();
         }
+
+        public async Task<OrderResponseDto> SendDraftToKdsAsync(SendOrderToKdsDto dto)
+        {
+            // Validate
+            var validator = _serviceProvider.GetRequiredService<IValidator<SendOrderToKdsDto>>();
+            await validator.ValidateAndThrowAsync(dto);
+
+            // Check table availability if table is being set/changed
+            if (dto.TableId.HasValue)
+            {
+                var table = await _tableRepository.GetByIdAsync(dto.TableId.Value);
+                if (table == null || table.Status != 1)
+                {
+                    throw new InvalidOperationException("Selected table is not available");
+                }
+            }
+
+            // Send to KDS
+            var sent = await _orderRepository.SendDraftToKdsAsync(dto.OrderId, dto.TableId);
+            if (!sent)
+            {
+                throw new InvalidOperationException("Failed to send order to KDS");
+            }
+
+            // Return updated order
+            return await GetOrderByIdAsync(dto.OrderId);
+        }
     }
 }
