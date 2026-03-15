@@ -15,7 +15,7 @@ namespace AMB.Application.Services
             _menuRepository = menuRepository;
         }
 
-        public async Task AddMenuItem(MenuItemDto dto)
+        public async Task<MenuItemDto> AddMenuItem(CreateMenuItemDto dto)
         {
             var entity = new MenuItem
             {
@@ -26,6 +26,15 @@ namespace AMB.Application.Services
             };
 
             await _menuRepository.AddAsync(entity);
+
+            return new MenuItemDto
+            {
+                Id = entity.Id,
+                Name = entity.Name,
+                Price = entity.Price,
+                Category = entity.Category,
+                IsAvailable = entity.IsAvailable
+            };
         }
 
         public async Task<List<MenuItemDto>> GetMenuItems(
@@ -39,7 +48,7 @@ namespace AMB.Application.Services
                 query = query.Where(x => x.Category == category);
 
             if (!string.IsNullOrEmpty(name))
-                query = query.Where(x => x.Name.ToLower().Contains(name.ToLower()));
+                query = query.Where(x => x.Name.Contains(name));
 
             if (isAvailable.HasValue)
                 query = query.Where(x => x.IsAvailable == isAvailable.Value);
@@ -48,6 +57,7 @@ namespace AMB.Application.Services
 
             return items.Select(x => new MenuItemDto
             {
+                Id = x.Id,
                 Name = x.Name,
                 Price = x.Price,
                 Category = x.Category,
