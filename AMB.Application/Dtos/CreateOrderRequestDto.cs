@@ -1,0 +1,22 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace AMB.Application.Dtos
+{
+    public class CreateOrderRequestDto
+    {
+        public int? TableId { get; set; }
+        public List<OrderItemDto> Items { get; set; } = new();
+        public bool IsDraft { get; set; }
+    }
+
+    public class OrderItemDto
+    {
+        public int MenuItemId { get; set; }
+        public string? SpecialInstructions { get; set; }
+        public int Quantity { get; set; }
+    }
+}
