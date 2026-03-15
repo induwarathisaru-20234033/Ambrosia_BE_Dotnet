@@ -18,16 +18,17 @@ namespace AMB.Application.Validators
             {
                 RuleFor(x => x.TableId)
                     .NotNull().WithMessage("Please select a table")
-                    .MustAsync(BeValidTable).WithMessage("Selected table is not available");
+                    .MustAsync(BeValidAndActiveTable).WithMessage("Selected table is not available");
 
                 RuleFor(x => x.Items)
                     .NotEmpty().WithMessage("Please add at least one item to the order");
 
-                //RuleForEach(x => x.Items)
-                //    .MustAsync(BeAvailableMenuItem).WithMessage("One or more items are unavailable");
+                RuleForEach(x => x.Items)
+                    .MustAsync(BeAvailableMenuItem)
+                    .WithMessage("One or more items are unavailable");
             });
 
-            // Always validate items have valid menu items
+            // Always validate items
             RuleForEach(x => x.Items)
                 .ChildRules(item =>
                 {
@@ -35,11 +36,17 @@ namespace AMB.Application.Validators
                         .GreaterThan(0).WithMessage("Invalid menu item");
 
                     item.RuleFor(i => i.Quantity)
-                        .GreaterThan(0).WithMessage("Quantity must be at least 1");
+                        .GreaterThan(0).WithMessage("Quantity must be at least 1")
+                        .LessThanOrEqualTo(100).WithMessage("Quantity cannot exceed 100");
                 });
+
+            // No duplicate menu items
+            RuleFor(x => x.Items)
+                .Must(HaveUniqueMenuItems)
+                .WithMessage("Duplicate menu items are not allowed. Please combine quantities.");
         }
 
-        private async Task<bool> BeValidTable(int? tableId, CancellationToken cancellationToken)
+        private async Task<bool> BeValidAndActiveTable(int? tableId, CancellationToken cancellationToken)
         {
             if (!tableId.HasValue) return false;
 
@@ -47,14 +54,29 @@ namespace AMB.Application.Validators
             var tableRepository = scope.ServiceProvider.GetRequiredService<ITableRepository>();
             var table = await tableRepository.GetByIdAsync(tableId.Value);
 
-            return table != null && table.Status == "Available";
+            // Check if table exists and is active (Status = 1 from BaseEntity)
+            return table != null && table.Status == 1;
         }
 
-        //private async Task<bool> BeAvailableMenuItem(CreateOrderRequestDto order, OrderItemDto item, CancellationToken cancellationToken)
-        //{
-        //    using var scope = _serviceProvider.CreateScope();
-        //    var menuItemRepository = scope.ServiceProvider.GetRequiredService<IMenuItemRepository>();
-        //    return await menuItemRepository.CheckAvailabilityAsync(item.MenuItemId);
-        //}
+        private async Task<bool> BeAvailableMenuItem(CreateOrderRequestDto order, OrderItemDto item, CancellationToken cancellationToken)
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var menuItemRepository = scope.ServiceProvider.GetRequiredService<IMenuItemRepository>();
+            var menuItem = await menuItemRepository.GetByIdAsync(item.MenuItemId);
+
+            // Check if menu item exists, is active (Status = 1), and is available for ordering
+            return menuItem != null && menuItem.Status == 1 && menuItem.IsAvailable;
+        }
+
+        private bool HaveUniqueMenuItems(List<OrderItemDto> items)
+        {
+            var duplicates = items
+                .GroupBy(x => x.MenuItemId)
+                .Where(g => g.Count() > 1)
+                .Select(g => g.Key)
+                .ToList();
+
+            return !duplicates.Any();
+        }
     }
 }
