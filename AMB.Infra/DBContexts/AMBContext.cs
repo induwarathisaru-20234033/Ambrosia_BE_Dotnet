@@ -35,6 +35,8 @@ namespace AMB.Infra.DBContexts
         public DbSet<InventoryItem> InventoryItems { get; set; }
         public DbSet<UnitOfMeasure> UnitsOfMeasure { get; set; }
         public DbSet<Currency> Currencies { get; set; }
+        public DbSet<Order> Orders { get; set; }
+        public DbSet<OrderItem> OrderItems { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -56,7 +58,9 @@ namespace AMB.Infra.DBContexts
             modelBuilder.Entity<InventoryItem>().ToTable(nameof(InventoryItems));
             modelBuilder.Entity<UnitOfMeasure>().ToTable(nameof(UnitsOfMeasure));
             modelBuilder.Entity<Currency>().ToTable(nameof(Currencies));
-
+            // Add Order Item
+            modelBuilder.Entity<Order>().ToTable(nameof(Orders));
+            modelBuilder.Entity<OrderItem>().ToTable(nameof(OrderItems));
 
             modelBuilder.Entity<Employee>()
                 .HasIndex(e => e.EmployeeId)
@@ -185,6 +189,30 @@ namespace AMB.Infra.DBContexts
             modelBuilder.Entity<InventoryItem>()
                 .Property(item => item.UnitPrice)
                 .HasPrecision(18, 2);
+
+            //Add order item
+            modelBuilder.Entity<Order>()
+            .HasOne(o => o.Table)
+            .WithMany()
+            .HasForeignKey(o => o.TableId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<OrderItem>()
+                .HasOne(oi => oi.Order)
+                .WithMany(o => o.OrderItems)
+                .HasForeignKey(oi => oi.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<OrderItem>()
+                .HasOne(oi => oi.MenuItem)
+                .WithMany()
+                .HasForeignKey(oi => oi.MenuItemId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<OrderItem>()
+                .Property(oi => oi.UnitPrice)
+                .HasPrecision(18, 2);
+        }
 
         }
 
