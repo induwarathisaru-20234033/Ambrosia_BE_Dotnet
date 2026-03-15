@@ -13,8 +13,8 @@ namespace AMB.Application.Interfaces.Repositories
 
     public class OrderQueryOptions
     {
-        public bool IncludeItems { get; set; } = false;
-        public bool IncludeMenuItem { get; set; } = false;
-        public bool IncludeTable { get; set; } = false;
+        public bool IncludeItems { get; set; }
+        public bool IncludeMenuItem { get; set; }
+        public bool IncludeTable { get; set; }
     }
 }
