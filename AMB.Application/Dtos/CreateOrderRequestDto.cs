@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace AMB.Application.Dtos
+﻿namespace AMB.Application.Dtos
 {
     public class CreateOrderRequestDto
     {
@@ -17,6 +11,6 @@ namespace AMB.Application.Dtos
     {
         public int MenuItemId { get; set; }
         public string? SpecialInstructions { get; set; }
-        public int Quantity { get; set; }
+        public int Quantity { get; set; } = 1;
     }
 }
