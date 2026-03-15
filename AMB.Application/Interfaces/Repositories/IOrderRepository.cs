@@ -1,0 +1,25 @@
+﻿using AMB.Domain.Entities;
+
+namespace AMB.Application.Interfaces.Repositories
+{
+    public interface IOrderRepository
+    {
+        Task<Order?> GetByIdAsync(int id, OrderQueryOptions? options = null);
+        Task<Order> AddAsync(Order order);
+        Task<Order> UpdateAsync(Order order);
+        Task<List<Order>> GetDraftOrdersByTableAsync(int tableId);
+        Task<string> GenerateOrderNumberAsync();
+        Task<bool> SendDraftToKdsAsync(int orderId, int? tableId = null);
+        Task<List<Order>> GetOrdersByStatusAsync(string status);
+        Task<List<Order>> GetKitchenOrdersAsync(); // Gets "Sent to KDS", "Preparing", "On Hold"
+        Task<bool> UpdateOrderStatusAsync(int orderId, string newStatus, string? reason = null);
+        Task<Order?> GetOrderWithDetailsAsync(int id);
+    }
+
+    public class OrderQueryOptions
+    {
+        public bool IncludeItems { get; set; }
+        public bool IncludeMenuItem { get; set; }
+        public bool IncludeTable { get; set; }
+    }
+}
