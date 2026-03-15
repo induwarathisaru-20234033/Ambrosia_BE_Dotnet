@@ -32,6 +32,9 @@ namespace AMB.Infra.DBContexts
         public DbSet<BookingSlot> BookingSlots { get; set; }
         public DbSet<CustomerDetail> CustomerDetails { get; set; }
         public DbSet<Reservation> Reservations { get; set; }
+        public DbSet<InventoryItem> InventoryItems { get; set; }
+        public DbSet<UnitOfMeasure> UnitsOfMeasure { get; set; }
+        public DbSet<Currency> Currencies { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -50,6 +53,9 @@ namespace AMB.Infra.DBContexts
             modelBuilder.Entity<BookingSlot>().ToTable(nameof(BookingSlots));
             modelBuilder.Entity<CustomerDetail>().ToTable(nameof(CustomerDetails));
             modelBuilder.Entity<Reservation>().ToTable(nameof(Reservations));
+            modelBuilder.Entity<InventoryItem>().ToTable(nameof(InventoryItems));
+            modelBuilder.Entity<UnitOfMeasure>().ToTable(nameof(UnitsOfMeasure));
+            modelBuilder.Entity<Currency>().ToTable(nameof(Currencies));
 
 
             modelBuilder.Entity<Employee>()
@@ -175,6 +181,10 @@ namespace AMB.Infra.DBContexts
                 .Property(c => c.PhoneNumber)
                 .IsRequired()
                 .HasMaxLength(20);
+
+            modelBuilder.Entity<InventoryItem>()
+                .Property(item => item.UnitPrice)
+                .HasPrecision(18, 2);
 
         }
 
