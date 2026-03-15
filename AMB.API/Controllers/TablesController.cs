@@ -66,9 +66,12 @@ namespace AMB.API.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<BaseResponseDto<List<TableDto>>>> GetAll()
+        public async Task<ActionResult<BaseResponseDto<List<TableDto>>>> GetAll([FromQuery] DateOnly? date = null)
         {
-            var result = await _tableService.GetAllAsync();
+            var result = date.HasValue 
+                ? await _tableService.GetTablesWithAllocationsAsync(date) 
+                : await _tableService.GetAllAsync();
+            
             var response = new BaseResponseDto<List<TableDto>>(result, "Tables retrieved successfully");
             return Ok(response);
         }

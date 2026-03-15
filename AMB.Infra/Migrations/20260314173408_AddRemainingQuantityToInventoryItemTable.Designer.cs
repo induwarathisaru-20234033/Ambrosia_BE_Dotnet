@@ -4,6 +4,7 @@ using AMB.Infra.DBContexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AMB.Infra.Migrations
 {
     [DbContext(typeof(AMBContext))]
-    partial class AMBContextModelSnapshot : ModelSnapshot
+    [Migration("20260314173408_AddRemainingQuantityToInventoryItemTable")]
+    partial class AddRemainingQuantityToInventoryItemTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -495,11 +498,7 @@ namespace AMB.Infra.Migrations
                     b.ToTable("Features", (string)null);
                 });
 
-<<<<<<< HEAD
-            modelBuilder.Entity("AMB.Domain.Entities.MenuItem", b =>
-=======
             modelBuilder.Entity("AMB.Domain.Entities.InventoryItem", b =>
->>>>>>> origin/main
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -507,13 +506,6 @@ namespace AMB.Infra.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-<<<<<<< HEAD
-                    b.Property<string>("Category")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-=======
->>>>>>> origin/main
                     b.Property<string>("CreatedBy")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -521,31 +513,16 @@ namespace AMB.Infra.Migrations
                     b.Property<DateTimeOffset>("CreatedDate")
                         .HasColumnType("datetimeoffset");
 
-<<<<<<< HEAD
-=======
                     b.Property<string>("Currency")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
->>>>>>> origin/main
                     b.Property<string>("DeletedBy")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTimeOffset?>("DeletedDate")
                         .HasColumnType("datetimeoffset");
 
-<<<<<<< HEAD
-                    b.Property<bool>("IsAvailable")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal>("Price")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-=======
                     b.Property<DateTimeOffset>("ExpiryDate")
                         .HasColumnType("datetimeoffset");
 
@@ -593,14 +570,11 @@ namespace AMB.Infra.Migrations
                     b.Property<string>("Sku")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
->>>>>>> origin/main
 
                     b.Property<int>("Status")
                         .IsConcurrencyToken()
                         .HasColumnType("int");
 
-<<<<<<< HEAD
-=======
                     b.Property<string>("StorageConditions")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -617,7 +591,6 @@ namespace AMB.Infra.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
->>>>>>> origin/main
                     b.Property<string>("UpdatedBy")
                         .HasColumnType("nvarchar(max)");
 
@@ -626,11 +599,7 @@ namespace AMB.Infra.Migrations
 
                     b.HasKey("Id");
 
-<<<<<<< HEAD
-                    b.ToTable("MenuItems", (string)null);
-=======
                     b.ToTable("InventoryItems", (string)null);
->>>>>>> origin/main
                 });
 
             modelBuilder.Entity("AMB.Domain.Entities.Permission", b =>

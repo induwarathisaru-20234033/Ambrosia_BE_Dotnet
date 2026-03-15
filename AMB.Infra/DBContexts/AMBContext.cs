@@ -29,7 +29,16 @@ namespace AMB.Infra.DBContexts
         public DbSet<ServiceHour> ServiceHours { get; set; }
         public DbSet<Table> Tables { get; set; }
         public DbSet<CalenderExclusion> CalenderExclusions { get; set; }
+<<<<<<< HEAD
         public DbSet<MenuItem> MenuItems { get; set; }
+=======
+        public DbSet<BookingSlot> BookingSlots { get; set; }
+        public DbSet<CustomerDetail> CustomerDetails { get; set; }
+        public DbSet<Reservation> Reservations { get; set; }
+        public DbSet<InventoryItem> InventoryItems { get; set; }
+        public DbSet<UnitOfMeasure> UnitsOfMeasure { get; set; }
+        public DbSet<Currency> Currencies { get; set; }
+>>>>>>> origin/main
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -45,7 +54,16 @@ namespace AMB.Infra.DBContexts
             modelBuilder.Entity<ServiceHour>().ToTable(nameof(ServiceHours));
             modelBuilder.Entity<Table>().ToTable(nameof(Tables));
             modelBuilder.Entity<CalenderExclusion>().ToTable(nameof(CalenderExclusions));
+<<<<<<< HEAD
             modelBuilder.Entity<MenuItem>().ToTable(nameof(MenuItems));
+=======
+            modelBuilder.Entity<BookingSlot>().ToTable(nameof(BookingSlots));
+            modelBuilder.Entity<CustomerDetail>().ToTable(nameof(CustomerDetails));
+            modelBuilder.Entity<Reservation>().ToTable(nameof(Reservations));
+            modelBuilder.Entity<InventoryItem>().ToTable(nameof(InventoryItems));
+            modelBuilder.Entity<UnitOfMeasure>().ToTable(nameof(UnitsOfMeasure));
+            modelBuilder.Entity<Currency>().ToTable(nameof(Currencies));
+>>>>>>> origin/main
 
 
             modelBuilder.Entity<Employee>()
@@ -119,9 +137,68 @@ namespace AMB.Infra.DBContexts
                 .HasForeignKey(erm => erm.CustomRoleId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+<<<<<<< HEAD
             modelBuilder.Entity<MenuItem>()
                 .Property(m => m.Price)
                 .HasPrecision(18, 2); // precision 18, scale 2
+=======
+            // Reservation relationships
+            modelBuilder.Entity<Reservation>()
+                .HasOne(r => r.CustomerDetail)
+                .WithMany()
+                .HasForeignKey(r => r.CustomerDetailId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Reservation>()
+                .HasOne(r => r.BookingSlot)
+                .WithMany()
+                .HasForeignKey(r => r.BookingSlotId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Reservation>()
+                .HasOne(r => r.Table)
+                .WithMany()
+                .HasForeignKey(r => r.TableId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Reservation configuration
+            modelBuilder.Entity<Reservation>()
+                .HasIndex(r => r.ReservationCode)
+                .IsUnique();
+
+            modelBuilder.Entity<Reservation>()
+                .Property(r => r.ReservationCode)
+                .IsRequired()
+                .HasMaxLength(50);
+
+            modelBuilder.Entity<Reservation>()
+                .Property(r => r.PartySize)
+                .IsRequired();
+
+            modelBuilder.Entity<Reservation>()
+                .Property(r => r.ReservationStatus)
+                .IsRequired();
+
+            // CustomerDetail configuration
+            modelBuilder.Entity<CustomerDetail>()
+                .Property(c => c.Name)
+                .IsRequired()
+                .HasMaxLength(200);
+
+            modelBuilder.Entity<CustomerDetail>()
+                .Property(c => c.Email)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            modelBuilder.Entity<CustomerDetail>()
+                .Property(c => c.PhoneNumber)
+                .IsRequired()
+                .HasMaxLength(20);
+
+            modelBuilder.Entity<InventoryItem>()
+                .Property(item => item.UnitPrice)
+                .HasPrecision(18, 2);
+>>>>>>> origin/main
 
         }
 

@@ -9,7 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace AMB.Application.Services
 {
-    public class TableService: ITableService
+    public class TableService : ITableService
     {
         private readonly IServiceProvider _serviceProvider;
         private readonly ITableRepository _tableRepository;
@@ -84,6 +84,35 @@ namespace AMB.Application.Services
             }
 
             return dtoModels;
+        }
+
+        public async Task<List<TableDto>> GetTablesWithAllocationsAsync(DateOnly? date = null)
+        {
+            var allTables = await _tableRepository.GetAllAsync();
+            var reservationRepository = _serviceProvider.GetRequiredService<IReservationRepository>();
+
+            var tableDtos = new List<TableDto>();
+
+            foreach (var table in allTables)
+            {
+                var allocationCount = 0;
+                if (date.HasValue)
+                {
+                    // Count allocations for specific date
+                    allocationCount = (await reservationRepository.GetTableReservationsByDateAsync(table.Id, date.Value)).Count;
+                }
+
+                tableDtos.Add(new TableDto
+                {
+                    Id = table.Id,
+                    TableName = table.TableName,
+                    Capacity = table.Capacity,
+                    IsOnlineBookingEnabled = table.IsOnlineBookingEnabled,
+                    ExistingAllocations = allocationCount
+                });
+            }
+
+            return tableDtos;
         }
     }
 }
