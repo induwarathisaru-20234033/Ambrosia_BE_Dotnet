@@ -1,5 +1,5 @@
 using AMB.Application.Dtos;
-using AMB.Application.Interfaces;
+using AMB.Application.Interfaces.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AMB.API.Controllers
