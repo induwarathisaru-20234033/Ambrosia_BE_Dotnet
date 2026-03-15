@@ -41,6 +41,7 @@ namespace AMB.Infra.Repositories
 
         public async Task<Order> AddAsync(Order order)
         {
+            // BaseEntity fields are set in DbContext SaveChangesAsync
             await _context.Orders.AddAsync(order);
             await _context.SaveChangesAsync();
             return order;
@@ -56,7 +57,7 @@ namespace AMB.Infra.Repositories
         public async Task<List<Order>> GetDraftOrdersByTableAsync(int tableId)
         {
             return await _context.Orders
-                .Where(o => o.TableId == tableId && o.Status == "Draft")
+                .Where(o => o.TableId == tableId && o.OrderStatus == "Draft" && o.Status == 1)
                 .Include(o => o.OrderItems)
                 .ToListAsync();
         }
