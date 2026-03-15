@@ -1,32 +1,31 @@
 using AMB.Application.Dtos;
-using AMB.Application.Interfaces;
+using AMB.Application.Interfaces.Repositories;
+using AMB.Application.Interfaces.Services;
 using AMB.Domain.Entities;
-using AMB.Infra.DBContexts;
 using Microsoft.EntityFrameworkCore;
 
 namespace AMB.Application.Services
 {
     public class MenuService : IMenuService
     {
-        private readonly AMBContext _context;
+        private readonly IMenuRepository _menuRepository;
 
-        public MenuService(AMBContext context)
+        public MenuService(IMenuRepository menuRepository)
         {
-            _context = context;
+            _menuRepository = menuRepository;
         }
 
-        public async Task AddMenuItem(MenuItemDto menuItemDto)
+        public async Task AddMenuItem(MenuItemDto dto)
         {
-            var menuItem = new MenuItem
+            var entity = new MenuItem
             {
-                Name = menuItemDto.Name,
-                Price = menuItemDto.Price,
-                Category = menuItemDto.Category,
-                IsAvailable = menuItemDto.IsAvailable
+                Name = dto.Name,
+                Price = dto.Price,
+                Category = dto.Category,
+                IsAvailable = dto.IsAvailable
             };
 
-            _context.MenuItems.Add(menuItem);
-            await _context.SaveChangesAsync();
+            await _menuRepository.AddAsync(entity);
         }
 
         public async Task<List<MenuItemDto>> GetMenuItems(
@@ -34,7 +33,7 @@ namespace AMB.Application.Services
             string? name,
             bool? isAvailable)
         {
-            var query = _context.MenuItems.AsQueryable();
+            var query = _menuRepository.GetQuery();
 
             if (!string.IsNullOrEmpty(category))
                 query = query.Where(x => x.Category == category);

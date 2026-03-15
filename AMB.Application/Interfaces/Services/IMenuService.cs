@@ -1,6 +1,6 @@
 using AMB.Application.Dtos;
 
-namespace AMB.Application.Interfaces
+namespace AMB.Application.Interfaces.Services
 {
     public interface IMenuService
     {
