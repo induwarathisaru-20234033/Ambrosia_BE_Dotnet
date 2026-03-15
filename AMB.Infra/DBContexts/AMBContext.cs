@@ -6,7 +6,7 @@ using System.IdentityModel.Tokens.Jwt;
 
 namespace AMB.Infra.DBContexts
 {
-    public class AMBContext: DbContext
+    public class AMBContext : DbContext
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ILogger<AMBContext> _logger;
@@ -19,19 +19,44 @@ namespace AMB.Infra.DBContexts
 
         public DbSet<Employee> Employees { get; set; }
         public DbSet<Role> Roles { get; set; }
+        public DbSet<CustomRole> CustomRoles { get; set; }
         public DbSet<Permission> Permissions { get; set; }
         public DbSet<Feature> Features { get; set; }
         public DbSet<RolePermissionMap> RolePermissionMaps { get; set; }
+        public DbSet<CustomRolePermissionMap> CustomRolePermissionMaps { get; set; }
         public DbSet<EmployeeRoleMap> EmployeeRoleMaps { get; set; }
+        public DbSet<ReservationSetting> ReservationSettings { get; set; }
+        public DbSet<ServiceHour> ServiceHours { get; set; }
+        public DbSet<Table> Tables { get; set; }
+        public DbSet<CalenderExclusion> CalenderExclusions { get; set; }
+        public DbSet<BookingSlot> BookingSlots { get; set; }
+        public DbSet<CustomerDetail> CustomerDetails { get; set; }
+        public DbSet<Reservation> Reservations { get; set; }
+        public DbSet<InventoryItem> InventoryItems { get; set; }
+        public DbSet<UnitOfMeasure> UnitsOfMeasure { get; set; }
+        public DbSet<Currency> Currencies { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Employee>().ToTable(nameof(Employees));
             modelBuilder.Entity<Role>().ToTable(nameof(Roles));
+            modelBuilder.Entity<CustomRole>().ToTable(nameof(CustomRoles));
             modelBuilder.Entity<Permission>().ToTable(nameof(Permissions));
             modelBuilder.Entity<Feature>().ToTable(nameof(Features));
             modelBuilder.Entity<RolePermissionMap>().ToTable(nameof(RolePermissionMaps));
+            modelBuilder.Entity<CustomRolePermissionMap>().ToTable(nameof(CustomRolePermissionMaps));
             modelBuilder.Entity<EmployeeRoleMap>().ToTable(nameof(EmployeeRoleMaps));
+            modelBuilder.Entity<ReservationSetting>().ToTable(nameof(ReservationSettings));
+            modelBuilder.Entity<ServiceHour>().ToTable(nameof(ServiceHours));
+            modelBuilder.Entity<Table>().ToTable(nameof(Tables));
+            modelBuilder.Entity<CalenderExclusion>().ToTable(nameof(CalenderExclusions));
+            modelBuilder.Entity<BookingSlot>().ToTable(nameof(BookingSlots));
+            modelBuilder.Entity<CustomerDetail>().ToTable(nameof(CustomerDetails));
+            modelBuilder.Entity<Reservation>().ToTable(nameof(Reservations));
+            modelBuilder.Entity<InventoryItem>().ToTable(nameof(InventoryItems));
+            modelBuilder.Entity<UnitOfMeasure>().ToTable(nameof(UnitsOfMeasure));
+            modelBuilder.Entity<Currency>().ToTable(nameof(Currencies));
+
 
             modelBuilder.Entity<Employee>()
                 .HasIndex(e => e.EmployeeId)
@@ -74,6 +99,18 @@ namespace AMB.Infra.DBContexts
                 .HasForeignKey(rpm => rpm.PermissionId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            modelBuilder.Entity<CustomRolePermissionMap>()
+                .HasOne(crpm => crpm.CustomRole)
+                .WithMany(cr => cr.CustomRolePermissionMaps)
+                .HasForeignKey(crpm => crpm.CustomRoleId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<CustomRolePermissionMap>()
+                .HasOne(crpm => crpm.Permission)
+                .WithMany()
+                .HasForeignKey(crpm => crpm.PermissionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             modelBuilder.Entity<EmployeeRoleMap>()
                 .HasOne(erm => erm.Employee)
                 .WithMany(e => e.EmployeeRoleMaps)
@@ -84,10 +121,73 @@ namespace AMB.Infra.DBContexts
                 .HasOne(erm => erm.Role)
                 .WithMany(r => r.EmployeeRoleMaps)
                 .HasForeignKey(erm => erm.RoleId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<EmployeeRoleMap>()
+                .HasOne(erm => erm.CustomRole)
+                .WithMany()
+                .HasForeignKey(erm => erm.CustomRoleId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Reservation relationships
+            modelBuilder.Entity<Reservation>()
+                .HasOne(r => r.CustomerDetail)
+                .WithMany()
+                .HasForeignKey(r => r.CustomerDetailId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Reservation>()
+                .HasOne(r => r.BookingSlot)
+                .WithMany()
+                .HasForeignKey(r => r.BookingSlotId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Reservation>()
+                .HasOne(r => r.Table)
+                .WithMany()
+                .HasForeignKey(r => r.TableId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Reservation configuration
+            modelBuilder.Entity<Reservation>()
+                .HasIndex(r => r.ReservationCode)
+                .IsUnique();
+
+            modelBuilder.Entity<Reservation>()
+                .Property(r => r.ReservationCode)
+                .IsRequired()
+                .HasMaxLength(50);
+
+            modelBuilder.Entity<Reservation>()
+                .Property(r => r.PartySize)
+                .IsRequired();
+
+            modelBuilder.Entity<Reservation>()
+                .Property(r => r.ReservationStatus)
+                .IsRequired();
+
+            // CustomerDetail configuration
+            modelBuilder.Entity<CustomerDetail>()
+                .Property(c => c.Name)
+                .IsRequired()
+                .HasMaxLength(200);
+
+            modelBuilder.Entity<CustomerDetail>()
+                .Property(c => c.Email)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            modelBuilder.Entity<CustomerDetail>()
+                .Property(c => c.PhoneNumber)
+                .IsRequired()
+                .HasMaxLength(20);
+
+            modelBuilder.Entity<InventoryItem>()
+                .Property(item => item.UnitPrice)
+                .HasPrecision(18, 2);
 
         }
- 
+
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             try

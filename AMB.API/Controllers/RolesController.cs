@@ -74,6 +74,29 @@ namespace AMB.API.Controllers
             }
         }
 
+        [HttpGet]
+        public async Task<ActionResult<BaseResponseDto<PaginatedResultDto<RoleDto>>>> GetAllRoles([FromQuery] RoleFilterRequestDto filter)
+        {
+            try
+            {
+                var result = await _roleService.GetAllRolesAsync(filter);
+                var response = new BaseResponseDto<PaginatedResultDto<RoleDto>>(
+                    result,
+                    "Roles retrieved successfully"
+                );
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving roles");
+                return StatusCode(500, new BaseResponseDto<PaginatedResultDto<RoleDto>>(
+                    "Failed to retrieve roles",
+                    new List<string> { "Internal server error" }
+                ));
+            }
+        }
+
         [HttpGet("permissions/grouped")]
         public async Task<ActionResult<BaseResponseDto<List<PermissionGroupDto>>>> GetPermissionsGrouped()
         {

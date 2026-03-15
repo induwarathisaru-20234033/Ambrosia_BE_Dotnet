@@ -21,6 +21,23 @@ namespace AMB.Application.Mappers
             };
         }
 
+        public static Employee ToEmployeeEntity(this UpdateEmployeeRequestDto dto)
+        {
+            if (dto == null) return null;
+
+            return new Employee
+            {
+                Id = dto.Id,
+                EmployeeId = dto.EmployeeId,
+                FirstName = dto.FirstName,
+                LastName = dto.LastName,
+                Email = dto.Email,
+                Username = dto.Username,
+                MobileNumber = dto.MobileNumber,
+                Address = dto.Address,
+            };
+        }
+
         public static EmployeeDto ToEmployeeDto(this Employee entity)
         {
             if (entity == null) return null;
@@ -35,6 +52,7 @@ namespace AMB.Application.Mappers
                 Username = entity.Username,
                 MobileNumber = entity.MobileNumber,
                 Address = entity.Address,
+                Status = entity.Status,
                 CreatedDate = entity.CreatedDate,
             };
         }

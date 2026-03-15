@@ -1,18 +1,21 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
+using Microsoft.EntityFrameworkCore;
 
 namespace AMB.Domain.Entities
 {
-    public class Table : BaseEntity
+    // Table
+    [Index(nameof(TableName), IsUnique = true)]
+    public class Table: BaseEntity
     {
-        [StringLength(10)]
-        public string TableNumber { get; set; } = string.Empty;
+        // Unique name for the table
+        [Required]
+        public string TableName { get; set; }
 
+        // Max seating capacity 
+        [Range(1, int.MaxValue)]
         public int Capacity { get; set; }
 
-        [StringLength(20)]
-        public string Status { get; set; } = "Available"; // "Available", "Occupied", "PendingClean", "Reserved".
-
-        // Navigation properties
-        public List<Order> Orders { get; set; } = new();
+        // Status for customer facing availability
+        public bool IsOnlineBookingEnabled { get; set; }
     }
 }
