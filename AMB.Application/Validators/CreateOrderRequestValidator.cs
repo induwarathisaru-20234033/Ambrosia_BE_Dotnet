@@ -64,8 +64,14 @@ namespace AMB.Application.Validators
             var menuItemRepository = scope.ServiceProvider.GetRequiredService<IMenuItemRepository>();
             var menuItem = await menuItemRepository.GetByIdAsync(item.MenuItemId);
 
-            // Check if menu item exists, is active (Status = 1), and is available for ordering
-            return menuItem != null && menuItem.Status == 1 && menuItem.IsAvailable;
+            // For fired orders, check availability
+            if (!order.IsDraft)
+            {
+                return menuItem != null && menuItem.IsAvailable;
+            }
+
+            // For draft orders, just check existence
+            return menuItem != null;
         }
 
         private bool HaveUniqueMenuItems(List<OrderItemDto> items)

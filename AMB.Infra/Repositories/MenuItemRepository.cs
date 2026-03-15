@@ -17,20 +17,20 @@ namespace AMB.Infra.Repositories
         public async Task<MenuItem?> GetByIdAsync(int id)
         {
             return await _context.MenuItems
-                .FirstOrDefaultAsync(m => m.Id == id && m.Status == 1);
+                .FirstOrDefaultAsync(m => m.Id == id); 
         }
 
         public async Task<List<MenuItem>> GetByIdsAsync(List<int> ids)
         {
             return await _context.MenuItems
-                .Where(m => ids.Contains(m.Id) && m.Status == 1)
+                .Where(m => ids.Contains(m.Id)) 
                 .ToListAsync();
         }
 
         public async Task<List<MenuItem>> GetByCategoryAsync(string category)
         {
             return await _context.MenuItems
-                .Where(m => m.Category == category && m.IsAvailable && m.Status == 1)
+                .Where(m => m.Category == category && m.IsAvailable) 
                 .OrderBy(m => m.Name)
                 .ToListAsync();
         }
@@ -38,18 +38,17 @@ namespace AMB.Infra.Repositories
         public IQueryable<MenuItem> GetQuery()
         {
             return _context.MenuItems
-                .Where(m => m.Status == 1)
-                .AsQueryable();
+                .AsQueryable(); 
         }
 
         public async Task<bool> CheckAvailabilityAsync(int menuItemId)
         {
             var menuItem = await _context.MenuItems
                 .Where(m => m.Id == menuItemId)
-                .Select(m => new { m.IsAvailable, m.Status })
+                .Select(m => m.IsAvailable) 
                 .FirstOrDefaultAsync();
 
-            return menuItem != null && menuItem.Status == 1 && menuItem.IsAvailable;
+            return menuItem; 
         }
     }
 }

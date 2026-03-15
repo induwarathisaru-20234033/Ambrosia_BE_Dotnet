@@ -36,15 +36,15 @@ namespace AMB.Application.Services
             var menuItemIds = request.Items.Select(i => i.MenuItemId).ToList();
             var menuItems = await _menuItemRepository.GetByIdsAsync(menuItemIds);
 
-            // Check if all items exist and are active
+            // Check if all items exist
             if (menuItems.Count != menuItemIds.Count)
             {
                 var foundIds = menuItems.Select(m => m.Id).ToList();
                 var missingIds = menuItemIds.Except(foundIds).ToList();
-                throw new InvalidOperationException($"Menu items not found or inactive: {string.Join(", ", missingIds)}");
+                throw new InvalidOperationException($"Menu items not found: {string.Join(", ", missingIds)}");
             }
 
-            // Check availability if firing order
+            // Check availability
             if (!request.IsDraft)
             {
                 var unavailableItems = menuItems.Where(m => !m.IsAvailable).ToList();
@@ -58,14 +58,13 @@ namespace AMB.Application.Services
             // Generate order number
             var orderNumber = await _orderRepository.GenerateOrderNumberAsync();
 
-            // Create order entity - BaseEntity fields (Status, CreatedDate, etc.) will be set in DbContext
+            // Create order entity
             var order = new Order
             {
                 OrderNumber = orderNumber,
                 TableId = request.TableId,
                 OrderStatus = request.IsDraft ? "Draft" : "Sent",
                 SentToKitchenAt = request.IsDraft ? null : DateTime.UtcNow,
-                // Status = 1 (Active) - will be set in DbContext SaveChangesAsync
                 OrderItems = request.Items.Select(item =>
                 {
                     var menuItem = menuItems.First(m => m.Id == item.MenuItemId);
@@ -75,7 +74,6 @@ namespace AMB.Application.Services
                         SpecialInstructions = item.SpecialInstructions,
                         Quantity = item.Quantity,
                         UnitPrice = menuItem.Price,
-                        // Status = 1 (Active) - will be set in DbContext
                     };
                 }).ToList()
             };
