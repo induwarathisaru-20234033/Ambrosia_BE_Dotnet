@@ -14,6 +14,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using AMB.Application.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -127,6 +128,9 @@ builder.Services.AddCors(options =>
         policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
     });
 });
+
+builder.Services.AddScoped<IMenuRepository, MenuRepository>();
+builder.Services.AddScoped<IMenuService, MenuService>();
 
 var app = builder.Build();
 

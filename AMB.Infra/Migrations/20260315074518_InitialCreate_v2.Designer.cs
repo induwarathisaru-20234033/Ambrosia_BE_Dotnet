@@ -4,6 +4,7 @@ using AMB.Infra.DBContexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AMB.Infra.Migrations
 {
     [DbContext(typeof(AMBContext))]
-    partial class AMBContextModelSnapshot : ModelSnapshot
+    [Migration("20260315074518_InitialCreate_v2")]
+    partial class InitialCreate_v2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,59 +24,6 @@ namespace AMB.Infra.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("AMB.Domain.Entities.BookingSlot", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTimeOffset>("CreatedDate")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<int>("Day")
-                        .HasColumnType("int");
-
-                    b.Property<string>("DeletedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTimeOffset?>("DeletedDate")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<TimeOnly>("EndTime")
-                        .HasColumnType("time");
-
-                    b.Property<int?>("ShiftId")
-                        .HasColumnType("int");
-
-                    b.Property<Guid>("SlotId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<TimeOnly>("StartTime")
-                        .HasColumnType("time");
-
-                    b.Property<int>("Status")
-                        .IsConcurrencyToken()
-                        .HasColumnType("int");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTimeOffset?>("UpdatedDate")
-                        .HasColumnType("datetimeoffset");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ShiftId");
-
-                    b.ToTable("BookingSlots", (string)null);
-                });
 
             modelBuilder.Entity("AMB.Domain.Entities.CalenderExclusion", b =>
                 {
@@ -116,50 +66,6 @@ namespace AMB.Infra.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("CalenderExclusions", (string)null);
-                });
-
-            modelBuilder.Entity("AMB.Domain.Entities.Currency", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTimeOffset>("CreatedDate")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("CurrencyCode")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("DeletedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTimeOffset?>("DeletedDate")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Status")
-                        .IsConcurrencyToken()
-                        .HasColumnType("int");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTimeOffset?>("UpdatedDate")
-                        .HasColumnType("datetimeoffset");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Currencies", (string)null);
                 });
 
             modelBuilder.Entity("AMB.Domain.Entities.CustomRole", b =>
@@ -254,57 +160,6 @@ namespace AMB.Infra.Migrations
                     b.HasIndex("PermissionId");
 
                     b.ToTable("CustomRolePermissionMaps", (string)null);
-                });
-
-            modelBuilder.Entity("AMB.Domain.Entities.CustomerDetail", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTimeOffset>("CreatedDate")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("DeletedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTimeOffset?>("DeletedDate")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("PhoneNumber")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<int>("Status")
-                        .IsConcurrencyToken()
-                        .HasColumnType("int");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTimeOffset?>("UpdatedDate")
-                        .HasColumnType("datetimeoffset");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("CustomerDetails", (string)null);
                 });
 
             modelBuilder.Entity("AMB.Domain.Entities.Employee", b =>
@@ -495,11 +350,7 @@ namespace AMB.Infra.Migrations
                     b.ToTable("Features", (string)null);
                 });
 
-
             modelBuilder.Entity("AMB.Domain.Entities.MenuItem", b =>
-
-            modelBuilder.Entity("AMB.Domain.Entities.InventoryItem", b =>
-
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -507,11 +358,9 @@ namespace AMB.Infra.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-
                     b.Property<string>("Category")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
 
                     b.Property<string>("CreatedBy")
                         .IsRequired()
@@ -520,17 +369,11 @@ namespace AMB.Infra.Migrations
                     b.Property<DateTimeOffset>("CreatedDate")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<string>("Currency")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-
                     b.Property<string>("DeletedBy")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTimeOffset?>("DeletedDate")
                         .HasColumnType("datetimeoffset");
-
 
                     b.Property<bool>("IsAvailable")
                         .HasColumnType("bit");
@@ -542,76 +385,10 @@ namespace AMB.Infra.Migrations
                     b.Property<decimal>("Price")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
-                    b.Property<DateTimeOffset>("ExpiryDate")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<int>("InventoryStatus")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ItemCategory")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ItemName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ItemNumber")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ItemType")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<float>("MaximumStockLevel")
-                        .HasColumnType("real");
-
-                    b.Property<float>("MinimumStockLevel")
-                        .HasColumnType("real");
-
-                    b.Property<float>("OpeningQuantity")
-                        .HasColumnType("real");
-
-                    b.Property<float>("ReOrderLevel")
-                        .HasColumnType("real");
-
-                    b.Property<float>("RemainingQuantity")
-                        .HasColumnType("real");
-
-                    b.Property<string>("Remarks")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<float>("ShelveLife")
-                        .HasColumnType("real");
-
-                    b.Property<string>("Sku")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
 
                     b.Property<int>("Status")
                         .IsConcurrencyToken()
                         .HasColumnType("int");
-
-
-                    b.Property<string>("StorageConditions")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("StorageLocation")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal>("UnitPrice")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("UoM")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
 
                     b.Property<string>("UpdatedBy")
                         .HasColumnType("nvarchar(max)");
@@ -621,12 +398,8 @@ namespace AMB.Infra.Migrations
 
                     b.HasKey("Id");
 
-
                     b.ToTable("MenuItems", (string)null);
-
-                    b.ToTable("InventoryItems", (string)null);
-
-                }));
+                });
 
             modelBuilder.Entity("AMB.Domain.Entities.Permission", b =>
                 {
@@ -677,89 +450,6 @@ namespace AMB.Infra.Migrations
                     b.HasIndex("FeatureId");
 
                     b.ToTable("Permissions", (string)null);
-                });
-
-            modelBuilder.Entity("AMB.Domain.Entities.Reservation", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTimeOffset?>("ArrivedAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<int>("BookingSlotId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTimeOffset?>("CancelledAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTimeOffset>("CreatedDate")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<int>("CustomerDetailId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("DeletedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTimeOffset?>("DeletedDate")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<DateTimeOffset?>("NoShowMarkedAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("Occasion")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("PartySize")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ReservationCode")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<DateTimeOffset>("ReservationDate")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<int>("ReservationStatus")
-                        .HasColumnType("int");
-
-                    b.Property<string>("SpecialRequests")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Status")
-                        .IsConcurrencyToken()
-                        .HasColumnType("int");
-
-                    b.Property<int>("TableId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTimeOffset?>("UpdatedDate")
-                        .HasColumnType("datetimeoffset");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BookingSlotId");
-
-                    b.HasIndex("CustomerDetailId");
-
-                    b.HasIndex("ReservationCode")
-                        .IsUnique();
-
-                    b.HasIndex("TableId");
-
-                    b.ToTable("Reservations", (string)null);
                 });
 
             modelBuilder.Entity("AMB.Domain.Entities.ReservationSetting", b =>
@@ -1001,59 +691,6 @@ namespace AMB.Infra.Migrations
                     b.ToTable("Tables", (string)null);
                 });
 
-            modelBuilder.Entity("AMB.Domain.Entities.UnitOfMeasure", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTimeOffset>("CreatedDate")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("DeletedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTimeOffset?>("DeletedDate")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Status")
-                        .IsConcurrencyToken()
-                        .HasColumnType("int");
-
-                    b.Property<string>("UoM")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTimeOffset?>("UpdatedDate")
-                        .HasColumnType("datetimeoffset");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("UnitsOfMeasure", (string)null);
-                });
-
-            modelBuilder.Entity("AMB.Domain.Entities.BookingSlot", b =>
-                {
-                    b.HasOne("AMB.Domain.Entities.ServiceHour", "Shift")
-                        .WithMany()
-                        .HasForeignKey("ShiftId");
-
-                    b.Navigation("Shift");
-                });
-
             modelBuilder.Entity("AMB.Domain.Entities.CustomRolePermissionMap", b =>
                 {
                     b.HasOne("AMB.Domain.Entities.CustomRole", "CustomRole")
@@ -1107,33 +744,6 @@ namespace AMB.Infra.Migrations
                         .IsRequired();
 
                     b.Navigation("Feature");
-                });
-
-            modelBuilder.Entity("AMB.Domain.Entities.Reservation", b =>
-                {
-                    b.HasOne("AMB.Domain.Entities.BookingSlot", "BookingSlot")
-                        .WithMany()
-                        .HasForeignKey("BookingSlotId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("AMB.Domain.Entities.CustomerDetail", "CustomerDetail")
-                        .WithMany()
-                        .HasForeignKey("CustomerDetailId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("AMB.Domain.Entities.Table", "Table")
-                        .WithMany()
-                        .HasForeignKey("TableId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("BookingSlot");
-
-                    b.Navigation("CustomerDetail");
-
-                    b.Navigation("Table");
                 });
 
             modelBuilder.Entity("AMB.Domain.Entities.RolePermissionMap", b =>
