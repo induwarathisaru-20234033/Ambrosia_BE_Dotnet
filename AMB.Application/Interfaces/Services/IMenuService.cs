@@ -4,7 +4,7 @@ namespace AMB.Application.Interfaces.Services
 {
     public interface IMenuService
     {
-        Task AddMenuItem(MenuItemDto menuItemDto);
+        Task<MenuItemDto> AddMenuItem(CreateMenuItemDto dto);
 
         Task<List<MenuItemDto>> GetMenuItems(
             string? category,
