@@ -91,6 +91,11 @@ builder.Services.AddScoped<IInventoryItemService, InventoryItemService>();
 
 builder.Services.AddValidatorsFromAssemblyContaining<CreateEmployeeValidator>();
 
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IOrderService, OrderService>();
+
+builder.Services.AddScoped<IMenuItemRepository, MenuItemRepository>();
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
