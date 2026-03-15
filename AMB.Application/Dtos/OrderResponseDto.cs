@@ -6,8 +6,9 @@
         public string OrderNumber { get; set; } = string.Empty;
         public int? TableId { get; set; }
         public string? TableName { get; set; }
-        public string OrderStatus { get; set; } = "Draft"; // "Draft", "Sent to KDS", "Preparing", "On Hold", "Ready", "Served", "Cancelled".
+        public string OrderStatus { get; set; } = string.Empty;
         public DateTimeOffset CreatedDate { get; set; }
+        public DateTimeOffset? UpdatedDate { get; set; }
         public List<OrderItemResponseDto> Items { get; set; } = new();
     }
 
@@ -21,5 +22,6 @@
         public decimal UnitPrice { get; set; }
         public decimal SubTotal => Quantity * UnitPrice;
         public bool IsAvailable { get; set; }
+        public DateTimeOffset CreatedDate { get; set; }
     }
 }
