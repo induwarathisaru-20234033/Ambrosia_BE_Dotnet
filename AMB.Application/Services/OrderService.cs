@@ -63,7 +63,7 @@ namespace AMB.Application.Services
             {
                 OrderNumber = orderNumber,
                 TableId = request.TableId,
-                OrderStatus = request.IsDraft ? "Draft" : "Sent",
+                OrderStatus = request.IsDraft ? "Draft" : "Sent to KDS",
                 SentToKitchenAt = request.IsDraft ? null : DateTime.UtcNow,
                 Status = 1, 
                 OrderItems = request.Items.Select(item =>

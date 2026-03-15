@@ -29,7 +29,7 @@ namespace AMB.API.Controllers
                 result,
                 result.OrderStatus == "Draft"
                     ? "Order saved as draft successfully"
-                    : "Order sent to kitchen successfully"
+                    : "Order sent to KDS successfully"
             );
 
             return Ok(response);
