@@ -29,12 +29,18 @@ namespace AMB.Infra.DBContexts
         public DbSet<ServiceHour> ServiceHours { get; set; }
         public DbSet<Table> Tables { get; set; }
         public DbSet<CalenderExclusion> CalenderExclusions { get; set; }
+
+        // Menu Item
+        public DbSet<MenuItem> MenuItems { get; set; }
+
+        //Reservation Entities
         public DbSet<BookingSlot> BookingSlots { get; set; }
         public DbSet<CustomerDetail> CustomerDetails { get; set; }
         public DbSet<Reservation> Reservations { get; set; }
         public DbSet<InventoryItem> InventoryItems { get; set; }
         public DbSet<UnitOfMeasure> UnitsOfMeasure { get; set; }
         public DbSet<Currency> Currencies { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -50,6 +56,9 @@ namespace AMB.Infra.DBContexts
             modelBuilder.Entity<ServiceHour>().ToTable(nameof(ServiceHours));
             modelBuilder.Entity<Table>().ToTable(nameof(Tables));
             modelBuilder.Entity<CalenderExclusion>().ToTable(nameof(CalenderExclusions));
+
+            modelBuilder.Entity<MenuItem>().ToTable(nameof(MenuItems));
+
             modelBuilder.Entity<BookingSlot>().ToTable(nameof(BookingSlots));
             modelBuilder.Entity<CustomerDetail>().ToTable(nameof(CustomerDetails));
             modelBuilder.Entity<Reservation>().ToTable(nameof(Reservations));
@@ -128,6 +137,11 @@ namespace AMB.Infra.DBContexts
                 .WithMany()
                 .HasForeignKey(erm => erm.CustomRoleId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+
+            modelBuilder.Entity<MenuItem>()
+                .Property(m => m.Price)
+                .HasPrecision(18, 2); // precision 18, scale 2
 
             // Reservation relationships
             modelBuilder.Entity<Reservation>()
