@@ -35,21 +35,6 @@ namespace AMB.API.Controllers
             return Ok(response);
         }
 
-
-        // Get menu items by category (Food/Drinks) 
-        [HttpGet("menu-items/category/{category}")]
-        public async Task<ActionResult<BaseResponseDto<List<MenuItemDto>>>> GetMenuItemsByCategory(string category)
-        {
-            var result = await _orderService.GetMenuItemsByCategoryAsync(category);
-
-            var response = new BaseResponseDto<List<MenuItemDto>>(
-                result,
-                "Menu items retrieved successfully"
-            );
-
-            return Ok(response);
-        }
-
         // Search menu items by name 
         [HttpGet("menu-items/search")]
         public async Task<ActionResult<BaseResponseDto<List<MenuItemDto>>>> SearchMenuItems([FromQuery] string term)

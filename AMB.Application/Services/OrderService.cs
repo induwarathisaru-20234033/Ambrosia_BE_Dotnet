@@ -44,7 +44,7 @@ namespace AMB.Application.Services
                 throw new InvalidOperationException($"Menu items not found: {string.Join(", ", missingIds)}");
             }
 
-            // Check availability
+            // Check availability for fired orders
             if (!request.IsDraft)
             {
                 var unavailableItems = menuItems.Where(m => !m.IsAvailable).ToList();
@@ -58,13 +58,14 @@ namespace AMB.Application.Services
             // Generate order number
             var orderNumber = await _orderRepository.GenerateOrderNumberAsync();
 
-            // Create order entity
+            // Create order entity 
             var order = new Order
             {
                 OrderNumber = orderNumber,
                 TableId = request.TableId,
                 OrderStatus = request.IsDraft ? "Draft" : "Sent",
                 SentToKitchenAt = request.IsDraft ? null : DateTime.UtcNow,
+                Status = 1, 
                 OrderItems = request.Items.Select(item =>
                 {
                     var menuItem = menuItems.First(m => m.Id == item.MenuItemId);
@@ -74,6 +75,7 @@ namespace AMB.Application.Services
                         SpecialInstructions = item.SpecialInstructions,
                         Quantity = item.Quantity,
                         UnitPrice = menuItem.Price,
+                        Status = 1, 
                     };
                 }).ToList()
             };
@@ -81,7 +83,7 @@ namespace AMB.Application.Services
             // Save to database
             var createdOrder = await _orderRepository.AddAsync(order);
 
-            // Return response
+            // Return response with complete data
             return await GetOrderByIdAsync(createdOrder.Id);
         }
 
@@ -125,19 +127,6 @@ namespace AMB.Application.Services
             };
         }
 
-        public async Task<List<MenuItemDto>> GetMenuItemsByCategoryAsync(string category)
-        {
-            var menuItems = await _menuItemRepository.GetByCategoryAsync(category);
-
-            return menuItems.Select(m => new MenuItemDto
-            {
-                Id = m.Id,
-                Name = m.Name,
-                Price = m.Price,
-                Category = m.Category,
-                IsAvailable = m.IsAvailable
-            }).ToList();
-        }
 
         public async Task<List<MenuItemDto>> SearchMenuItemsAsync(string searchTerm)
         {
