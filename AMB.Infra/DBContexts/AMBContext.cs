@@ -228,7 +228,7 @@ namespace AMB.Infra.DBContexts
                 .HasPrecision(18, 2);
         }
 
-        }
+        
 
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
