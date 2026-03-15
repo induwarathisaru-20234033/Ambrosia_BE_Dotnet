@@ -6,7 +6,9 @@ namespace AMB.Application.Interfaces.Services
     {
         Task<OrderResponseDto> CreateOrderAsync(CreateOrderRequestDto request);
         Task<OrderResponseDto> GetOrderByIdAsync(int id);
-        Task<List<MenuItemDto>> SearchMenuItemsAsync(string searchTerm);
         Task<OrderResponseDto> SendDraftToKdsAsync(SendOrderToKdsDto dto);
+        Task<OrderResponseDto> UpdateOrderStatusAsync(UpdateOrderStatusDto dto);
+        Task<List<OrderResponseDto>> GetOrdersByStatusAsync(string status);
+        Task<List<OrderResponseDto>> GetKitchenOrdersAsync();
     }
 }

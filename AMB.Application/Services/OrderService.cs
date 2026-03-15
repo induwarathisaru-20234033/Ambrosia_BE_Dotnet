@@ -127,29 +127,6 @@ namespace AMB.Application.Services
             };
         }
 
-
-        public async Task<List<MenuItemDto>> SearchMenuItemsAsync(string searchTerm)
-        {
-            if (string.IsNullOrWhiteSpace(searchTerm))
-                return new List<MenuItemDto>();
-
-            var query = _menuItemRepository.GetQuery()
-                .Where(m => m.Name.Contains(searchTerm) && m.IsAvailable)
-                .OrderBy(m => m.Name)
-                .Take(20);
-
-            var menuItems = await Task.Run(() => query.ToList());
-
-            return menuItems.Select(m => new MenuItemDto
-            {
-                Id = m.Id,
-                Name = m.Name,
-                Price = m.Price,
-                Category = m.Category,
-                IsAvailable = m.IsAvailable
-            }).ToList();
-        }
-
         public async Task<OrderResponseDto> SendDraftToKdsAsync(SendOrderToKdsDto dto)
         {
             // Validate
@@ -175,6 +152,63 @@ namespace AMB.Application.Services
 
             // Return updated order
             return await GetOrderByIdAsync(dto.OrderId);
+        }
+        public async Task<OrderResponseDto> UpdateOrderStatusAsync(UpdateOrderStatusDto dto)
+        {
+            // Validate
+            var validator = _serviceProvider.GetRequiredService<IValidator<UpdateOrderStatusDto>>();
+            await validator.ValidateAndThrowAsync(dto);
+
+            // Update status
+            var updated = await _orderRepository.UpdateOrderStatusAsync(dto.OrderId, dto.Status, dto.Reason);
+            if (!updated)
+            {
+                throw new InvalidOperationException($"Failed to update order status");
+            }
+
+            // Return updated order
+            return await GetOrderByIdAsync(dto.OrderId);
+        }
+
+        public async Task<List<OrderResponseDto>> GetOrdersByStatusAsync(string status)
+        {
+            var orders = await _orderRepository.GetOrdersByStatusAsync(status);
+
+            return orders.Select(o => MapToOrderResponseDto(o)).ToList();
+        }
+
+        public async Task<List<OrderResponseDto>> GetKitchenOrdersAsync()
+        {
+            var orders = await _orderRepository.GetKitchenOrdersAsync();
+
+            return orders.Select(o => MapToOrderResponseDto(o)).ToList();
+        }
+
+        private OrderResponseDto MapToOrderResponseDto(Order order)
+        {
+            return new OrderResponseDto
+            {
+                Id = order.Id,
+                OrderNumber = order.OrderNumber,
+                TableId = order.TableId,
+                TableName = order.Table?.TableName,
+                OrderStatus = order.OrderStatus,
+                CreatedDate = order.CreatedDate,
+                UpdatedDate = order.UpdatedDate,
+                Items = order.OrderItems?
+                    .Where(oi => oi.Status == 1)
+                    .Select(oi => new OrderItemResponseDto
+                    {
+                        Id = oi.Id,
+                        MenuItemId = oi.MenuItemId,
+                        MenuItemName = oi.MenuItem?.Name ?? string.Empty,
+                        SpecialInstructions = oi.SpecialInstructions,
+                        Quantity = oi.Quantity,
+                        UnitPrice = oi.UnitPrice,
+                        IsAvailable = oi.MenuItem?.IsAvailable ?? false,
+                        CreatedDate = oi.CreatedDate
+                    }).ToList() ?? new()
+            };
         }
     }
 }
