@@ -16,19 +16,19 @@ namespace AMB.API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddMenuItem(MenuItemDto dto)
+        public async Task<IActionResult> AddMenuItem([FromBody] CreateMenuItemDto dto)
         {
-            await _menuService.AddMenuItem(dto);
+            var createdItem = await _menuService.AddMenuItem(dto);
 
-            return Ok("Menu item added");
+            return CreatedAtAction(nameof(GetMenuItems), new { id = createdItem.Id }, createdItem);
         }
 
         [HttpGet]
         public async Task<IActionResult> GetMenuItems(
-                [FromQuery] string? category,
-                [FromQuery] string? name,
-                [FromQuery] bool? isAvailable
-            )
+            [FromQuery] string? category,
+            [FromQuery] string? name,
+            [FromQuery] bool? isAvailable
+        )
         {
             var items = await _menuService.GetMenuItems(category, name, isAvailable);
 
