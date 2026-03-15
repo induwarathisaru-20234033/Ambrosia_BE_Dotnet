@@ -3,6 +3,7 @@ using AMB.Application.Interfaces.Repositories;
 using AMB.Application.Interfaces.Services;
 using AMB.Application.Mappers;
 using AMB.Domain.Enums;
+using Microsoft.EntityFrameworkCore;
 
 namespace AMB.Application.Services
 {
@@ -55,6 +56,79 @@ namespace AMB.Application.Services
             }
 
             return updated.ToPurchaseRequestDto();
+        }
+
+        public async Task<PaginatedResultDto<PurchaseRequestDto>> GetPurchaseRequestsPagedAsync(PurchaseRequestFilterRequestDto request)
+        {
+            var query = _purchaseRequestRepositoy.GetSearchQuery();
+
+            if (!string.IsNullOrWhiteSpace(request.PurchaseRequestCode))
+            {
+                query = query.Where(pr => pr.PurchaseRequestCode.Contains(request.PurchaseRequestCode));
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.Supplier))
+            {
+                query = query.Where(pr => pr.Supplier.Contains(request.Supplier));
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.RequestedBy))
+            {
+                query = query.Where(pr => pr.RequestedBy.Contains(request.RequestedBy));
+            }
+
+            if (request.PurchaseRequestStatus.HasValue)
+            {
+                query = query.Where(pr => pr.PurchaseRequestStatus == request.PurchaseRequestStatus.Value);
+            }
+
+            var totalItemCount = await query.CountAsync();
+
+            var pageCount = request.PageSize == 0
+                ? 0
+                : (int)Math.Ceiling(totalItemCount / (double)request.PageSize);
+
+            if (request.PageSize > 0)
+            {
+                query = query
+                    .OrderByDescending(pr => pr.CreatedDate)
+                    .Skip((request.PageNumber - 1) * request.PageSize)
+                    .Take(request.PageSize);
+            }
+
+            var purchaseRequests = await query.ToListAsync();
+
+            var creatorUsernames = purchaseRequests
+                .Select(pr => pr.CreatedBy)
+                .Where(createdBy => !string.IsNullOrWhiteSpace(createdBy))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            var creatorNames = await _purchaseRequestRepositoy.GetCreatorNamesByUsernamesAsync(creatorUsernames);
+
+            var items = purchaseRequests
+                .Select(pr =>
+                {
+                    var dto = pr.ToPurchaseRequestDto();
+                    if (!string.IsNullOrWhiteSpace(pr.CreatedBy)
+                        && creatorNames.TryGetValue(pr.CreatedBy, out var creatorName)
+                        && !string.IsNullOrWhiteSpace(creatorName))
+                    {
+                        dto.CreatedBy = creatorName;
+                    }
+
+                    return dto;
+                })
+                .ToList();
+
+            return new PaginatedResultDto<PurchaseRequestDto>
+            {
+                PageCount = pageCount,
+                PageSize = request.PageSize,
+                PageNumber = request.PageNumber,
+                TotalItemCount = totalItemCount,
+                Items = items,
+            };
         }
 
         public async Task<PurchaseRequestDto> ApprovePurchaseRequestAsync(int id)

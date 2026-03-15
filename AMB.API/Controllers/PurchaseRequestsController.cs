@@ -25,6 +25,26 @@ namespace AMB.API.Controllers
             return Ok(response);
         }
 
+        [HttpGet]
+        public async Task<ActionResult<BaseResponseDto<PaginatedResultDto<PurchaseRequestDto>>>> GetPaginated([FromQuery] PurchaseRequestFilterRequestDto request)
+        {
+            if (request.PageNumber < 1)
+            {
+                var errorResponse = new BaseResponseDto<PaginatedResultDto<PurchaseRequestDto>>(
+                    "Invalid pagination parameters.",
+                    new List<string> { "pageNumber must be greater than zero." });
+
+                return BadRequest(errorResponse);
+            }
+
+            var result = await _purchaseRequestService.GetPurchaseRequestsPagedAsync(request);
+            var response = new BaseResponseDto<PaginatedResultDto<PurchaseRequestDto>>(
+                result,
+                "Purchase requests retrieved successfully!");
+
+            return Ok(response);
+        }
+
         [HttpPatch("{id:int}")]
         public async Task<ActionResult<BaseResponseDto<PurchaseRequestDto>>> Update(int id, [FromBody] UpdatePurchaseRequestDto request)
         {

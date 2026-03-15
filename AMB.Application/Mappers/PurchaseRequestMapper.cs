@@ -34,6 +34,8 @@ namespace AMB.Application.Mappers
             {
                 Id = entity.Id,
                 PurchaseRequestCode = entity.PurchaseRequestCode,
+                CreatedDate = entity.CreatedDate,
+                CreatedBy = entity.CreatedBy,
                 Description = entity.Description,
                 Supplier = entity.Supplier,
                 RequestedBy = entity.RequestedBy,

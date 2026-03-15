@@ -4,6 +4,8 @@ namespace AMB.Application.Dtos
     {
         public int Id { get; set; }
         public string PurchaseRequestCode { get; set; } = string.Empty;
+        public DateTimeOffset CreatedDate { get; set; }
+        public string CreatedBy { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public string Supplier { get; set; } = string.Empty;
         public string RequestedBy { get; set; } = string.Empty;
