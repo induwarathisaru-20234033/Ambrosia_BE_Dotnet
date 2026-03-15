@@ -119,6 +119,10 @@ namespace AMB.Infra.DBContexts
                 .HasForeignKey(erm => erm.CustomRoleId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<MenuItem>()
+                .Property(m => m.Price)
+                .HasPrecision(18, 2); // precision 18, scale 2
+
         }
 
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
