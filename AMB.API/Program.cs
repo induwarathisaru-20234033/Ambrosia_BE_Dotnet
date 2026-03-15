@@ -123,6 +123,7 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddScoped<IMenuRepository, MenuRepository>();
 builder.Services.AddScoped<IMenuService, MenuService>();
 
 var app = builder.Build();
