@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using AMB.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace AMB.Domain.Entities
@@ -11,7 +12,7 @@ namespace AMB.Domain.Entities
 
         public int? TableId { get; set; }
 
-        public int OrderStatus { get; set; } = (int)OrderStatus.Draft;
+        public int OrderStatus { get; set; } = (int)AMB.Domain.Enums.OrderStatus.Draft;
 
         public DateTimeOffset? SentToKitchenAt { get; set; }
 

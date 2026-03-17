@@ -2,6 +2,7 @@
 using AMB.Application.Interfaces.Repositories;
 using AMB.Application.Interfaces.Services;
 using AMB.Domain.Entities;
+using AMB.Domain.Enums;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -63,7 +64,7 @@ namespace AMB.Application.Services
             {
                 OrderNumber = orderNumber,
                 TableId = request.TableId,
-                OrderStatus = request.IsDraft ? "Draft" : "Sent to KDS",
+                OrderStatus = request.IsDraft ? (int)OrderStatus.Draft : (int)OrderStatus.SentToKDS,
                 SentToKitchenAt = request.IsDraft ? null : DateTime.UtcNow,
                 Status = 1, 
                 OrderItems = request.Items.Select(item =>
@@ -108,7 +109,7 @@ namespace AMB.Application.Services
                 OrderNumber = order.OrderNumber,
                 TableId = order.TableId,
                 TableName = order.Table?.TableName,
-                OrderStatus = order.OrderStatus,
+                OrderStatus = (OrderStatus)order.OrderStatus,
                 CreatedDate = order.CreatedDate,
                 UpdatedDate = order.UpdatedDate,
                 Items = order.OrderItems?
@@ -170,10 +171,9 @@ namespace AMB.Application.Services
             return await GetOrderByIdAsync(dto.OrderId);
         }
 
-        public async Task<List<OrderResponseDto>> GetOrdersByStatusAsync(string status)
+        public async Task<List<OrderResponseDto>> GetOrdersByStatusAsync(OrderStatus status)
         {
             var orders = await _orderRepository.GetOrdersByStatusAsync(status);
-
             return orders.Select(o => MapToOrderResponseDto(o)).ToList();
         }
 
@@ -192,7 +192,7 @@ namespace AMB.Application.Services
                 OrderNumber = order.OrderNumber,
                 TableId = order.TableId,
                 TableName = order.Table?.TableName,
-                OrderStatus = order.OrderStatus,
+                OrderStatus = (OrderStatus)order.OrderStatus,
                 CreatedDate = order.CreatedDate,
                 UpdatedDate = order.UpdatedDate,
                 Items = order.OrderItems?
