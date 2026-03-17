@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AMB.Infra.Migrations
 {
     [DbContext(typeof(AMBContext))]
-    [Migration("20260317151801_AddOrderTables_V3")]
-    partial class AddOrderTables_V3
+    [Migration("20260317153135_AddOrderTables_Final")]
+    partial class AddOrderTables_Final
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
