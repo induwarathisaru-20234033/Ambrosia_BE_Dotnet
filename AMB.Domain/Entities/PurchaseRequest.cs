@@ -16,5 +16,7 @@ namespace AMB.Domain.Entities
         public bool IsUrgent { get; set; }
         public int PurchaseRequestStatus { get; set; }
         public virtual ICollection<PurchaseRequestItem> PRItems { get; set; } = new List<PurchaseRequestItem>();
+        public string ReviewedBy { get; set; } = string.Empty;
+        public DateTimeOffset ReviewedDate { get; set; }
     }
 }
