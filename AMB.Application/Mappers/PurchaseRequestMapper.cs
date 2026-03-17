@@ -42,6 +42,8 @@ namespace AMB.Application.Mappers
                 RequestedDeliveryDate = entity.RequestedDeliveryDate,
                 IsUrgent = entity.IsUrgent,
                 PurchaseRequestStatus = entity.PurchaseRequestStatus,
+                ReviewedBy = entity.ReviewedBy,
+                ReviewedDate = entity.ReviewedDate,
                 PRItems = entity.PRItems.Select(item => new PurchaseRequestItemDto
                 {
                     Id = item.Id,
@@ -49,6 +51,7 @@ namespace AMB.Application.Mappers
                     RequestedQuantity = item.RequestedQuantity,
                     Price = item.Price,
                     InventoryItemId = item.InventoryItemId,
+                    InventoryItem = item.InventoryItem?.ToInventoryItemDto(),
                 }).ToList(),
             };
         }
