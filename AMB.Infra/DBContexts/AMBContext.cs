@@ -40,6 +40,8 @@ namespace AMB.Infra.DBContexts
         public DbSet<InventoryItem> InventoryItems { get; set; }
         public DbSet<UnitOfMeasure> UnitsOfMeasure { get; set; }
         public DbSet<Currency> Currencies { get; set; }
+        public DbSet<PurchaseRequest> PurchaseRequests { get; set; }
+        public DbSet<PurchaseRequestItem> PurchaseRequestItems { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }
 
@@ -67,6 +69,9 @@ namespace AMB.Infra.DBContexts
             modelBuilder.Entity<InventoryItem>().ToTable(nameof(InventoryItems));
             modelBuilder.Entity<UnitOfMeasure>().ToTable(nameof(UnitsOfMeasure));
             modelBuilder.Entity<Currency>().ToTable(nameof(Currencies));
+            modelBuilder.Entity<PurchaseRequest>().ToTable(nameof(PurchaseRequests));
+            modelBuilder.Entity<PurchaseRequestItem>().ToTable(nameof(PurchaseRequestItems));
+
             // Add Order Item
             modelBuilder.Entity<Order>().ToTable(nameof(Orders));
             modelBuilder.Entity<OrderItem>().ToTable(nameof(OrderItems));
@@ -204,6 +209,26 @@ namespace AMB.Infra.DBContexts
                 .Property(item => item.UnitPrice)
                 .HasPrecision(18, 2);
 
+            modelBuilder.Entity<PurchaseRequest>()
+                .HasIndex(pr => pr.PurchaseRequestCode)
+                .IsUnique();
+
+            modelBuilder.Entity<PurchaseRequest>()
+                .Property(pr => pr.PurchaseRequestCode)
+                .IsRequired()
+                .HasMaxLength(50);
+
+            modelBuilder.Entity<PurchaseRequest>()
+                .HasMany(pr => pr.PRItems)
+                .WithOne(item => item.PurchaseRequest)
+                .HasForeignKey(item => item.PurchaseRequestId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<PurchaseRequestItem>()
+                .Property(item => item.Price)
+                .HasPrecision(18, 2);
+
+        }
             //Add order item
             modelBuilder.Entity<Order>()
             .HasOne(o => o.Table)
