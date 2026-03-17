@@ -37,10 +37,39 @@ namespace AMB.API.Controllers
                 return BadRequest(errorResponse);
             }
 
+            if (request.CreatedDateFrom.HasValue
+                && request.CreatedDateTo.HasValue
+                && request.CreatedDateFrom.Value > request.CreatedDateTo.Value)
+            {
+                var errorResponse = new BaseResponseDto<PaginatedResultDto<PurchaseRequestDto>>(
+                    "Invalid date range.",
+                    new List<string> { "createdDateFrom must be less than or equal to createdDateTo." });
+
+                return BadRequest(errorResponse);
+            }
+
             var result = await _purchaseRequestService.GetPurchaseRequestsPagedAsync(request);
             var response = new BaseResponseDto<PaginatedResultDto<PurchaseRequestDto>>(
                 result,
                 "Purchase requests retrieved successfully!");
+
+            return Ok(response);
+        }
+
+        [HttpGet("{id:int}")]
+        public async Task<ActionResult<BaseResponseDto<PurchaseRequestDto>>> GetById(int id)
+        {
+            if (id <= 0)
+            {
+                var errorResponse = new BaseResponseDto<PurchaseRequestDto>(
+                    "Invalid id.",
+                    new List<string> { "id must be greater than zero." });
+
+                return BadRequest(errorResponse);
+            }
+
+            var result = await _purchaseRequestService.GetPurchaseRequestByIdAsync(id);
+            var response = new BaseResponseDto<PurchaseRequestDto>(result, "Purchase request retrieved successfully!");
 
             return Ok(response);
         }

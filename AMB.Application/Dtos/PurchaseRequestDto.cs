@@ -12,6 +12,8 @@ namespace AMB.Application.Dtos
         public DateTimeOffset RequestedDeliveryDate { get; set; }
         public bool IsUrgent { get; set; }
         public int PurchaseRequestStatus { get; set; }
+        public string ReviewedBy { get; set; } = string.Empty;
+        public DateTimeOffset ReviewedDate { get; set; }
         public List<PurchaseRequestItemDto> PRItems { get; set; } = new();
     }
 }
