@@ -35,5 +35,12 @@ namespace AMB.Infra.Repositories
                 .AsNoTracking()
                 .AnyAsync(grn => grn.GRNNumber == grnNumber);
         }
+
+        public IQueryable<GoodReceiptNote> GetSearchQuery()
+        {
+            return _context.GoodReceiptNotes
+                .Include(grn => grn.GRNItems)
+                .AsNoTracking();
+        }
     }
 }
