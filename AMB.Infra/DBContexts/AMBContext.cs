@@ -42,6 +42,8 @@ namespace AMB.Infra.DBContexts
         public DbSet<Currency> Currencies { get; set; }
         public DbSet<PurchaseRequest> PurchaseRequests { get; set; }
         public DbSet<PurchaseRequestItem> PurchaseRequestItems { get; set; }
+        public DbSet<GoodReceiptNote> GoodReceiptNotes { get; set; }
+        public DbSet<GRNItem> GRNItems { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -69,6 +71,8 @@ namespace AMB.Infra.DBContexts
             modelBuilder.Entity<Currency>().ToTable(nameof(Currencies));
             modelBuilder.Entity<PurchaseRequest>().ToTable(nameof(PurchaseRequests));
             modelBuilder.Entity<PurchaseRequestItem>().ToTable(nameof(PurchaseRequestItems));
+            modelBuilder.Entity<GoodReceiptNote>().ToTable(nameof(GoodReceiptNotes));
+            modelBuilder.Entity<GRNItem>().ToTable(nameof(GRNItems));
 
 
             modelBuilder.Entity<Employee>()
@@ -221,6 +225,28 @@ namespace AMB.Infra.DBContexts
 
             modelBuilder.Entity<PurchaseRequestItem>()
                 .Property(item => item.Price)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<GoodReceiptNote>()
+                .HasMany(grn => grn.GRNItems)
+                .WithOne(item => item.GoodReceiptNote)
+                .HasForeignKey(item => item.GRNId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<GoodReceiptNote>()
+                .HasOne(grn => grn.PurchaseRequest)
+                .WithMany()
+                .HasForeignKey(grn => grn.PurchaseRequestId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<GRNItem>()
+                .HasOne(item => item.PRItem)
+                .WithMany()
+                .HasForeignKey(item => item.PRItemId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<GRNItem>()
+                .Property(item => item.TotalPrice)
                 .HasPrecision(18, 2);
 
         }
