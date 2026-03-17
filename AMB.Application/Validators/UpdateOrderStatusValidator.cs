@@ -1,5 +1,6 @@
 ﻿using AMB.Application.Dtos;
 using AMB.Application.Interfaces.Repositories;
+using AMB.Domain.Enums;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -8,16 +9,6 @@ namespace AMB.Application.Validators
     public class UpdateOrderStatusValidator : AbstractValidator<UpdateOrderStatusDto>
     {
         private readonly IServiceProvider _serviceProvider;
-
-        // Valid status values
-        private readonly string[] ValidStatuses = new[]
-        {
-            "Preparing",    // From "Sent to KDS"
-            "On Hold",      // From "Preparing" or "Sent to KDS"
-            "Ready",        // From "Preparing" or "On Hold"
-            "Served",       // From "Ready"
-            "Cancelled"     // From any state
-        };
 
         public UpdateOrderStatusValidator(IServiceProvider serviceProvider)
         {
@@ -28,14 +19,14 @@ namespace AMB.Application.Validators
                 .MustAsync(OrderExists).WithMessage("Order not found");
 
             RuleFor(x => x.Status)
-                .NotEmpty().WithMessage("Status is required")
-                .Must(status => ValidStatuses.Contains(status))
-                .WithMessage($"Status must be one of: {string.Join(", ", ValidStatuses)}")
+                .IsInEnum().WithMessage("Invalid status value")
+                .Must(status => status != OrderStatus.Draft && status != OrderStatus.SentToKDS)
+                .WithMessage("Cannot update to Draft or SentToKDS status directly")
                 .MustAsync(BeValidStatusTransition).WithMessage("Invalid status transition for this order");
 
             RuleFor(x => x.Reason)
                 .MaximumLength(200).WithMessage("Reason cannot exceed 200 characters")
-                .When(x => x.Status == "On Hold" || x.Status == "Cancelled")
+                .When(x => x.Status == OrderStatus.OnHold || x.Status == OrderStatus.Cancelled)
                 .NotEmpty().WithMessage("Reason is required when cancelling or putting order on hold");
         }
 
@@ -47,7 +38,7 @@ namespace AMB.Application.Validators
             return order != null;
         }
 
-        private async Task<bool> BeValidStatusTransition(UpdateOrderStatusDto dto, string newStatus, CancellationToken cancellationToken)
+        private async Task<bool> BeValidStatusTransition(UpdateOrderStatusDto dto, OrderStatus newStatus, CancellationToken cancellationToken)
         {
             using var scope = _serviceProvider.CreateScope();
             var orderRepository = scope.ServiceProvider.GetRequiredService<IOrderRepository>();
@@ -55,17 +46,17 @@ namespace AMB.Application.Validators
 
             if (order == null) return false;
 
-            var currentStatus = order.OrderStatus;
+            var currentStatus = (OrderStatus)order.OrderStatus;
 
             // Define valid transitions
-            var validTransitions = new Dictionary<string, string[]>
+            var validTransitions = new Dictionary<OrderStatus, OrderStatus[]>
             {
-                ["Sent to KDS"] = new[] { "Preparing", "On Hold", "Cancelled" },
-                ["Preparing"] = new[] { "On Hold", "Ready", "Cancelled" },
-                ["On Hold"] = new[] { "Preparing", "Ready", "Cancelled" },
-                ["Ready"] = new[] { "Served", "Cancelled" },
-                ["Served"] = Array.Empty<string>(),
-                ["Cancelled"] = Array.Empty<string>()
+                [OrderStatus.SentToKDS] = new[] { OrderStatus.Preparing, OrderStatus.OnHold, OrderStatus.Cancelled },
+                [OrderStatus.Preparing] = new[] { OrderStatus.OnHold, OrderStatus.Ready, OrderStatus.Cancelled },
+                [OrderStatus.OnHold] = new[] { OrderStatus.Preparing, OrderStatus.Ready, OrderStatus.Cancelled },
+                [OrderStatus.Ready] = new[] { OrderStatus.Served, OrderStatus.Cancelled },
+                [OrderStatus.Served] = Array.Empty<OrderStatus>(),
+                [OrderStatus.Cancelled] = Array.Empty<OrderStatus>()
             };
 
             return validTransitions.ContainsKey(currentStatus) &&
