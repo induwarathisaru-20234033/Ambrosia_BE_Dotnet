@@ -6,11 +6,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AMB.Infra.Repositories
 {
-    public class TableRespository: ITableRepository
+    public class TableRepository : ITableRepository
     {
         private readonly AMBContext _context;
 
-        public TableRespository(AMBContext context)
+        public TableRepository(AMBContext context)
         {
             _context = context;
         }
@@ -45,6 +45,12 @@ namespace AMB.Infra.Repositories
         public IQueryable<Table> GetSearchQuery()
         {
             return _context.Tables.AsNoTracking();
+        }
+
+        public async Task<Table?> GetByIdAsync(int id)
+        {
+            return await _context.Tables
+                .FirstOrDefaultAsync(t => t.Id == id);
         }
     }
 }

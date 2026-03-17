@@ -42,7 +42,8 @@ namespace AMB.Infra.DBContexts
         public DbSet<Currency> Currencies { get; set; }
         public DbSet<PurchaseRequest> PurchaseRequests { get; set; }
         public DbSet<PurchaseRequestItem> PurchaseRequestItems { get; set; }
-
+        public DbSet<Order> Orders { get; set; }
+        public DbSet<OrderItem> OrderItems { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -70,6 +71,9 @@ namespace AMB.Infra.DBContexts
             modelBuilder.Entity<PurchaseRequest>().ToTable(nameof(PurchaseRequests));
             modelBuilder.Entity<PurchaseRequestItem>().ToTable(nameof(PurchaseRequestItems));
 
+            // Add Order tables
+            modelBuilder.Entity<Order>().ToTable(nameof(Orders));
+            modelBuilder.Entity<OrderItem>().ToTable(nameof(OrderItems));
 
             modelBuilder.Entity<Employee>()
                 .HasIndex(e => e.EmployeeId)
@@ -142,10 +146,9 @@ namespace AMB.Infra.DBContexts
                 .HasForeignKey(erm => erm.CustomRoleId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-
             modelBuilder.Entity<MenuItem>()
                 .Property(m => m.Price)
-                .HasPrecision(18, 2); // precision 18, scale 2
+                .HasPrecision(18, 2);
 
             // Reservation relationships
             modelBuilder.Entity<Reservation>()
@@ -223,6 +226,28 @@ namespace AMB.Infra.DBContexts
                 .Property(item => item.Price)
                 .HasPrecision(18, 2);
 
+            // Order configurations - MOVED INSIDE OnModelCreating
+            modelBuilder.Entity<Order>()
+                .HasOne(o => o.Table)
+                .WithMany()
+                .HasForeignKey(o => o.TableId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<OrderItem>()
+                .HasOne(oi => oi.Order)
+                .WithMany(o => o.OrderItems)
+                .HasForeignKey(oi => oi.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<OrderItem>()
+                .HasOne(oi => oi.MenuItem)
+                .WithMany()
+                .HasForeignKey(oi => oi.MenuItemId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<OrderItem>()
+                .Property(oi => oi.UnitPrice)
+                .HasPrecision(18, 2);
         }
 
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
