@@ -3,17 +3,26 @@ using AMB.Application.Interfaces.Repositories;
 using AMB.Application.Interfaces.Services;
 using AMB.Application.Mappers;
 using AMB.Domain.Enums;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace AMB.Application.Services
 {
     public class PurchaseRequestService : IPurchaseRequestService
     {
         private readonly IPurchaseRequestRepositoy _purchaseRequestRepositoy;
+        private readonly IEmployeeRepository _employeeRepository;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public PurchaseRequestService(IPurchaseRequestRepositoy purchaseRequestRepositoy)
+        public PurchaseRequestService(
+            IPurchaseRequestRepositoy purchaseRequestRepositoy,
+            IEmployeeRepository employeeRepository,
+            IHttpContextAccessor httpContextAccessor)
         {
             _purchaseRequestRepositoy = purchaseRequestRepositoy;
+            _employeeRepository = employeeRepository;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<PurchaseRequestDto> CreatePurchaseRequestAsync(CreatePurchaseRequestDto request)
@@ -58,6 +67,31 @@ namespace AMB.Application.Services
             return updated.ToPurchaseRequestDto();
         }
 
+        public async Task<PurchaseRequestDto> GetPurchaseRequestByIdAsync(int id)
+        {
+            var purchaseRequest = await _purchaseRequestRepositoy.GetByIdAsync(id);
+            if (purchaseRequest == null)
+            {
+                throw new KeyNotFoundException($"Purchase request with ID {id} not found.");
+            }
+
+            var dto = purchaseRequest.ToPurchaseRequestDto();
+
+            if (!string.IsNullOrWhiteSpace(purchaseRequest.CreatedBy))
+            {
+                var creatorNames = await _purchaseRequestRepositoy
+                    .GetCreatorNamesByUsernamesAsync(new List<string> { purchaseRequest.CreatedBy });
+
+                if (creatorNames.TryGetValue(purchaseRequest.CreatedBy, out var creatorName)
+                    && !string.IsNullOrWhiteSpace(creatorName))
+                {
+                    dto.CreatedBy = creatorName;
+                }
+            }
+
+            return dto;
+        }
+
         public async Task<PaginatedResultDto<PurchaseRequestDto>> GetPurchaseRequestsPagedAsync(PurchaseRequestFilterRequestDto request)
         {
             var query = _purchaseRequestRepositoy.GetSearchQuery();
@@ -80,6 +114,16 @@ namespace AMB.Application.Services
             if (request.PurchaseRequestStatus.HasValue)
             {
                 query = query.Where(pr => pr.PurchaseRequestStatus == request.PurchaseRequestStatus.Value);
+            }
+
+            if (request.CreatedDateFrom.HasValue)
+            {
+                query = query.Where(pr => pr.CreatedDate >= request.CreatedDateFrom.Value);
+            }
+
+            if (request.CreatedDateTo.HasValue)
+            {
+                query = query.Where(pr => pr.CreatedDate <= request.CreatedDateTo.Value);
             }
 
             var totalItemCount = await query.CountAsync();
@@ -175,6 +219,8 @@ namespace AMB.Application.Services
             }
 
             existing.PurchaseRequestStatus = (int)reviewStatus;
+            existing.ReviewedBy = await GetCurrentReviewerAsync();
+            existing.ReviewedDate = DateTimeOffset.UtcNow;
 
             var updated = await _purchaseRequestRepositoy.UpdateAsync(existing);
             if (updated == null)
@@ -183,6 +229,22 @@ namespace AMB.Application.Services
             }
 
             return updated.ToPurchaseRequestDto();
+        }
+
+        private async Task<string> GetCurrentReviewerAsync()
+        {
+            var context = _httpContextAccessor.HttpContext;
+            var auth0UserId = context?.User?.Claims?.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrWhiteSpace(auth0UserId))
+            {
+                return "SYSTEM";
+            }
+
+            var employee = await _employeeRepository.GetByUserIDAsync(auth0UserId);
+            return !string.IsNullOrWhiteSpace(employee?.FirstName)
+                ? $"{employee!.FirstName} {employee.LastName}".Trim()
+                : "SYSTEM";
         }
     }
 }
