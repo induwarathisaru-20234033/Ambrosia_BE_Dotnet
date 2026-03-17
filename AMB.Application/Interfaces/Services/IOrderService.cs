@@ -1,4 +1,5 @@
 ﻿using AMB.Application.Dtos;
+using AMB.Domain.Enums;
 
 namespace AMB.Application.Interfaces.Services
 {
@@ -8,7 +9,7 @@ namespace AMB.Application.Interfaces.Services
         Task<OrderResponseDto> GetOrderByIdAsync(int id);
         Task<OrderResponseDto> SendDraftToKdsAsync(SendOrderToKdsDto dto);
         Task<OrderResponseDto> UpdateOrderStatusAsync(UpdateOrderStatusDto dto);
-        Task<List<OrderResponseDto>> GetOrdersByStatusAsync(string status);
+        Task<List<OrderResponseDto>> GetOrdersByStatusAsync(OrderStatus status);
         Task<List<OrderResponseDto>> GetKitchenOrdersAsync();
     }
 }

@@ -1,4 +1,5 @@
 ﻿using AMB.Domain.Entities;
+using AMB.Domain.Enums;
 
 namespace AMB.Application.Interfaces.Repositories
 {
@@ -10,9 +11,9 @@ namespace AMB.Application.Interfaces.Repositories
         Task<List<Order>> GetDraftOrdersByTableAsync(int tableId);
         Task<string> GenerateOrderNumberAsync();
         Task<bool> SendDraftToKdsAsync(int orderId, int? tableId = null);
-        Task<List<Order>> GetOrdersByStatusAsync(string status);
+        Task<List<Order>> GetOrdersByStatusAsync(OrderStatus status);
         Task<List<Order>> GetKitchenOrdersAsync(); // Gets "Sent to KDS", "Preparing", "On Hold"
-        Task<bool> UpdateOrderStatusAsync(int orderId, string newStatus, string? reason = null);
+        Task<bool> UpdateOrderStatusAsync(int orderId, OrderStatus newStatus, string? reason = null);
         Task<Order?> GetOrderWithDetailsAsync(int id);
     }
 
