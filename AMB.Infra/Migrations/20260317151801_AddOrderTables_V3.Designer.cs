@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AMB.Infra.Migrations
 {
     [DbContext(typeof(AMBContext))]
-    [Migration("20260315150816_AddOrdersTables")]
-    partial class AddOrdersTables
+    [Migration("20260317151801_AddOrderTables_V3")]
+    partial class AddOrderTables_V3
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -679,10 +679,8 @@ namespace AMB.Infra.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<string>("OrderStatus")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                    b.Property<int>("OrderStatus")
+                        .HasColumnType("int");
 
                     b.Property<DateTimeOffset?>("SentToKitchenAt")
                         .HasColumnType("datetimeoffset");
@@ -727,6 +725,9 @@ namespace AMB.Infra.Migrations
 
                     b.Property<DateTimeOffset?>("DeletedDate")
                         .HasColumnType("datetimeoffset");
+
+                    b.Property<int?>("ItemStatus")
+                        .HasColumnType("int");
 
                     b.Property<int>("MenuItemId")
                         .HasColumnType("int");
@@ -813,6 +814,134 @@ namespace AMB.Infra.Migrations
                     b.HasIndex("FeatureId");
 
                     b.ToTable("Permissions", (string)null);
+                });
+
+            modelBuilder.Entity("AMB.Domain.Entities.PurchaseRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset>("CreatedDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("DeletedDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsUrgent")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("PurchaseRequestCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("PurchaseRequestStatus")
+                        .HasColumnType("int");
+
+                    b.Property<string>("RequestedBy")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset>("RequestedDeliveryDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("ReviewedBy")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset>("ReviewedDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("Status")
+                        .IsConcurrencyToken()
+                        .HasColumnType("int");
+
+                    b.Property<string>("Supplier")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("UpdatedDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PurchaseRequestCode")
+                        .IsUnique();
+
+                    b.ToTable("PurchaseRequests", (string)null);
+                });
+
+            modelBuilder.Entity("AMB.Domain.Entities.PurchaseRequestItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset>("CreatedDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("DeletedDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("InventoryItemId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("LineItemNo")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Price")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("PurchaseRequestId")
+                        .HasColumnType("int");
+
+                    b.Property<float>("RequestedQuantity")
+                        .HasColumnType("real");
+
+                    b.Property<int>("Status")
+                        .IsConcurrencyToken()
+                        .HasColumnType("int");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("UpdatedDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InventoryItemId");
+
+                    b.HasIndex("PurchaseRequestId");
+
+                    b.ToTable("PurchaseRequestItems", (string)null);
                 });
 
             modelBuilder.Entity("AMB.Domain.Entities.Reservation", b =>
@@ -1274,6 +1403,25 @@ namespace AMB.Infra.Migrations
                     b.Navigation("Feature");
                 });
 
+            modelBuilder.Entity("AMB.Domain.Entities.PurchaseRequestItem", b =>
+                {
+                    b.HasOne("AMB.Domain.Entities.InventoryItem", "InventoryItem")
+                        .WithMany()
+                        .HasForeignKey("InventoryItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AMB.Domain.Entities.PurchaseRequest", "PurchaseRequest")
+                        .WithMany("PRItems")
+                        .HasForeignKey("PurchaseRequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("InventoryItem");
+
+                    b.Navigation("PurchaseRequest");
+                });
+
             modelBuilder.Entity("AMB.Domain.Entities.Reservation", b =>
                 {
                     b.HasOne("AMB.Domain.Entities.BookingSlot", "BookingSlot")
@@ -1343,6 +1491,11 @@ namespace AMB.Infra.Migrations
             modelBuilder.Entity("AMB.Domain.Entities.Permission", b =>
                 {
                     b.Navigation("RolePermissionMaps");
+                });
+
+            modelBuilder.Entity("AMB.Domain.Entities.PurchaseRequest", b =>
+                {
+                    b.Navigation("PRItems");
                 });
 
             modelBuilder.Entity("AMB.Domain.Entities.Role", b =>

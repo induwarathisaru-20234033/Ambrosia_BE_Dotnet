@@ -45,7 +45,6 @@ namespace AMB.Infra.DBContexts
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }
 
-
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Employee>().ToTable(nameof(Employees));
@@ -72,7 +71,7 @@ namespace AMB.Infra.DBContexts
             modelBuilder.Entity<PurchaseRequest>().ToTable(nameof(PurchaseRequests));
             modelBuilder.Entity<PurchaseRequestItem>().ToTable(nameof(PurchaseRequestItems));
 
-            // Add Order Item
+            // Add Order tables
             modelBuilder.Entity<Order>().ToTable(nameof(Orders));
             modelBuilder.Entity<OrderItem>().ToTable(nameof(OrderItems));
 
@@ -147,10 +146,9 @@ namespace AMB.Infra.DBContexts
                 .HasForeignKey(erm => erm.CustomRoleId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-
             modelBuilder.Entity<MenuItem>()
                 .Property(m => m.Price)
-                .HasPrecision(18, 2); // precision 18, scale 2
+                .HasPrecision(18, 2);
 
             // Reservation relationships
             modelBuilder.Entity<Reservation>()
@@ -228,13 +226,12 @@ namespace AMB.Infra.DBContexts
                 .Property(item => item.Price)
                 .HasPrecision(18, 2);
 
-        }
-            //Add order item
+            // Order configurations - MOVED INSIDE OnModelCreating
             modelBuilder.Entity<Order>()
-            .HasOne(o => o.Table)
-            .WithMany()
-            .HasForeignKey(o => o.TableId)
-            .OnDelete(DeleteBehavior.SetNull);
+                .HasOne(o => o.Table)
+                .WithMany()
+                .HasForeignKey(o => o.TableId)
+                .OnDelete(DeleteBehavior.SetNull);
 
             modelBuilder.Entity<OrderItem>()
                 .HasOne(oi => oi.Order)
@@ -252,8 +249,6 @@ namespace AMB.Infra.DBContexts
                 .Property(oi => oi.UnitPrice)
                 .HasPrecision(18, 2);
         }
-
-        
 
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
