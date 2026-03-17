@@ -44,6 +44,7 @@ namespace AMB.Infra.DBContexts
         public DbSet<PurchaseRequestItem> PurchaseRequestItems { get; set; }
         public DbSet<GoodReceiptNote> GoodReceiptNotes { get; set; }
         public DbSet<GRNItem> GRNItems { get; set; }
+        public DbSet<StockTransaction> StockTransactions { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -73,6 +74,7 @@ namespace AMB.Infra.DBContexts
             modelBuilder.Entity<PurchaseRequestItem>().ToTable(nameof(PurchaseRequestItems));
             modelBuilder.Entity<GoodReceiptNote>().ToTable(nameof(GoodReceiptNotes));
             modelBuilder.Entity<GRNItem>().ToTable(nameof(GRNItems));
+            modelBuilder.Entity<StockTransaction>().ToTable(nameof(StockTransactions));
 
 
             modelBuilder.Entity<Employee>()
@@ -248,6 +250,12 @@ namespace AMB.Infra.DBContexts
             modelBuilder.Entity<GRNItem>()
                 .Property(item => item.TotalPrice)
                 .HasPrecision(18, 2);
+
+            modelBuilder.Entity<StockTransaction>()
+                .HasOne(transaction => transaction.InventoryItem)
+                .WithMany()
+                .HasForeignKey(transaction => transaction.InventoryItemId)
+                .OnDelete(DeleteBehavior.Restrict);
 
         }
 
