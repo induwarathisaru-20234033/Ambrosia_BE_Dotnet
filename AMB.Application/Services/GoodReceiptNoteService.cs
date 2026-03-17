@@ -62,6 +62,7 @@ namespace AMB.Application.Services
                 ReceivedDate = request.ReceivedDate,
                 ReceivedFacility = request.ReceivingFacility,
                 PurchaseRequestId = purchaseRequestId,
+                GRNStatus = request.GRNStatus,
                 Status = (int)EntityStatus.Active,
                 GRNItems = request.Items.Select((item, index) => new GRNItem
                 {
@@ -77,7 +78,103 @@ namespace AMB.Application.Services
             };
 
             var createdGrn = await _goodReceiptNoteRepository.AddAsync(goodReceiptNote);
+
+            if (createdGrn.GRNStatus == (int)GRNStatus.Posted)
+            {
+                await _goodReceiptNoteRepository.ProcessPostedGrnAsync(createdGrn.Id);
+                createdGrn = await _goodReceiptNoteRepository.GetByIdAsync(createdGrn.Id) ?? createdGrn;
+            }
+
             return createdGrn.ToGoodReceiptNoteDto();
+        }
+
+        public async Task<GoodReceiptNoteDto> UpdateGoodReceiptNoteAsync(UpdateGoodReceiptNoteDto request)
+        {
+            var existing = await _goodReceiptNoteRepository.GetByIdAsync(request.Id);
+            if (existing == null)
+            {
+                throw new KeyNotFoundException($"GRN with ID {request.Id} not found.");
+            }
+
+            if (request.Items == null || request.Items.Count == 0)
+            {
+                throw new ArgumentException("At least one GRN item is required.");
+            }
+
+            var prItemIds = request.Items
+                .Select(item => item.PRItemId)
+                .Distinct()
+                .ToList();
+
+            var prItems = await _goodReceiptNoteRepository.GetPurchaseRequestItemsByIdsAsync(prItemIds);
+
+            var missingPrItemIds = prItemIds
+                .Except(prItems.Select(item => item.Id))
+                .ToList();
+
+            if (missingPrItemIds.Count > 0)
+            {
+                throw new ArgumentException($"Invalid PR item IDs: {string.Join(", ", missingPrItemIds)}.");
+            }
+
+            var purchaseRequestIds = prItems
+                .Select(item => item.PurchaseRequestId)
+                .Distinct()
+                .ToList();
+
+            if (purchaseRequestIds.Count != 1)
+            {
+                throw new ArgumentException("All GRN items must belong to the same purchase request.");
+            }
+
+            var purchaseRequestId = purchaseRequestIds[0];
+            var supplier = prItems.First().PurchaseRequest?.Supplier ?? string.Empty;
+            var priceByPrItemId = prItems.ToDictionary(item => item.Id, item => item.Price);
+
+            existing.Supplier = supplier;
+            existing.ReceivedBy = request.ReceivedBy;
+            existing.ReceivedDate = request.ReceivedDate;
+            existing.ReceivedFacility = request.ReceivingFacility;
+            existing.PurchaseRequestId = purchaseRequestId;
+            var wasPosted = existing.GRNStatus == (int)GRNStatus.Posted;
+            existing.GRNStatus = request.GRNStatus;
+            existing.Status = (int)EntityStatus.Active;
+            existing.GRNItems = request.Items.Select(item => new GRNItem
+            {
+                LineItemNo = item.LineItemNo,
+                PRItemId = item.PRItemId,
+                Remarks = item.Remarks ?? string.Empty,
+                ReceivedQuantity = item.ReceivedQuantity,
+                AcceptedQuantity = item.AcceptedQuantity,
+                RejectedQuantity = item.RejectedQuantity,
+                TotalPrice = item.TotalPrice > 0 ? item.TotalPrice : priceByPrItemId[item.PRItemId] * (decimal)item.ReceivedQuantity,
+                Status = (int)EntityStatus.Active,
+            }).ToList();
+
+            var updated = await _goodReceiptNoteRepository.UpdateAsync(existing);
+            if (updated == null)
+            {
+                throw new KeyNotFoundException($"GRN with ID {request.Id} not found.");
+            }
+
+            if (!wasPosted && updated.GRNStatus == (int)GRNStatus.Posted)
+            {
+                await _goodReceiptNoteRepository.ProcessPostedGrnAsync(updated.Id);
+                updated = await _goodReceiptNoteRepository.GetByIdAsync(updated.Id) ?? updated;
+            }
+
+            return updated.ToGoodReceiptNoteDto();
+        }
+
+        public async Task<GoodReceiptNoteDto> GetGoodReceiptNoteByIdAsync(int id)
+        {
+            var grn = await _goodReceiptNoteRepository.GetByIdAsync(id);
+            if (grn == null)
+            {
+                throw new KeyNotFoundException($"GRN with ID {id} not found.");
+            }
+
+            return grn.ToGoodReceiptNoteDto();
         }
 
         public async Task<PaginatedResultDto<GoodReceiptNoteDto>> GetGoodReceiptNotesPagedAsync(GoodReceiptNoteFilterRequestDto request)

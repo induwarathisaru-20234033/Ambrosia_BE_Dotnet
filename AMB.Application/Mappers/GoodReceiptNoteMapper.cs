@@ -16,6 +16,7 @@ namespace AMB.Application.Mappers
                 ReceivedBy = entity.ReceivedBy,
                 ReceivedFacility = entity.ReceivedFacility,
                 PurchaseRequestId = entity.PurchaseRequestId,
+                GRNStatus = entity.GRNStatus,
                 Items = entity.GRNItems
                     .OrderBy(item => item.LineItemNo)
                     .Select(item => new GRNItemDto
@@ -23,6 +24,17 @@ namespace AMB.Application.Mappers
                         Id = item.Id,
                         LineItemNo = item.LineItemNo,
                         PRItemId = item.PRItemId,
+                        PurchaseRequestItem = item.PRItem == null
+                            ? null
+                            : new PurchaseRequestItemDto
+                            {
+                                Id = item.PRItem.Id,
+                                LineItemNo = item.PRItem.LineItemNo,
+                                RequestedQuantity = item.PRItem.RequestedQuantity,
+                                Price = item.PRItem.Price,
+                                InventoryItemId = item.PRItem.InventoryItemId,
+                                InventoryItem = item.PRItem.InventoryItem?.ToInventoryItemDto(),
+                            },
                         ReceivedQuantity = item.ReceivedQuantity,
                         AcceptedQuantity = item.AcceptedQuantity,
                         RejectedQuantity = item.RejectedQuantity,
