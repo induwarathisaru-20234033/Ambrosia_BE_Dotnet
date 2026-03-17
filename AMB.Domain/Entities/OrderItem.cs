@@ -14,6 +14,7 @@ namespace AMB.Domain.Entities
         public int Quantity { get; set; } = 1;
 
         public decimal UnitPrice { get; set; }
+        public int? ItemStatus { get; set; }
 
         // Navigation properties
         public Order? Order { get; set; }

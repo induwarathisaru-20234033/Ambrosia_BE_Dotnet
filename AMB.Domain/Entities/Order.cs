@@ -11,9 +11,7 @@ namespace AMB.Domain.Entities
 
         public int? TableId { get; set; }
 
-        [Required]
-        [StringLength(20)]
-        public string OrderStatus { get; set; } = "Draft"; // "Draft", "Sent to KDS", "Preparing", "On Hold", "Ready", "Served", "Cancelled".
+        public int OrderStatus { get; set; } = (int)OrderStatus.Draft;
 
         public DateTimeOffset? SentToKitchenAt { get; set; }
 
