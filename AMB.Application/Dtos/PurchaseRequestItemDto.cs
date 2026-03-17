@@ -7,5 +7,6 @@ namespace AMB.Application.Dtos
         public float RequestedQuantity { get; set; }
         public decimal Price { get; set; }
         public int InventoryItemId { get; set; }
+        public InventoryItemDto? InventoryItem { get; set; }
     }
 }
