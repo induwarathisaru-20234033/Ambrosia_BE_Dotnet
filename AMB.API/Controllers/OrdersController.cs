@@ -1,6 +1,7 @@
 ﻿using AMB.API.Attributes;
 using AMB.Application.Dtos;
 using AMB.Application.Interfaces.Services;
+using AMB.Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AMB.API.Controllers
@@ -27,7 +28,7 @@ namespace AMB.API.Controllers
 
             var response = new BaseResponseDto<OrderResponseDto>(
                 result,
-                result.OrderStatus == "Draft"
+                result.OrderStatus == OrderStatus.Draft
                     ? "Order saved as draft successfully"
                     : "Order sent to KDS successfully"
             );
@@ -101,7 +102,15 @@ namespace AMB.API.Controllers
         [HttpGet("status/{status}")]
         public async Task<ActionResult<BaseResponseDto<List<OrderResponseDto>>>> GetOrdersByStatus(string status)
         {
-            var result = await _orderService.GetOrdersByStatusAsync(status);
+            if (!Enum.TryParse<OrderStatus>(status, true, out var orderStatus))
+            {
+                return BadRequest(new BaseResponseDto<List<OrderResponseDto>>(
+                    "Invalid status value",
+                    new List<string> { $"Status must be one of: {string.Join(", ", Enum.GetNames<OrderStatus>())}" }
+                ));
+            }
+
+            var result = await _orderService.GetOrdersByStatusAsync(orderStatus);
 
             var response = new BaseResponseDto<List<OrderResponseDto>>(
                 result,
