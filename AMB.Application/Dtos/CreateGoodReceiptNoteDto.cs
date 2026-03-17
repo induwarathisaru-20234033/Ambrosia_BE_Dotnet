@@ -11,6 +11,7 @@ namespace AMB.Application.Dtos
         public string ReceivedBy { get; set; }
         public DateTimeOffset ReceivedDate { get; set; }
         public string ReceivingFacility { get; set; }
+        public int GRNStatus { get; set; }
         public List<CreateGRNItemDto> Items { get; set; }
     }
 

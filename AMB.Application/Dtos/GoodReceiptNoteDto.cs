@@ -9,6 +9,7 @@ namespace AMB.Application.Dtos
         public string ReceivedBy { get; set; } = string.Empty;
         public string ReceivedFacility { get; set; } = string.Empty;
         public int PurchaseRequestId { get; set; }
+        public int GRNStatus { get; set; }
         public List<GRNItemDto> Items { get; set; } = new List<GRNItemDto>();
     }
 
@@ -17,6 +18,7 @@ namespace AMB.Application.Dtos
         public int Id { get; set; }
         public int LineItemNo { get; set; }
         public int PRItemId { get; set; }
+        public PurchaseRequestItemDto? PurchaseRequestItem { get; set; }
         public float ReceivedQuantity { get; set; }
         public float AcceptedQuantity { get; set; }
         public float RejectedQuantity { get; set; }
