@@ -7,5 +7,6 @@ namespace AMB.Application.Interfaces.Repositories
         Task<GoodReceiptNote> AddAsync(GoodReceiptNote goodReceiptNote);
         Task<List<PurchaseRequestItem>> GetPurchaseRequestItemsByIdsAsync(List<int> prItemIds);
         Task<bool> ExistsByNumberAsync(string grnNumber);
+        IQueryable<GoodReceiptNote> GetSearchQuery();
     }
 }
