@@ -1,5 +1,6 @@
 ﻿using AMB.Application.Interfaces.Repositories;
 using AMB.Domain.Entities;
+using AMB.Domain.Enums;
 using AMB.Infra.DBContexts;
 using Microsoft.EntityFrameworkCore;
 
@@ -57,7 +58,7 @@ namespace AMB.Infra.Repositories
         public async Task<List<Order>> GetDraftOrdersByTableAsync(int tableId)
         {
             return await _context.Orders
-                .Where(o => o.TableId == tableId && o.OrderStatus == "Draft" && o.Status == 1)
+                .Where(o => o.TableId == tableId && o.OrderStatus == (int)OrderStatus.Draft && o.Status == 1)
                 .Include(o => o.OrderItems)
                 .ToListAsync();
         }
@@ -84,7 +85,7 @@ namespace AMB.Infra.Repositories
             var order = await _context.Orders.FindAsync(orderId);
             if (order == null) return false;
 
-            order.OrderStatus = "Sent to KDS";
+            order.OrderStatus = (int)OrderStatus.SentToKDS;
             order.SentToKitchenAt = DateTime.UtcNow;
             order.UpdatedDate = DateTime.UtcNow;
 
@@ -97,10 +98,10 @@ namespace AMB.Infra.Repositories
             return true;
         }
 
-        public async Task<List<Order>> GetOrdersByStatusAsync(string status)
+        public async Task<List<Order>> GetOrdersByStatusAsync(OrderStatus status)
         {
             return await _context.Orders
-                .Where(o => o.OrderStatus == status && o.Status == 1)
+                .Where(o => o.OrderStatus == (int)status && o.Status == 1)
                 .Include(o => o.OrderItems!)
                     .ThenInclude(oi => oi.MenuItem)
                 .Include(o => o.Table)
@@ -110,7 +111,12 @@ namespace AMB.Infra.Repositories
 
         public async Task<List<Order>> GetKitchenOrdersAsync()
         {
-            var kitchenStatuses = new[] { "Sent to KDS", "Preparing", "On Hold" };
+            var kitchenStatuses = new[]
+            {
+                (int)OrderStatus.SentToKDS,
+                (int)OrderStatus.Preparing,
+                (int)OrderStatus.OnHold
+            };
 
             return await _context.Orders
                 .Where(o => kitchenStatuses.Contains(o.OrderStatus) && o.Status == 1)
@@ -121,12 +127,12 @@ namespace AMB.Infra.Repositories
                 .ToListAsync();
         }
 
-        public async Task<bool> UpdateOrderStatusAsync(int orderId, string newStatus, string? reason = null)
+        public async Task<bool> UpdateOrderStatusAsync(int orderId, OrderStatus newStatus, string? reason = null)
         {
             var order = await _context.Orders.FindAsync(orderId);
             if (order == null) return false;
 
-            order.OrderStatus = newStatus;
+            order.OrderStatus = (int)newStatus;
             order.UpdatedDate = DateTime.UtcNow;
             await _context.SaveChangesAsync();
             return true;
