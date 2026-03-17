@@ -92,6 +92,9 @@ builder.Services.AddScoped<IInventoryItemService, InventoryItemService>();
 builder.Services.AddScoped<IPurchaseRequestRepositoy, PurchaseRequestRepository>();
 builder.Services.AddScoped<IPurchaseRequestService, PurchaseRequestService>();
 
+builder.Services.AddScoped<IGoodReceiptNoteRepository, GoodReceiptNoteRepository>();
+builder.Services.AddScoped<IGoodReceiptNoteService, GoodReceiptNoteService>();
+
 builder.Services.AddValidatorsFromAssemblyContaining<CreateEmployeeValidator>();
 
 builder.Services.AddAuthentication(options =>
