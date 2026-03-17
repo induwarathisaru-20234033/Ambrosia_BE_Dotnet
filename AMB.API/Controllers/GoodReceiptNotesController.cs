@@ -25,6 +25,15 @@ namespace AMB.API.Controllers
             return Ok(response);
         }
 
+        [HttpPatch("{id:int}")]
+        public async Task<ActionResult<BaseResponseDto<GoodReceiptNoteDto>>> Update(int id, [FromBody] UpdateGoodReceiptNoteDto request)
+        {
+            request.Id = id;
+            var result = await _goodReceiptNoteService.UpdateGoodReceiptNoteAsync(request);
+            var response = new BaseResponseDto<GoodReceiptNoteDto>(result, "GRN updated successfully!");
+            return Ok(response);
+        }
+
         [HttpGet]
         public async Task<ActionResult<BaseResponseDto<PaginatedResultDto<GoodReceiptNoteDto>>>> GetPaginated([FromQuery] GoodReceiptNoteFilterRequestDto request)
         {
@@ -52,6 +61,24 @@ namespace AMB.API.Controllers
             var response = new BaseResponseDto<PaginatedResultDto<GoodReceiptNoteDto>>(
                 result,
                 "GRNs retrieved successfully!");
+
+            return Ok(response);
+        }
+
+        [HttpGet("{id:int}")]
+        public async Task<ActionResult<BaseResponseDto<GoodReceiptNoteDto>>> GetById(int id)
+        {
+            if (id <= 0)
+            {
+                var errorResponse = new BaseResponseDto<GoodReceiptNoteDto>(
+                    "Invalid id.",
+                    new List<string> { "id must be greater than zero." });
+
+                return BadRequest(errorResponse);
+            }
+
+            var result = await _goodReceiptNoteService.GetGoodReceiptNoteByIdAsync(id);
+            var response = new BaseResponseDto<GoodReceiptNoteDto>(result, "GRN retrieved successfully!");
 
             return Ok(response);
         }
