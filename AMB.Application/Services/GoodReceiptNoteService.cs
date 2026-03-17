@@ -4,6 +4,7 @@ using AMB.Application.Interfaces.Services;
 using AMB.Application.Mappers;
 using AMB.Domain.Entities;
 using AMB.Domain.Enums;
+using Microsoft.EntityFrameworkCore;
 
 namespace AMB.Application.Services
 {
@@ -77,6 +78,66 @@ namespace AMB.Application.Services
 
             var createdGrn = await _goodReceiptNoteRepository.AddAsync(goodReceiptNote);
             return createdGrn.ToGoodReceiptNoteDto();
+        }
+
+        public async Task<PaginatedResultDto<GoodReceiptNoteDto>> GetGoodReceiptNotesPagedAsync(GoodReceiptNoteFilterRequestDto request)
+        {
+            var query = _goodReceiptNoteRepository.GetSearchQuery();
+
+            if (!string.IsNullOrWhiteSpace(request.GRNNumber))
+            {
+                query = query.Where(grn => grn.GRNNumber.Contains(request.GRNNumber));
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.Supplier))
+            {
+                query = query.Where(grn => grn.Supplier.Contains(request.Supplier));
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.ReceivedBy))
+            {
+                query = query.Where(grn => grn.ReceivedBy.Contains(request.ReceivedBy));
+            }
+
+            if (request.PurchaseRequestId.HasValue)
+            {
+                query = query.Where(grn => grn.PurchaseRequestId == request.PurchaseRequestId.Value);
+            }
+
+            if (request.ReceivedDateFrom.HasValue)
+            {
+                query = query.Where(grn => grn.ReceivedDate >= request.ReceivedDateFrom.Value);
+            }
+
+            if (request.ReceivedDateTo.HasValue)
+            {
+                query = query.Where(grn => grn.ReceivedDate <= request.ReceivedDateTo.Value);
+            }
+
+            var totalItemCount = await query.CountAsync();
+
+            var pageCount = request.PageSize == 0
+                ? 0
+                : (int)Math.Ceiling(totalItemCount / (double)request.PageSize);
+
+            if (request.PageSize > 0)
+            {
+                query = query
+                    .OrderByDescending(grn => grn.CreatedDate)
+                    .Skip((request.PageNumber - 1) * request.PageSize)
+                    .Take(request.PageSize);
+            }
+
+            var grns = await query.ToListAsync();
+
+            return new PaginatedResultDto<GoodReceiptNoteDto>
+            {
+                PageCount = pageCount,
+                PageSize = request.PageSize,
+                PageNumber = request.PageNumber,
+                TotalItemCount = totalItemCount,
+                Items = grns.Select(grn => grn.ToGoodReceiptNoteDto()).ToList(),
+            };
         }
 
         private async Task<string> GenerateUniqueGrnNumberAsync()
