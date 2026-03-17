@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using AMB.Domain.Enums;
+using System.ComponentModel.DataAnnotations;
 
 namespace AMB.Application.Dtos
 {
@@ -8,7 +9,7 @@ namespace AMB.Application.Dtos
         public int OrderId { get; set; }
 
         [Required]
-        public string Status { get; set; } = string.Empty; // "Preparing", "On Hold", "Ready", "Served", "Cancelled"
+        public OrderStatus Status { get; set; } // "Preparing", "On Hold", "Ready", "Served", "Cancelled"
 
         public string? Reason { get; set; } // Required for "On Hold" and "Cancelled"
     }
