@@ -89,6 +89,9 @@ builder.Services.AddScoped<IReservationService, ReservationService>();
 builder.Services.AddScoped<IInventoryItemRepository, InventoryItemRepository>();
 builder.Services.AddScoped<IInventoryItemService, InventoryItemService>();
 
+builder.Services.AddScoped<IPurchaseRequestRepositoy, PurchaseRequestRepository>();
+builder.Services.AddScoped<IPurchaseRequestService, PurchaseRequestService>();
+
 builder.Services.AddValidatorsFromAssemblyContaining<CreateEmployeeValidator>();
 
 builder.Services.AddAuthentication(options =>
