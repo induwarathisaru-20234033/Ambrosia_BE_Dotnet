@@ -1,5 +1,6 @@
 ﻿using AMB.Application.Dtos;
 using AMB.Application.Interfaces.Repositories;
+using AMB.Domain.Enums;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -27,7 +28,7 @@ namespace AMB.Application.Validators
             var orderRepository = scope.ServiceProvider.GetRequiredService<IOrderRepository>();
             var order = await orderRepository.GetByIdAsync(orderId);
 
-            return order != null && order.OrderStatus == "Draft";
+            return order != null && (OrderStatus)order.OrderStatus == OrderStatus.Draft;
         }
 
         private async Task<bool> HaveItems(int orderId, CancellationToken cancellationToken)
