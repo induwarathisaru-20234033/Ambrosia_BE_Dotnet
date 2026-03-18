@@ -162,12 +162,7 @@ namespace AMB.API.Controllers
                 ));
             }
 
-            var result = await _orderService.UpdateDraftOrderAsync(dto);
-
-            var response = new BaseResponseDto<OrderResponseDto>(
-                result,
-                "Draft order updated successfully"
-            );
+            await _orderService.UpdateDraftOrderAsync(dto);
 
             return NoContent();
         }
@@ -180,12 +175,7 @@ namespace AMB.API.Controllers
         {
             try
             {
-                var result = await _orderService.RemoveItemFromOrderAsync(orderId, menuItemId);
-
-                var response = new BaseResponseDto<OrderResponseDto>(
-                    result,
-                    "Item removed from order successfully"
-                );
+                await _orderService.RemoveItemFromOrderAsync(orderId, menuItemId);
 
                 return NoContent();
             }
