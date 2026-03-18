@@ -39,6 +39,14 @@ namespace AMB.Infra.Repositories
             await _context.SaveChangesAsync();
         }
 
+        public async Task<List<TableCanvasShape>> GetTableFloorMapAsync()
+        {
+            return await _context.TableCanvasShapes
+                .Where(shape => shape.Status == (int)EntityStatus.Active)
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
         public async Task UpdateStatusAsync(int id, EntityStatus status)
         {
             var table = await _context.Tables.SingleOrDefaultAsync(t => t.Id == id);
