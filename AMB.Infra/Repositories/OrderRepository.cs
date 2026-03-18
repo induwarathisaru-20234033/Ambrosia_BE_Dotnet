@@ -264,21 +264,49 @@ namespace AMB.Infra.Repositories
                     .Where(m => menuItemIds.Contains(m.Id))
                     .ToDictionaryAsync(m => m.Id, m => m.Price);
 
-                // Remove existing items
-                _context.OrderItems.RemoveRange(order.OrderItems);
+                // Group items by MenuItemId from request (combine duplicates)
+                var requestItems = items.GroupBy(i => i.MenuItemId)
+                    .Select(g => new
+                    {
+                        MenuItemId = g.Key,
+                        Quantity = g.Sum(i => i.Quantity),
+                        SpecialInstructions = string.Join("; ", g.Select(i => i.SpecialInstructions).Where(s => !string.IsNullOrEmpty(s)))
+                    })
+                    .ToList();
 
-                // Add new items
-                var newItems = items.Select(item => new OrderItem
+                // Track which items we've processed
+                var processedMenuItemIds = new HashSet<int>();
+
+                // Update existing items or add new ones
+                foreach (var requestItem in requestItems)
                 {
-                    OrderId = orderId,
-                    MenuItemId = item.MenuItemId,
-                    SpecialInstructions = item.SpecialInstructions,
-                    Quantity = item.Quantity,
-                    UnitPrice = menuItems[item.MenuItemId],
-                    Status = 1,
-                });
+                    var existingItem = order.OrderItems
+                        .FirstOrDefault(oi => oi.MenuItemId == requestItem.MenuItemId);
 
-                await _context.OrderItems.AddRangeAsync(newItems);
+                    if (existingItem != null)
+                    {
+                        // Update existing item quantity and instructions
+                        existingItem.Quantity = requestItem.Quantity;
+                        existingItem.SpecialInstructions = requestItem.SpecialInstructions;
+                        existingItem.UpdatedDate = DateTime.UtcNow;
+                        processedMenuItemIds.Add(requestItem.MenuItemId);
+                    }
+                    else
+                    {
+                        // Add new item
+                        order.OrderItems.Add(new OrderItem
+                        {
+                            OrderId = orderId,
+                            MenuItemId = requestItem.MenuItemId,
+                            SpecialInstructions = requestItem.SpecialInstructions,
+                            Quantity = requestItem.Quantity,
+                            UnitPrice = menuItems[requestItem.MenuItemId],
+                            Status = 1,
+                            CreatedDate = DateTime.UtcNow
+                        });
+                        processedMenuItemIds.Add(requestItem.MenuItemId);
+                    }
+                }
 
                 order.UpdatedDate = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
