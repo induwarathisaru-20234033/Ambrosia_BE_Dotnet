@@ -171,5 +171,38 @@ namespace AMB.API.Controllers
 
             return Ok(response);
         }
+
+        // Remove an item from a draft order
+        [HttpDelete("{orderId}/items/{menuItemId}")]
+        public async Task<ActionResult<BaseResponseDto<OrderResponseDto>>> RemoveItemFromOrder(
+            int orderId,
+            int menuItemId)
+        {
+            try
+            {
+                var result = await _orderService.RemoveItemFromOrderAsync(orderId, menuItemId);
+
+                var response = new BaseResponseDto<OrderResponseDto>(
+                    result,
+                    "Item removed from order successfully"
+                );
+
+                return Ok(response);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new BaseResponseDto<OrderResponseDto>(
+                    ex.Message,
+                    new List<string> { ex.Message }
+                ));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new BaseResponseDto<OrderResponseDto>(
+                    ex.Message,
+                    new List<string> { ex.Message }
+                ));
+            }
+        }
     }
 }
