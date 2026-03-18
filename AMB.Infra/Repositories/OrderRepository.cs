@@ -245,5 +245,52 @@ namespace AMB.Infra.Repositories
 
             return (items, totalCount);
         }
+
+        public async Task<bool> UpdateDraftOrderItemsAsync(int orderId, List<OrderItemDto> items)
+        {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+
+            try
+            {
+                var order = await _context.Orders
+                    .Include(o => o.OrderItems)
+                    .FirstOrDefaultAsync(o => o.Id == orderId);
+
+                if (order == null) return false;
+
+                // Get menu items for pricing
+                var menuItemIds = items.Select(i => i.MenuItemId).ToList();
+                var menuItems = await _context.MenuItems
+                    .Where(m => menuItemIds.Contains(m.Id))
+                    .ToDictionaryAsync(m => m.Id, m => m.Price);
+
+                // Remove existing items
+                _context.OrderItems.RemoveRange(order.OrderItems);
+
+                // Add new items
+                var newItems = items.Select(item => new OrderItem
+                {
+                    OrderId = orderId,
+                    MenuItemId = item.MenuItemId,
+                    SpecialInstructions = item.SpecialInstructions,
+                    Quantity = item.Quantity,
+                    UnitPrice = menuItems[item.MenuItemId],
+                    Status = 1,
+                });
+
+                await _context.OrderItems.AddRangeAsync(newItems);
+
+                order.UpdatedDate = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+                return true;
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
     }
 }
