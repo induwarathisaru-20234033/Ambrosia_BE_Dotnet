@@ -64,7 +64,7 @@ namespace AMB.Application.Services
             {
                 OrderNumber = orderNumber,
                 TableId = request.TableId,
-                OrderStatus = request.IsDraft ? (int)OrderStatus.Draft : (int)OrderStatus.SentToKDS,
+               OrderStatus = request.IsDraft ? (int)AMB.Domain.Enums.OrderStatus.Draft : (int)AMB.Domain.Enums.OrderStatus.SentToKDS,
                 SentToKitchenAt = request.IsDraft ? null : DateTime.UtcNow,
                 Status = 1, 
                 OrderItems = request.Items.Select(item =>
