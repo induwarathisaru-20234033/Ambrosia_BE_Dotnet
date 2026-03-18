@@ -335,5 +335,36 @@ namespace AMB.Infra.Repositories
                 throw;
             }
         }
+
+        public async Task<bool> RemoveItemFromOrderAsync(int orderId, int menuItemId)
+        {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+
+            try
+            {
+                var orderItem = await _context.OrderItems
+                    .FirstOrDefaultAsync(oi => oi.OrderId == orderId && oi.MenuItemId == menuItemId);
+
+                if (orderItem == null) return false;
+
+                _context.OrderItems.Remove(orderItem);
+
+                var order = await _context.Orders.FindAsync(orderId);
+                if (order != null)
+                {
+                    order.UpdatedDate = DateTime.UtcNow;
+                }
+
+                await _context.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+                return true;
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
     }
 }
