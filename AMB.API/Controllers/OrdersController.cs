@@ -201,7 +201,7 @@ namespace AMB.API.Controllers
                 return BadRequest(new BaseResponseDto<OrderResponseDto>(
                     ex.Message,
                     new List<string> { ex.Message }
-                ));
+                )  );
             }
         }
     }
