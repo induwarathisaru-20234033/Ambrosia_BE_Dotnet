@@ -233,7 +233,7 @@ namespace AMB.Application.Services
             };
         }
 
-        public async Task<OrderResponseDto> UpdateDraftOrderAsync(UpdateDraftOrderDto dto)
+        public async Task UpdateDraftOrderAsync(UpdateDraftOrderDto dto)
         {
             var validator = _serviceProvider.GetRequiredService<IValidator<UpdateDraftOrderDto>>();
             await validator.ValidateAndThrowAsync(dto);
@@ -256,11 +256,9 @@ namespace AMB.Application.Services
                 throw new InvalidOperationException("Failed to update draft order");
             }
 
-            // Return updated order
-            return await GetOrderByIdAsync(dto.OrderId);
         }
 
-        public async Task<OrderResponseDto> RemoveItemFromOrderAsync(int orderId, int menuItemId)
+        public async Task RemoveItemFromOrderAsync(int orderId, int menuItemId)
         {
             // Validate order exists and is draft
             var order = await _orderRepository.GetByIdAsync(orderId);
@@ -281,8 +279,6 @@ namespace AMB.Application.Services
             var updated = await _orderRepository.RemoveItemFromOrderAsync(orderId, menuItemId);
             if (!updated)
                 throw new InvalidOperationException("Failed to remove item from order");
-
-            return await GetOrderByIdAsync(orderId);
         }
     }
 }
