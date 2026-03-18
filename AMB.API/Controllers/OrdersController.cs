@@ -169,7 +169,7 @@ namespace AMB.API.Controllers
                 "Draft order updated successfully"
             );
 
-            return Ok(response);
+            return NoContent();
         }
 
         // Remove an item from a draft order
@@ -187,7 +187,7 @@ namespace AMB.API.Controllers
                     "Item removed from order successfully"
                 );
 
-                return Ok(response);
+                return NoContent();
             }
             catch (KeyNotFoundException ex)
             {
