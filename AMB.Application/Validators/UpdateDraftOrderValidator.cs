@@ -27,9 +27,8 @@ namespace AMB.Application.Validators
                     item.RuleFor(i => i.MenuItemId)
                         .GreaterThan(0).WithMessage("Invalid menu item");
 
-                    // Allow 0 for removal, but validate other quantities
                     item.RuleFor(i => i.Quantity)
-                        .Must(qty => qty >= 0).WithMessage("Quantity cannot be negative");
+                        .GreaterThan(0).WithMessage("Quantity must be greater than 0");
                 });
 
             // Warn if all items have quantity 0 (would remove everything)
