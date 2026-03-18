@@ -8,7 +8,7 @@ namespace AMB.API.Controllers
 {
     [ApiController]
     [Route("api/orders")]
-    [EnableAuthorization]
+    //[EnableAuthorization]
     public class OrdersController : ControllerBase
     {
         private readonly IOrderService _orderService;
@@ -129,6 +129,20 @@ namespace AMB.API.Controllers
             var response = new BaseResponseDto<List<OrderResponseDto>>(
                 result,
                 "Kitchen orders retrieved successfully"
+            );
+
+            return Ok(response);
+        }
+
+        [HttpGet]
+        public async Task<ActionResult<BaseResponseDto<PagedResponseDto<OrderResponseDto>>>> SearchOrders(
+            [FromQuery] SearchOrderRequestDto dto)
+        {
+            var result = await _orderService.SearchOrdersAsync(dto);
+
+            var response = new BaseResponseDto<PagedResponseDto<OrderResponseDto>>(
+                result,
+                "Orders retrieved successfully"
             );
 
             return Ok(response);
