@@ -64,9 +64,9 @@ namespace AMB.Application.Services
             {
                 OrderNumber = orderNumber,
                 TableId = request.TableId,
-               OrderStatus = request.IsDraft ? (int)AMB.Domain.Enums.OrderStatus.Draft : (int)AMB.Domain.Enums.OrderStatus.SentToKDS,
+                OrderStatus = request.IsDraft ? (int)AMB.Domain.Enums.OrderStatus.Draft:(int)AMB.Domain.Enums.OrderStatus.SentToKDS,
                 SentToKitchenAt = request.IsDraft ? null : DateTime.UtcNow,
-                Status = 1, 
+                Status = 1,
                 OrderItems = request.Items.Select(item =>
                 {
                     var menuItem = menuItems.First(m => m.Id == item.MenuItemId);
@@ -130,7 +130,6 @@ namespace AMB.Application.Services
 
         public async Task<OrderResponseDto> SendDraftToKdsAsync(SendOrderToKdsDto dto)
         {
-            // Validate
             var validator = _serviceProvider.GetRequiredService<IValidator<SendOrderToKdsDto>>();
             await validator.ValidateAndThrowAsync(dto);
 
@@ -154,6 +153,7 @@ namespace AMB.Application.Services
             // Return updated order
             return await GetOrderByIdAsync(dto.OrderId);
         }
+
         public async Task<OrderResponseDto> UpdateOrderStatusAsync(UpdateOrderStatusDto dto)
         {
             // Validate
@@ -174,14 +174,36 @@ namespace AMB.Application.Services
         public async Task<List<OrderResponseDto>> GetOrdersByStatusAsync(OrderStatus status)
         {
             var orders = await _orderRepository.GetOrdersByStatusAsync(status);
+
             return orders.Select(o => MapToOrderResponseDto(o)).ToList();
         }
 
         public async Task<List<OrderResponseDto>> GetKitchenOrdersAsync()
         {
             var orders = await _orderRepository.GetKitchenOrdersAsync();
-
             return orders.Select(o => MapToOrderResponseDto(o)).ToList();
+        }
+
+        // search / filter / sort / paginate orders for FE DataTable
+        public async Task<PagedResponseDto<OrderResponseDto>> SearchOrdersAsync(SearchOrderRequestDto request)
+        {
+            var pageNumber = request.PageNumber <= 0 ? 1 : request.PageNumber;
+            var pageSize = request.PageSize <= 0 ? 10 : request.PageSize;
+
+            var (orders, totalCount) = await _orderRepository.SearchOrdersAsync(request);
+
+            var mappedOrders = orders.Select(o => MapToOrderResponseDto(o)).ToList();
+
+            var pageCount = (int)Math.Ceiling((double)totalCount / pageSize);
+
+            return new PagedResponseDto<OrderResponseDto>
+            {
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                PageCount = pageCount,
+                TotalItemCount = totalCount,
+                Items = mappedOrders
+            };
         }
 
         private OrderResponseDto MapToOrderResponseDto(Order order)

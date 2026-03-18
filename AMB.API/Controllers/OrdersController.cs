@@ -133,5 +133,19 @@ namespace AMB.API.Controllers
 
             return Ok(response);
         }
+
+        [HttpGet]
+        public async Task<ActionResult<BaseResponseDto<PagedResponseDto<OrderResponseDto>>>> SearchOrders(
+            [FromQuery] SearchOrderRequestDto dto)
+        {
+            var result = await _orderService.SearchOrdersAsync(dto);
+
+            var response = new BaseResponseDto<PagedResponseDto<OrderResponseDto>>(
+                result,
+                "Orders retrieved successfully"
+            );
+
+            return Ok(response);
+        }
     }
 }
