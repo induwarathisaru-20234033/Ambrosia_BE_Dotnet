@@ -3,6 +3,7 @@ using AMB.Domain.Entities;
 using AMB.Domain.Enums;
 using AMB.Infra.DBContexts;
 using Microsoft.EntityFrameworkCore;
+using AMB.Application.Dtos;
 
 namespace AMB.Infra.Repositories
 {
@@ -145,6 +146,104 @@ namespace AMB.Infra.Repositories
                     .ThenInclude(oi => oi.MenuItem)
                 .Include(o => o.Table)
                 .FirstOrDefaultAsync(o => o.Id == id && o.Status == 1);
+        }
+        public async Task<(List<Order> Items, int TotalCount)> SearchOrdersAsync(SearchOrderRequestDto request)
+        {
+            var pageNumber = request.PageNumber <= 0 ? 1 : request.PageNumber;
+            var pageSize = request.PageSize <= 0 ? 10 : request.PageSize;
+
+            IQueryable<Order> query = _context.Orders
+                .AsNoTracking()
+                .Where(o => o.Status == 1)
+                .Include(o => o.OrderItems!)
+                    .ThenInclude(oi => oi.MenuItem)
+                .Include(o => o.Table);
+
+            // Filter by category
+            if (!string.IsNullOrWhiteSpace(request.Category))
+            {
+                if (request.Category.Equals("ongoing", StringComparison.OrdinalIgnoreCase))
+                {
+                    var ongoingStatuses = new[]
+                    {
+                (int)OrderStatus.SentToKDS,
+                (int)OrderStatus.Preparing,
+                (int)OrderStatus.OnHold
+            };
+
+                    query = query.Where(o => ongoingStatuses.Contains(o.OrderStatus));
+                }
+                else if (request.Category.Equals("completed", StringComparison.OrdinalIgnoreCase))
+                {
+                    var completedStatuses = new[]
+                    {
+                (int)OrderStatus.Served,
+                (int)OrderStatus.Cancelled
+            };
+
+                    query = query.Where(o => completedStatuses.Contains(o.OrderStatus));
+                }
+            }
+
+            // Filter by exact status
+            if (request.Status.HasValue)
+            {
+                query = query.Where(o => o.OrderStatus == (int)request.Status.Value);
+            }
+
+            // Filter by order number
+            if (!string.IsNullOrWhiteSpace(request.OrderNumber))
+            {
+                query = query.Where(o => o.OrderNumber.Contains(request.OrderNumber));
+            }
+
+            // Filter by table name
+            if (!string.IsNullOrWhiteSpace(request.TableName))
+            {
+                query = query.Where(o => o.Table != null && o.Table.TableName.Contains(request.TableName));
+            }
+
+            // Filter by date range
+            if (request.OrderDateFrom.HasValue)
+            {
+                query = query.Where(o => o.CreatedDate >= request.OrderDateFrom.Value);
+            }
+
+            if (request.OrderDateTo.HasValue)
+            {
+                query = query.Where(o => o.CreatedDate <= request.OrderDateTo.Value);
+            }
+
+            // Sorting
+            query = request.SortField?.ToLower() switch
+            {
+                "ordernumber" => request.SortOrder == -1
+                    ? query.OrderByDescending(o => o.OrderNumber)
+                    : query.OrderBy(o => o.OrderNumber),
+
+                "tablename" => request.SortOrder == -1
+                    ? query.OrderByDescending(o => o.Table != null ? o.Table.TableName : "")
+                    : query.OrderBy(o => o.Table != null ? o.Table.TableName : ""),
+
+                "createddate" => request.SortOrder == -1
+                    ? query.OrderByDescending(o => o.CreatedDate)
+                    : query.OrderBy(o => o.CreatedDate),
+
+                "orderstatus" => request.SortOrder == -1
+                    ? query.OrderByDescending(o => o.OrderStatus)
+                    : query.OrderBy(o => o.OrderStatus),
+
+                _ => query.OrderByDescending(o => o.CreatedDate)
+            };
+
+            var totalCount = await query.CountAsync();
+
+            var items = await query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return (items, totalCount);
         }
     }
 }
