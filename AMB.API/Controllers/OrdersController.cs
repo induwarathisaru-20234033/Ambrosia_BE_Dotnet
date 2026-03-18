@@ -8,7 +8,7 @@ namespace AMB.API.Controllers
 {
     [ApiController]
     [Route("api/orders")]
-    //[EnableAuthorization]
+    [EnableAuthorization]
     public class OrdersController : ControllerBase
     {
         private readonly IOrderService _orderService;
