@@ -232,5 +232,32 @@ namespace AMB.Application.Services
                     }).ToList() ?? new()
             };
         }
+
+        public async Task<OrderResponseDto> UpdateDraftOrderAsync(UpdateDraftOrderDto dto)
+        {
+            var validator = _serviceProvider.GetRequiredService<IValidator<UpdateDraftOrderDto>>();
+            await validator.ValidateAndThrowAsync(dto);
+
+            // Verify all menu items exist
+            var menuItemIds = dto.Items.Select(i => i.MenuItemId).ToList();
+            var menuItems = await _menuItemRepository.GetByIdsAsync(menuItemIds);
+
+            if (menuItems.Count != menuItemIds.Count)
+            {
+                var foundIds = menuItems.Select(m => m.Id).ToList();
+                var missingIds = menuItemIds.Except(foundIds).ToList();
+                throw new InvalidOperationException($"Menu items not found: {string.Join(", ", missingIds)}");
+            }
+
+            // Update the draft order
+            var updated = await _orderRepository.UpdateDraftOrderItemsAsync(dto.OrderId, dto.Items);
+            if (!updated)
+            {
+                throw new InvalidOperationException("Failed to update draft order");
+            }
+
+            // Return updated order
+            return await GetOrderByIdAsync(dto.OrderId);
+        }
     }
 }
