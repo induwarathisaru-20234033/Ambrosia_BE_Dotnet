@@ -274,8 +274,8 @@ namespace AMB.Infra.Repositories
                     })
                     .ToList();
 
-                // Track which items we've processed
-                var processedMenuItemIds = new HashSet<int>();
+                // Track items to remove (those with quantity = 0)
+                var itemsToRemove = new List<OrderItem>();
 
                 // Update existing items or add new ones
                 foreach (var requestItem in requestItems)
@@ -283,13 +283,23 @@ namespace AMB.Infra.Repositories
                     var existingItem = order.OrderItems
                         .FirstOrDefault(oi => oi.MenuItemId == requestItem.MenuItemId);
 
+                    if (requestItem.Quantity <= 0)
+                    {
+                        // If quantity is 0 remove the item
+                        if (existingItem != null)
+                        {
+                            itemsToRemove.Add(existingItem);
+                        }
+                        // If it doesn't exist, just ignore
+                        continue;
+                    }
+
                     if (existingItem != null)
                     {
                         // Update existing item quantity and instructions
                         existingItem.Quantity = requestItem.Quantity;
                         existingItem.SpecialInstructions = requestItem.SpecialInstructions;
                         existingItem.UpdatedDate = DateTime.UtcNow;
-                        processedMenuItemIds.Add(requestItem.MenuItemId);
                     }
                     else
                     {
@@ -304,8 +314,13 @@ namespace AMB.Infra.Repositories
                             Status = 1,
                             CreatedDate = DateTime.UtcNow
                         });
-                        processedMenuItemIds.Add(requestItem.MenuItemId);
                     }
+                }
+
+                // Remove items with quantity 0
+                if (itemsToRemove.Any())
+                {
+                    _context.OrderItems.RemoveRange(itemsToRemove);
                 }
 
                 order.UpdatedDate = DateTime.UtcNow;
