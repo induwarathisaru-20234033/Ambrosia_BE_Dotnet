@@ -29,13 +29,32 @@ namespace AMB.Application.Validators
 
                     item.RuleFor(i => i.Quantity)
                         .GreaterThan(0).WithMessage("Quantity must be at least 1");
-                    // REMOVED: .LessThanOrEqualTo(100)
                 });
 
             // No duplicate menu items
             RuleFor(x => x.Items)
                 .Must(HaveUniqueMenuItems)
                 .WithMessage("Duplicate menu items are not allowed. Please combine quantities.");
+        }
+
+        private async Task<bool> BeDraftOrder(int orderId, CancellationToken cancellationToken)
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var orderRepository = scope.ServiceProvider.GetRequiredService<IOrderRepository>();
+            var order = await orderRepository.GetByIdAsync(orderId);
+
+            return order != null && (OrderStatus)order.OrderStatus == OrderStatus.Draft;
+        }
+
+        private bool HaveUniqueMenuItems(List<OrderItemDto> items)
+        {
+            var duplicates = items
+                .GroupBy(x => x.MenuItemId)
+                .Where(g => g.Count() > 1)
+                .Select(g => g.Key)
+                .ToList();
+
+            return !duplicates.Any();
         }
     }
 }
