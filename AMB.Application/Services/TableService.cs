@@ -43,6 +43,12 @@ namespace AMB.Application.Services
             await _tableRepository.SaveTableFloorMapAsync(shapeEntities);
         }
 
+        public async Task<GetTableFloorMapResponseDto> GetTableFloorMapAsync()
+        {
+            var savedShapes = await _tableRepository.GetTableFloorMapAsync();
+            return savedShapes.ToGetTableFloorMapResponseDto();
+        }
+
         public async Task RemoveTableAsync(int id)
         {
             await _tableRepository.UpdateStatusAsync(id, EntityStatus.Inactive);
