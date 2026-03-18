@@ -29,15 +29,12 @@ namespace AMB.Application.Services
 
         public async Task<OrderResponseDto> CreateOrderAsync(CreateOrderRequestDto request)
         {
-            // Validate using FluentValidation
             var validator = _serviceProvider.GetRequiredService<IValidator<CreateOrderRequestDto>>();
             await validator.ValidateAndThrowAsync(request);
 
-            // Get menu items for price and validation
             var menuItemIds = request.Items.Select(i => i.MenuItemId).ToList();
             var menuItems = await _menuItemRepository.GetByIdsAsync(menuItemIds);
 
-            // Check if all items exist
             if (menuItems.Count != menuItemIds.Count)
             {
                 var foundIds = menuItems.Select(m => m.Id).ToList();
@@ -45,7 +42,6 @@ namespace AMB.Application.Services
                 throw new InvalidOperationException($"Menu items not found: {string.Join(", ", missingIds)}");
             }
 
-            // Check availability for fired orders
             if (!request.IsDraft)
             {
                 var unavailableItems = menuItems.Where(m => !m.IsAvailable).ToList();
@@ -56,17 +52,17 @@ namespace AMB.Application.Services
                 }
             }
 
-            // Generate order number
             var orderNumber = await _orderRepository.GenerateOrderNumberAsync();
 
-            // Create order entity 
             var order = new Order
             {
                 OrderNumber = orderNumber,
                 TableId = request.TableId,
-               OrderStatus = request.IsDraft ? (int)AMB.Domain.Enums.OrderStatus.Draft : (int)AMB.Domain.Enums.OrderStatus.SentToKDS,
+                OrderStatus = request.IsDraft
+                    ? (int)AMB.Domain.Enums.OrderStatus.Draft
+                    : (int)AMB.Domain.Enums.OrderStatus.SentToKDS,
                 SentToKitchenAt = request.IsDraft ? null : DateTime.UtcNow,
-                Status = 1, 
+                Status = 1,
                 OrderItems = request.Items.Select(item =>
                 {
                     var menuItem = menuItems.First(m => m.Id == item.MenuItemId);
@@ -76,15 +72,13 @@ namespace AMB.Application.Services
                         SpecialInstructions = item.SpecialInstructions,
                         Quantity = item.Quantity,
                         UnitPrice = menuItem.Price,
-                        Status = 1, 
+                        Status = 1,
                     };
                 }).ToList()
             };
 
-            // Save to database
             var createdOrder = await _orderRepository.AddAsync(order);
 
-            // Return response with complete data
             return await GetOrderByIdAsync(createdOrder.Id);
         }
 
@@ -98,7 +92,7 @@ namespace AMB.Application.Services
             };
 
             var order = await _orderRepository.GetByIdAsync(id, options);
-            if (order == null || order.Status != 1) // Check if active
+            if (order == null || order.Status != 1)
             {
                 throw new KeyNotFoundException($"Order with ID {id} not found");
             }
@@ -113,7 +107,7 @@ namespace AMB.Application.Services
                 CreatedDate = order.CreatedDate,
                 UpdatedDate = order.UpdatedDate,
                 Items = order.OrderItems?
-                    .Where(oi => oi.Status == 1) // Only active items
+                    .Where(oi => oi.Status == 1)
                     .Select(oi => new OrderItemResponseDto
                     {
                         Id = oi.Id,
@@ -130,11 +124,9 @@ namespace AMB.Application.Services
 
         public async Task<OrderResponseDto> SendDraftToKdsAsync(SendOrderToKdsDto dto)
         {
-            // Validate
             var validator = _serviceProvider.GetRequiredService<IValidator<SendOrderToKdsDto>>();
             await validator.ValidateAndThrowAsync(dto);
 
-            // Check table availability if table is being set/changed
             if (dto.TableId.HasValue)
             {
                 var table = await _tableRepository.GetByIdAsync(dto.TableId.Value);
@@ -144,30 +136,26 @@ namespace AMB.Application.Services
                 }
             }
 
-            // Send to KDS
             var sent = await _orderRepository.SendDraftToKdsAsync(dto.OrderId, dto.TableId);
             if (!sent)
             {
                 throw new InvalidOperationException("Failed to send order to KDS");
             }
 
-            // Return updated order
             return await GetOrderByIdAsync(dto.OrderId);
         }
+
         public async Task<OrderResponseDto> UpdateOrderStatusAsync(UpdateOrderStatusDto dto)
         {
-            // Validate
             var validator = _serviceProvider.GetRequiredService<IValidator<UpdateOrderStatusDto>>();
             await validator.ValidateAndThrowAsync(dto);
 
-            // Update status
             var updated = await _orderRepository.UpdateOrderStatusAsync(dto.OrderId, dto.Status, dto.Reason);
             if (!updated)
             {
-                throw new InvalidOperationException($"Failed to update order status");
+                throw new InvalidOperationException("Failed to update order status");
             }
 
-            // Return updated order
             return await GetOrderByIdAsync(dto.OrderId);
         }
 
@@ -180,8 +168,29 @@ namespace AMB.Application.Services
         public async Task<List<OrderResponseDto>> GetKitchenOrdersAsync()
         {
             var orders = await _orderRepository.GetKitchenOrdersAsync();
-
             return orders.Select(o => MapToOrderResponseDto(o)).ToList();
+        }
+
+        // search / filter / sort / paginate orders for FE DataTable
+        public async Task<PagedResponseDto<OrderResponseDto>> SearchOrdersAsync(SearchOrderRequestDto request)
+        {
+            var pageNumber = request.PageNumber <= 0 ? 1 : request.PageNumber;
+            var pageSize = request.PageSize <= 0 ? 10 : request.PageSize;
+
+            var (orders, totalCount) = await _orderRepository.SearchOrdersAsync(request);
+
+            var mappedOrders = orders.Select(o => MapToOrderResponseDto(o)).ToList();
+
+            var pageCount = (int)Math.Ceiling((double)totalCount / pageSize);
+
+            return new PagedResponseDto<OrderResponseDto>
+            {
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                PageCount = pageCount,
+                TotalItemCount = totalCount,
+                Items = mappedOrders
+            };
         }
 
         private OrderResponseDto MapToOrderResponseDto(Order order)
