@@ -17,6 +17,7 @@ namespace AMB.Application.Interfaces.Repositories
         Task<bool> UpdateOrderStatusAsync(int orderId, OrderStatus newStatus, string? reason = null);
         Task<Order?> GetOrderWithDetailsAsync(int id);
         Task<(List<Order> Items, int TotalCount)> SearchOrdersAsync(SearchOrderRequestDto request);
+        Task<bool> UpdateDraftOrderItemsAsync(int orderId, List<OrderItemDto> items);
     }
 
     public class OrderQueryOptions
