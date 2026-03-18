@@ -232,5 +232,53 @@ namespace AMB.Application.Services
                     }).ToList() ?? new()
             };
         }
+
+        public async Task UpdateDraftOrderAsync(UpdateDraftOrderDto dto)
+        {
+            var validator = _serviceProvider.GetRequiredService<IValidator<UpdateDraftOrderDto>>();
+            await validator.ValidateAndThrowAsync(dto);
+
+            // Verify all menu items exist
+            var menuItemIds = dto.Items.Select(i => i.MenuItemId).ToList();
+            var menuItems = await _menuItemRepository.GetByIdsAsync(menuItemIds);
+
+            if (menuItems.Count != menuItemIds.Count)
+            {
+                var foundIds = menuItems.Select(m => m.Id).ToList();
+                var missingIds = menuItemIds.Except(foundIds).ToList();
+                throw new InvalidOperationException($"Menu items not found: {string.Join(", ", missingIds)}");
+            }
+
+            // Update the draft order
+            var updated = await _orderRepository.UpdateDraftOrderItemsAsync(dto.OrderId, dto.Items);
+            if (!updated)
+            {
+                throw new InvalidOperationException("Failed to update draft order");
+            }
+
+        }
+
+        public async Task RemoveItemFromOrderAsync(int orderId, int menuItemId)
+        {
+            // Validate order exists and is draft
+            var order = await _orderRepository.GetByIdAsync(orderId);
+            if (order == null)
+                throw new KeyNotFoundException($"Order with ID {orderId} not found");
+
+            if ((OrderStatus)order.OrderStatus != OrderStatus.Draft)
+                throw new InvalidOperationException("Can only remove items from draft orders");
+
+            // Check if item exists in order
+            var orderWithItems = await _orderRepository.GetByIdAsync(orderId, new OrderQueryOptions { IncludeItems = true });
+            var itemExists = orderWithItems?.OrderItems?.Any(oi => oi.MenuItemId == menuItemId) ?? false;
+
+            if (!itemExists)
+                throw new InvalidOperationException($"Item with ID {menuItemId} not found in order");
+
+            // Remove the item
+            var updated = await _orderRepository.RemoveItemFromOrderAsync(orderId, menuItemId);
+            if (!updated)
+                throw new InvalidOperationException("Failed to remove item from order");
+        }
     }
 }

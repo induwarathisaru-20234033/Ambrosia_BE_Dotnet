@@ -245,5 +245,126 @@ namespace AMB.Infra.Repositories
 
             return (items, totalCount);
         }
+
+        public async Task<bool> UpdateDraftOrderItemsAsync(int orderId, List<OrderItemDto> items)
+        {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+
+            try
+            {
+                var order = await _context.Orders
+                    .Include(o => o.OrderItems)
+                    .FirstOrDefaultAsync(o => o.Id == orderId);
+
+                if (order == null) return false;
+
+                // Get menu items for pricing
+                var menuItemIds = items.Select(i => i.MenuItemId).ToList();
+                var menuItems = await _context.MenuItems
+                    .Where(m => menuItemIds.Contains(m.Id))
+                    .ToDictionaryAsync(m => m.Id, m => m.Price);
+
+                // Group items by MenuItemId from request (combine duplicates)
+                var requestItems = items.GroupBy(i => i.MenuItemId)
+                    .Select(g => new
+                    {
+                        MenuItemId = g.Key,
+                        Quantity = g.Sum(i => i.Quantity),
+                        SpecialInstructions = string.Join("; ", g.Select(i => i.SpecialInstructions).Where(s => !string.IsNullOrEmpty(s)))
+                    })
+                    .ToList();
+
+                // Track items to remove (those with quantity = 0)
+                var itemsToRemove = new List<OrderItem>();
+
+                // Update existing items or add new ones
+                foreach (var requestItem in requestItems)
+                {
+                    var existingItem = order.OrderItems
+                        .FirstOrDefault(oi => oi.MenuItemId == requestItem.MenuItemId);
+
+                    if (requestItem.Quantity <= 0)
+                    {
+                        // If quantity is 0 remove the item
+                        if (existingItem != null)
+                        {
+                            itemsToRemove.Add(existingItem);
+                        }
+                        // If it doesn't exist, just ignore
+                        continue;
+                    }
+
+                    if (existingItem != null)
+                    {
+                        // Update existing item quantity and instructions
+                        existingItem.Quantity = requestItem.Quantity;
+                        existingItem.SpecialInstructions = requestItem.SpecialInstructions;
+                        existingItem.UpdatedDate = DateTime.UtcNow;
+                    }
+                    else
+                    {
+                        // Add new item
+                        order.OrderItems.Add(new OrderItem
+                        {
+                            OrderId = orderId,
+                            MenuItemId = requestItem.MenuItemId,
+                            SpecialInstructions = requestItem.SpecialInstructions,
+                            Quantity = requestItem.Quantity,
+                            UnitPrice = menuItems[requestItem.MenuItemId],
+                            Status = 1,
+                            CreatedDate = DateTime.UtcNow
+                        });
+                    }
+                }
+
+                // Remove items with quantity 0
+                if (itemsToRemove.Any())
+                {
+                    _context.OrderItems.RemoveRange(itemsToRemove);
+                }
+
+                order.UpdatedDate = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+                return true;
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+
+        public async Task<bool> RemoveItemFromOrderAsync(int orderId, int menuItemId)
+        {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+
+            try
+            {
+                var orderItem = await _context.OrderItems
+                    .FirstOrDefaultAsync(oi => oi.OrderId == orderId && oi.MenuItemId == menuItemId);
+
+                if (orderItem == null) return false;
+
+                _context.OrderItems.Remove(orderItem);
+
+                var order = await _context.Orders.FindAsync(orderId);
+                if (order != null)
+                {
+                    order.UpdatedDate = DateTime.UtcNow;
+                }
+
+                await _context.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+                return true;
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
     }
 }
