@@ -32,6 +32,17 @@ namespace AMB.Application.Services
             return table.ToTableDto();
         }
 
+        public async Task SaveTableFloorMapAsync(SaveTableFloorMapRequestDto request)
+        {
+            var validator = _serviceProvider.GetRequiredService<IValidator<SaveTableFloorMapRequestDto>>();
+            await validator.ValidateAndThrowAsync(request);
+
+            var shapeEntities = request.ToTableCanvasShapeEntities();
+            shapeEntities.ForEach(shape => shape.Status = (int)EntityStatus.Active);
+
+            await _tableRepository.SaveTableFloorMapAsync(shapeEntities);
+        }
+
         public async Task RemoveTableAsync(int id)
         {
             await _tableRepository.UpdateStatusAsync(id, EntityStatus.Inactive);

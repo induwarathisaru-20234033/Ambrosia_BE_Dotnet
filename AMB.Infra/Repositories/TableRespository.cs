@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AMB.Infra.Repositories
 {
-    public class TableRespository: ITableRepository
+    public class TableRespository : ITableRepository
     {
         private readonly AMBContext _context;
 
@@ -22,7 +22,24 @@ namespace AMB.Infra.Repositories
             return table;
         }
 
-        public async Task UpdateStatusAsync(int id, EntityStatus entityStatus)
+        public async Task SaveTableFloorMapAsync(List<TableCanvasShape> shapes)
+        {
+            var existingShapes = await _context.TableCanvasShapes.ToListAsync();
+
+            if (existingShapes.Count > 0)
+            {
+                _context.TableCanvasShapes.RemoveRange(existingShapes);
+            }
+
+            if (shapes != null && shapes.Count > 0)
+            {
+                await _context.TableCanvasShapes.AddRangeAsync(shapes);
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task UpdateStatusAsync(int id, EntityStatus status)
         {
             var table = await _context.Tables.SingleOrDefaultAsync(t => t.Id == id);
             if (table == null)
@@ -30,7 +47,7 @@ namespace AMB.Infra.Repositories
                 throw new InvalidOperationException($"Table with id {id} not found.");
             }
 
-            table.Status = (int)entityStatus;
+            table.Status = (int)status;
             await _context.SaveChangesAsync();
         }
 

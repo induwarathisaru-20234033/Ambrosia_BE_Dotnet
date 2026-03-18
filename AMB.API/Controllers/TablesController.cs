@@ -24,6 +24,15 @@ namespace AMB.API.Controllers
             return Ok(response);
         }
 
+        [HttpPost("floor-map")]
+        public async Task<ActionResult<BaseResponseDto<object>>> SaveFloorMap([FromBody] SaveTableFloorMapRequestDto request)
+        {
+            await _tableService.SaveTableFloorMapAsync(request);
+
+            var response = new BaseResponseDto<object>(new object(), "Table floor map saved successfully!");
+            return Ok(response);
+        }
+
         [HttpGet("search")]
         public async Task<ActionResult<BaseResponseDto<PaginatedResultDto<TableDto>>>> Search([FromQuery] SearchTableRequestDto request)
         {
@@ -59,7 +68,7 @@ namespace AMB.API.Controllers
             await _tableService.RemoveTableAsync(id);
 
             var response = new BaseResponseDto<object>(
-                null,
+                new object(),
                 "Table removed successfully.");
 
             return Ok(response);
@@ -68,10 +77,10 @@ namespace AMB.API.Controllers
         [HttpGet]
         public async Task<ActionResult<BaseResponseDto<List<TableDto>>>> GetAll([FromQuery] DateOnly? date = null)
         {
-            var result = date.HasValue 
-                ? await _tableService.GetTablesWithAllocationsAsync(date) 
+            var result = date.HasValue
+                ? await _tableService.GetTablesWithAllocationsAsync(date)
                 : await _tableService.GetAllAsync();
-            
+
             var response = new BaseResponseDto<List<TableDto>>(result, "Tables retrieved successfully");
             return Ok(response);
         }

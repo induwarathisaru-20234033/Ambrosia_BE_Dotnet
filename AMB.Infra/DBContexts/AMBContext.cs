@@ -28,6 +28,7 @@ namespace AMB.Infra.DBContexts
         public DbSet<ReservationSetting> ReservationSettings { get; set; }
         public DbSet<ServiceHour> ServiceHours { get; set; }
         public DbSet<Table> Tables { get; set; }
+        public DbSet<TableCanvasShape> TableCanvasShapes { get; set; }
         public DbSet<CalenderExclusion> CalenderExclusions { get; set; }
 
         // Menu Item
@@ -57,6 +58,7 @@ namespace AMB.Infra.DBContexts
             modelBuilder.Entity<ReservationSetting>().ToTable(nameof(ReservationSettings));
             modelBuilder.Entity<ServiceHour>().ToTable(nameof(ServiceHours));
             modelBuilder.Entity<Table>().ToTable(nameof(Tables));
+            modelBuilder.Entity<TableCanvasShape>().ToTable(nameof(TableCanvasShapes));
             modelBuilder.Entity<CalenderExclusion>().ToTable(nameof(CalenderExclusions));
 
             modelBuilder.Entity<MenuItem>().ToTable(nameof(MenuItems));
@@ -179,6 +181,16 @@ namespace AMB.Infra.DBContexts
             modelBuilder.Entity<Reservation>()
                 .Property(r => r.PartySize)
                 .IsRequired();
+
+            modelBuilder.Entity<TableCanvasShape>()
+                .HasOne(shape => shape.AssignedTable)
+                .WithMany()
+                .HasForeignKey(shape => shape.AssignedTableId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<TableCanvasShape>()
+                .Property(shape => shape.Fill)
+                .HasMaxLength(50);
 
             modelBuilder.Entity<Reservation>()
                 .Property(r => r.ReservationStatus)

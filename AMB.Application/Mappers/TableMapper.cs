@@ -34,5 +34,25 @@ namespace AMB.Application.Mappers
                 IsOnlineBookingEnabled = entity.IsOnlineBookingEnabled,
             };
         }
+
+        public static List<TableCanvasShape> ToTableCanvasShapeEntities(this SaveTableFloorMapRequestDto dto)
+        {
+            if (dto == null || dto.Shapes == null || dto.Shapes.Count == 0)
+            {
+                return new List<TableCanvasShape>();
+            }
+
+            return dto.Shapes.Select(shape => new TableCanvasShape
+            {
+                Type = (int)shape.Type,
+                X = shape.X,
+                Y = shape.Y,
+                Width = shape.Width,
+                Height = shape.Height,
+                Rotation = shape.Rotation,
+                Fill = shape.Fill,
+                AssignedTableId = shape.AssignedTableId
+            }).ToList();
+        }
     }
 }
