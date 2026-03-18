@@ -29,11 +29,7 @@ namespace AMB.Infra.DBContexts
         public DbSet<ServiceHour> ServiceHours { get; set; }
         public DbSet<Table> Tables { get; set; }
         public DbSet<CalenderExclusion> CalenderExclusions { get; set; }
-
-        // Menu Item
         public DbSet<MenuItem> MenuItems { get; set; }
-
-        //Reservation Entities
         public DbSet<BookingSlot> BookingSlots { get; set; }
         public DbSet<CustomerDetail> CustomerDetails { get; set; }
         public DbSet<Reservation> Reservations { get; set; }
@@ -42,15 +38,11 @@ namespace AMB.Infra.DBContexts
         public DbSet<Currency> Currencies { get; set; }
         public DbSet<PurchaseRequest> PurchaseRequests { get; set; }
         public DbSet<PurchaseRequestItem> PurchaseRequestItems { get; set; }
-<<<<<<< feature/awp-0000_create-and-view-grns
         public DbSet<GoodReceiptNote> GoodReceiptNotes { get; set; }
         public DbSet<GRNItem> GRNItems { get; set; }
         public DbSet<StockTransaction> StockTransactions { get; set; }
-
-=======
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }
->>>>>>> main
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -66,9 +58,7 @@ namespace AMB.Infra.DBContexts
             modelBuilder.Entity<ServiceHour>().ToTable(nameof(ServiceHours));
             modelBuilder.Entity<Table>().ToTable(nameof(Tables));
             modelBuilder.Entity<CalenderExclusion>().ToTable(nameof(CalenderExclusions));
-
             modelBuilder.Entity<MenuItem>().ToTable(nameof(MenuItems));
-
             modelBuilder.Entity<BookingSlot>().ToTable(nameof(BookingSlots));
             modelBuilder.Entity<CustomerDetail>().ToTable(nameof(CustomerDetails));
             modelBuilder.Entity<Reservation>().ToTable(nameof(Reservations));
