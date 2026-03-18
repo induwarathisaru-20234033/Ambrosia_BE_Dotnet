@@ -259,5 +259,30 @@ namespace AMB.Application.Services
             // Return updated order
             return await GetOrderByIdAsync(dto.OrderId);
         }
+
+        public async Task<OrderResponseDto> RemoveItemFromOrderAsync(int orderId, int menuItemId)
+        {
+            // Validate order exists and is draft
+            var order = await _orderRepository.GetByIdAsync(orderId);
+            if (order == null)
+                throw new KeyNotFoundException($"Order with ID {orderId} not found");
+
+            if ((OrderStatus)order.OrderStatus != OrderStatus.Draft)
+                throw new InvalidOperationException("Can only remove items from draft orders");
+
+            // Check if item exists in order
+            var orderWithItems = await _orderRepository.GetByIdAsync(orderId, new OrderQueryOptions { IncludeItems = true });
+            var itemExists = orderWithItems?.OrderItems?.Any(oi => oi.MenuItemId == menuItemId) ?? false;
+
+            if (!itemExists)
+                throw new InvalidOperationException($"Item with ID {menuItemId} not found in order");
+
+            // Remove the item
+            var updated = await _orderRepository.RemoveItemFromOrderAsync(orderId, menuItemId);
+            if (!updated)
+                throw new InvalidOperationException("Failed to remove item from order");
+
+            return await GetOrderByIdAsync(orderId);
+        }
     }
 }
