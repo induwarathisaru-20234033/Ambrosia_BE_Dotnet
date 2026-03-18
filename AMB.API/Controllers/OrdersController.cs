@@ -147,5 +147,29 @@ namespace AMB.API.Controllers
 
             return Ok(response);
         }
+
+        // Update a draft order (add/remove items)
+        [HttpPut("{id}/items")]
+        public async Task<ActionResult<BaseResponseDto<OrderResponseDto>>> UpdateDraftOrder(
+            int id,
+            [FromBody] UpdateDraftOrderDto dto)
+        {
+            if (id != dto.OrderId)
+            {
+                return BadRequest(new BaseResponseDto<OrderResponseDto>(
+                    "ID mismatch",
+                    new List<string> { "URL ID does not match request body ID" }
+                ));
+            }
+
+            var result = await _orderService.UpdateDraftOrderAsync(dto);
+
+            var response = new BaseResponseDto<OrderResponseDto>(
+                result,
+                "Draft order updated successfully"
+            );
+
+            return Ok(response);
+        }
     }
 }
