@@ -77,7 +77,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ICalenderExclusionRepository, CalenderExclusionRepository>();
 builder.Services.AddScoped<ICalendarExclusionService, CalenderExclusionService>();
 
-builder.Services.AddScoped<ITableRepository, TableRespository>();
+builder.Services.AddScoped<ITableRepository, TableRepository>();
 builder.Services.AddScoped<ITableService, TableService>();
 
 builder.Services.AddScoped<IConfigRepository, ConfigRepository>();
@@ -93,6 +93,11 @@ builder.Services.AddScoped<IPurchaseRequestRepositoy, PurchaseRequestRepository>
 builder.Services.AddScoped<IPurchaseRequestService, PurchaseRequestService>();
 
 builder.Services.AddValidatorsFromAssemblyContaining<CreateEmployeeValidator>();
+
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IOrderService, OrderService>();
+
+builder.Services.AddScoped<IMenuItemRepository, MenuItemRepository>();
 
 builder.Services.AddAuthentication(options =>
 {

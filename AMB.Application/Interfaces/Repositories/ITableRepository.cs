@@ -1,4 +1,4 @@
-﻿using AMB.Domain.Entities;
+using AMB.Domain.Entities;
 using AMB.Domain.Enums;
 
 namespace AMB.Application.Interfaces.Repositories
@@ -11,5 +11,6 @@ namespace AMB.Application.Interfaces.Repositories
         Task UpdateStatusAsync(int id, EntityStatus status);
         Task<List<Table>> GetAllAsync();
         IQueryable<Table> GetSearchQuery();
+        Task<Table?> GetByIdAsync(int id);
     }
 }
