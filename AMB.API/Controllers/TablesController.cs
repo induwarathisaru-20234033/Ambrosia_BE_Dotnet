@@ -33,6 +33,14 @@ namespace AMB.API.Controllers
             return Ok(response);
         }
 
+        [HttpGet("floor-map")]
+        public async Task<ActionResult<BaseResponseDto<GetTableFloorMapResponseDto>>> GetFloorMap()
+        {
+            var result = await _tableService.GetTableFloorMapAsync();
+            var response = new BaseResponseDto<GetTableFloorMapResponseDto>(result, "Table floor map retrieved successfully!");
+            return Ok(response);
+        }
+
         [HttpGet("search")]
         public async Task<ActionResult<BaseResponseDto<PaginatedResultDto<TableDto>>>> Search([FromQuery] SearchTableRequestDto request)
         {

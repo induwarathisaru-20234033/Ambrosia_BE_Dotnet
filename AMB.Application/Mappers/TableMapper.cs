@@ -1,5 +1,6 @@
 ﻿using AMB.Application.Dtos;
 using AMB.Domain.Entities;
+using AMB.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -53,6 +54,29 @@ namespace AMB.Application.Mappers
                 Fill = shape.Fill,
                 AssignedTableId = shape.AssignedTableId
             }).ToList();
+        }
+
+        public static GetTableFloorMapResponseDto ToGetTableFloorMapResponseDto(this List<TableCanvasShape> entities)
+        {
+            if (entities == null || entities.Count == 0)
+            {
+                return new GetTableFloorMapResponseDto();
+            }
+
+            return new GetTableFloorMapResponseDto
+            {
+                Shapes = entities.Select(shape => new TableFloorMapShapeDto
+                {
+                    Type = (ShapeType)shape.Type,
+                    X = shape.X,
+                    Y = shape.Y,
+                    Width = shape.Width,
+                    Height = shape.Height,
+                    Rotation = shape.Rotation,
+                    Fill = shape.Fill,
+                    AssignedTableId = shape.AssignedTableId
+                }).ToList()
+            };
         }
     }
 }
