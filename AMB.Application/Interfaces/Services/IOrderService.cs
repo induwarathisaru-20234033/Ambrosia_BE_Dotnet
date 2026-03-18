@@ -12,5 +12,6 @@ namespace AMB.Application.Interfaces.Services
         Task<List<OrderResponseDto>> GetOrdersByStatusAsync(OrderStatus status);
         Task<List<OrderResponseDto>> GetKitchenOrdersAsync();
         Task<PagedResponseDto<OrderResponseDto>> SearchOrdersAsync(SearchOrderRequestDto request);
+        Task<OrderResponseDto> UpdateDraftOrderAsync(UpdateDraftOrderDto dto);
     }
 }
