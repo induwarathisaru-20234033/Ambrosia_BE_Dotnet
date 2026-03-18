@@ -42,10 +42,15 @@ namespace AMB.Infra.DBContexts
         public DbSet<Currency> Currencies { get; set; }
         public DbSet<PurchaseRequest> PurchaseRequests { get; set; }
         public DbSet<PurchaseRequestItem> PurchaseRequestItems { get; set; }
+<<<<<<< feature/awp-0000_create-and-view-grns
         public DbSet<GoodReceiptNote> GoodReceiptNotes { get; set; }
         public DbSet<GRNItem> GRNItems { get; set; }
         public DbSet<StockTransaction> StockTransactions { get; set; }
 
+=======
+        public DbSet<Order> Orders { get; set; }
+        public DbSet<OrderItem> OrderItems { get; set; }
+>>>>>>> main
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -76,6 +81,9 @@ namespace AMB.Infra.DBContexts
             modelBuilder.Entity<GRNItem>().ToTable(nameof(GRNItems));
             modelBuilder.Entity<StockTransaction>().ToTable(nameof(StockTransactions));
 
+            // Add Order tables
+            modelBuilder.Entity<Order>().ToTable(nameof(Orders));
+            modelBuilder.Entity<OrderItem>().ToTable(nameof(OrderItems));
 
             modelBuilder.Entity<Employee>()
                 .HasIndex(e => e.EmployeeId)
@@ -148,10 +156,9 @@ namespace AMB.Infra.DBContexts
                 .HasForeignKey(erm => erm.CustomRoleId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-
             modelBuilder.Entity<MenuItem>()
                 .Property(m => m.Price)
-                .HasPrecision(18, 2); // precision 18, scale 2
+                .HasPrecision(18, 2);
 
             // Reservation relationships
             modelBuilder.Entity<Reservation>()
@@ -229,6 +236,7 @@ namespace AMB.Infra.DBContexts
                 .Property(item => item.Price)
                 .HasPrecision(18, 2);
 
+<<<<<<< feature/awp-0000_create-and-view-grns
             modelBuilder.Entity<GoodReceiptNote>()
                 .HasMany(grn => grn.GRNItems)
                 .WithOne(item => item.GoodReceiptNote)
@@ -257,6 +265,30 @@ namespace AMB.Infra.DBContexts
                 .HasForeignKey(transaction => transaction.InventoryItemId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+=======
+            // Order configurations - MOVED INSIDE OnModelCreating
+            modelBuilder.Entity<Order>()
+                .HasOne(o => o.Table)
+                .WithMany()
+                .HasForeignKey(o => o.TableId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<OrderItem>()
+                .HasOne(oi => oi.Order)
+                .WithMany(o => o.OrderItems)
+                .HasForeignKey(oi => oi.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<OrderItem>()
+                .HasOne(oi => oi.MenuItem)
+                .WithMany()
+                .HasForeignKey(oi => oi.MenuItemId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<OrderItem>()
+                .Property(oi => oi.UnitPrice)
+                .HasPrecision(18, 2);
+>>>>>>> main
         }
 
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

@@ -4,6 +4,7 @@ using AMB.Infra.DBContexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AMB.Infra.Migrations
 {
     [DbContext(typeof(AMBContext))]
-    partial class AMBContextModelSnapshot : ModelSnapshot
+    [Migration("20260317153135_AddOrderTables_Final")]
+    partial class AddOrderTables_Final
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -493,135 +496,6 @@ namespace AMB.Infra.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Features", (string)null);
-                });
-
-            modelBuilder.Entity("AMB.Domain.Entities.GRNItem", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<float>("AcceptedQuantity")
-                        .HasColumnType("real");
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTimeOffset>("CreatedDate")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("DeletedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTimeOffset?>("DeletedDate")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<int>("GRNId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("LineItemNo")
-                        .HasColumnType("int");
-
-                    b.Property<int>("PRItemId")
-                        .HasColumnType("int");
-
-                    b.Property<float>("ReceivedQuantity")
-                        .HasColumnType("real");
-
-                    b.Property<float>("RejectedQuantity")
-                        .HasColumnType("real");
-
-                    b.Property<string>("Remarks")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Status")
-                        .IsConcurrencyToken()
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("TotalPrice")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTimeOffset?>("UpdatedDate")
-                        .HasColumnType("datetimeoffset");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("GRNId");
-
-                    b.HasIndex("PRItemId");
-
-                    b.ToTable("GRNItems", (string)null);
-                });
-
-            modelBuilder.Entity("AMB.Domain.Entities.GoodReceiptNote", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTimeOffset>("CreatedDate")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("DeletedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTimeOffset?>("DeletedDate")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("GRNNumber")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("GRNStatus")
-                        .HasColumnType("int");
-
-                    b.Property<int>("PurchaseRequestId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ReceivedBy")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTimeOffset>("ReceivedDate")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("ReceivedFacility")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Status")
-                        .IsConcurrencyToken()
-                        .HasColumnType("int");
-
-                    b.Property<string>("Supplier")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTimeOffset?>("UpdatedDate")
-                        .HasColumnType("datetimeoffset");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PurchaseRequestId");
-
-                    b.ToTable("GoodReceiptNotes", (string)null);
                 });
 
             modelBuilder.Entity("AMB.Domain.Entities.InventoryItem", b =>
@@ -1343,73 +1217,6 @@ namespace AMB.Infra.Migrations
                     b.ToTable("ServiceHours", (string)null);
                 });
 
-            modelBuilder.Entity("AMB.Domain.Entities.StockTransaction", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTimeOffset>("CreatedDate")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("DeletedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTimeOffset?>("DeletedDate")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<int>("Direction")
-                        .HasColumnType("int");
-
-                    b.Property<int>("InventoryItemId")
-                        .HasColumnType("int");
-
-                    b.Property<float>("Quantity")
-                        .HasColumnType("real");
-
-                    b.Property<int>("ReferenceId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("ReferenceLineId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ReferenceNumber")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Remarks")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Status")
-                        .IsConcurrencyToken()
-                        .HasColumnType("int");
-
-                    b.Property<DateTimeOffset>("TransactionDate")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<int>("TransactionType")
-                        .HasColumnType("int");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTimeOffset?>("UpdatedDate")
-                        .HasColumnType("datetimeoffset");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("InventoryItemId");
-
-                    b.ToTable("StockTransactions", (string)null);
-                });
-
             modelBuilder.Entity("AMB.Domain.Entities.Table", b =>
                 {
                     b.Property<int>("Id")
@@ -1556,36 +1363,6 @@ namespace AMB.Infra.Migrations
                     b.Navigation("Role");
                 });
 
-            modelBuilder.Entity("AMB.Domain.Entities.GRNItem", b =>
-                {
-                    b.HasOne("AMB.Domain.Entities.GoodReceiptNote", "GoodReceiptNote")
-                        .WithMany("GRNItems")
-                        .HasForeignKey("GRNId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("AMB.Domain.Entities.PurchaseRequestItem", "PRItem")
-                        .WithMany()
-                        .HasForeignKey("PRItemId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("GoodReceiptNote");
-
-                    b.Navigation("PRItem");
-                });
-
-            modelBuilder.Entity("AMB.Domain.Entities.GoodReceiptNote", b =>
-                {
-                    b.HasOne("AMB.Domain.Entities.PurchaseRequest", "PurchaseRequest")
-                        .WithMany()
-                        .HasForeignKey("PurchaseRequestId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("PurchaseRequest");
-                    });
-                    
             modelBuilder.Entity("AMB.Domain.Entities.Order", b =>
                 {
                     b.HasOne("AMB.Domain.Entities.Table", "Table")
@@ -1691,17 +1468,6 @@ namespace AMB.Infra.Migrations
                     b.Navigation("Role");
                 });
 
-            modelBuilder.Entity("AMB.Domain.Entities.StockTransaction", b =>
-                {
-                    b.HasOne("AMB.Domain.Entities.InventoryItem", "InventoryItem")
-                        .WithMany()
-                        .HasForeignKey("InventoryItemId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("InventoryItem");
-                });
-
             modelBuilder.Entity("AMB.Domain.Entities.CustomRole", b =>
                 {
                     b.Navigation("CustomRolePermissionMaps");
@@ -1717,11 +1483,6 @@ namespace AMB.Infra.Migrations
                     b.Navigation("Permissions");
                 });
 
-            modelBuilder.Entity("AMB.Domain.Entities.GoodReceiptNote", b =>
-                {
-                    b.Navigation("GRNItems");
-                });
-                
             modelBuilder.Entity("AMB.Domain.Entities.Order", b =>
                 {
                     b.Navigation("OrderItems");
