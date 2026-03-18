@@ -13,5 +13,6 @@ namespace AMB.Application.Interfaces.Services
         Task<List<OrderResponseDto>> GetKitchenOrdersAsync();
         Task<PagedResponseDto<OrderResponseDto>> SearchOrdersAsync(SearchOrderRequestDto request);
         Task<OrderResponseDto> UpdateDraftOrderAsync(UpdateDraftOrderDto dto);
+        Task<OrderResponseDto> RemoveItemFromOrderAsync(int orderId, int menuItemId);
     }
 }
