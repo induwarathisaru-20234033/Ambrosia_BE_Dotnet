@@ -226,7 +226,6 @@ namespace AMB.Infra.DBContexts
                 .Property(item => item.Price)
                 .HasPrecision(18, 2);
 
-<<<<<<< feature/awp-0000_create-and-view-grns
             modelBuilder.Entity<GoodReceiptNote>()
                 .HasMany(grn => grn.GRNItems)
                 .WithOne(item => item.GoodReceiptNote)
@@ -255,7 +254,6 @@ namespace AMB.Infra.DBContexts
                 .HasForeignKey(transaction => transaction.InventoryItemId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-=======
             // Order configurations - MOVED INSIDE OnModelCreating
             modelBuilder.Entity<Order>()
                 .HasOne(o => o.Table)
@@ -278,7 +276,6 @@ namespace AMB.Infra.DBContexts
             modelBuilder.Entity<OrderItem>()
                 .Property(oi => oi.UnitPrice)
                 .HasPrecision(18, 2);
->>>>>>> main
         }
 
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
