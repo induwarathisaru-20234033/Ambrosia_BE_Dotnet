@@ -150,6 +150,9 @@ namespace AMB.API.Controllers
 
         // Update a draft order (add/remove items)
         [HttpPut("{id}/items")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(BaseResponseDto<object>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(BaseResponseDto<object>), StatusCodes.Status404NotFound)]
         public async Task<ActionResult<BaseResponseDto<OrderResponseDto>>> UpdateDraftOrder(
             int id,
             [FromBody] UpdateDraftOrderDto dto)
@@ -169,6 +172,9 @@ namespace AMB.API.Controllers
 
         // Remove an item from a draft order
         [HttpDelete("{orderId}/items/{menuItemId}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(BaseResponseDto<object>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(BaseResponseDto<object>), StatusCodes.Status404NotFound)]
         public async Task<ActionResult<BaseResponseDto<OrderResponseDto>>> RemoveItemFromOrder(
             int orderId,
             int menuItemId)
