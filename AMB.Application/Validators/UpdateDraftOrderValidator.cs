@@ -27,14 +27,16 @@ namespace AMB.Application.Validators
                     item.RuleFor(i => i.MenuItemId)
                         .GreaterThan(0).WithMessage("Invalid menu item");
 
+                    // Allow 0 for removal, but validate other quantities
                     item.RuleFor(i => i.Quantity)
-                        .GreaterThan(0).WithMessage("Quantity must be at least 1");
+                        .Must(qty => qty >= 0).WithMessage("Quantity cannot be negative");
                 });
 
-            // No duplicate menu items
+            // Warn if all items have quantity 0 (would remove everything)
             RuleFor(x => x.Items)
-                .Must(HaveUniqueMenuItems)
-                .WithMessage("Duplicate menu items are not allowed. Please combine quantities.");
+                .Must(items => items.Any(i => i.Quantity > 0))
+                .WithMessage("At least one item must have quantity greater than 0")
+                .When(x => x.Items.Any()); // Only check if there are items
         }
 
         private async Task<bool> BeDraftOrder(int orderId, CancellationToken cancellationToken)
