@@ -23,4 +23,16 @@ public class MenuRepository : IMenuRepository
     {
         return _context.MenuItems.AsQueryable();
     }
+
+    public async Task<MenuItem?> GetByIdAsync(int id)
+    {
+        return await _context.MenuItems.FirstOrDefaultAsync(x => x.Id == id);
+    }
+
+    public async Task<MenuItem> UpdateAsync(MenuItem item)
+    {
+        _context.MenuItems.Update(item);
+        await _context.SaveChangesAsync();
+        return item;
+    }
 }

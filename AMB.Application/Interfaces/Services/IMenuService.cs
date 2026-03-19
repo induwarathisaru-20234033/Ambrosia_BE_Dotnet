@@ -11,5 +11,7 @@ namespace AMB.Application.Interfaces.Services
             string? name,
             bool? isAvailable
         );
+        Task<MenuItemDto> UpdateMenuItem(int id, UpdateMenuItemDto dto);
+
     }
 }

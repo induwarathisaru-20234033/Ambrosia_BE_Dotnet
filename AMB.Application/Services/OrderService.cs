@@ -64,9 +64,9 @@ namespace AMB.Application.Services
             {
                 OrderNumber = orderNumber,
                 TableId = request.TableId,
-               OrderStatus = request.IsDraft ? (int)AMB.Domain.Enums.OrderStatus.Draft : (int)AMB.Domain.Enums.OrderStatus.SentToKDS,
+                OrderStatus = request.IsDraft ? (int)AMB.Domain.Enums.OrderStatus.Draft:(int)AMB.Domain.Enums.OrderStatus.SentToKDS,
                 SentToKitchenAt = request.IsDraft ? null : DateTime.UtcNow,
-                Status = 1, 
+                Status = 1,
                 OrderItems = request.Items.Select(item =>
                 {
                     var menuItem = menuItems.First(m => m.Id == item.MenuItemId);
@@ -130,7 +130,6 @@ namespace AMB.Application.Services
 
         public async Task<OrderResponseDto> SendDraftToKdsAsync(SendOrderToKdsDto dto)
         {
-            // Validate
             var validator = _serviceProvider.GetRequiredService<IValidator<SendOrderToKdsDto>>();
             await validator.ValidateAndThrowAsync(dto);
 
@@ -154,6 +153,7 @@ namespace AMB.Application.Services
             // Return updated order
             return await GetOrderByIdAsync(dto.OrderId);
         }
+
         public async Task<OrderResponseDto> UpdateOrderStatusAsync(UpdateOrderStatusDto dto)
         {
             // Validate
@@ -174,14 +174,36 @@ namespace AMB.Application.Services
         public async Task<List<OrderResponseDto>> GetOrdersByStatusAsync(OrderStatus status)
         {
             var orders = await _orderRepository.GetOrdersByStatusAsync(status);
+
             return orders.Select(o => MapToOrderResponseDto(o)).ToList();
         }
 
         public async Task<List<OrderResponseDto>> GetKitchenOrdersAsync()
         {
             var orders = await _orderRepository.GetKitchenOrdersAsync();
-
             return orders.Select(o => MapToOrderResponseDto(o)).ToList();
+        }
+
+        // search / filter / sort / paginate orders for FE DataTable
+        public async Task<PagedResponseDto<OrderResponseDto>> SearchOrdersAsync(SearchOrderRequestDto request)
+        {
+            var pageNumber = request.PageNumber <= 0 ? 1 : request.PageNumber;
+            var pageSize = request.PageSize <= 0 ? 10 : request.PageSize;
+
+            var (orders, totalCount) = await _orderRepository.SearchOrdersAsync(request);
+
+            var mappedOrders = orders.Select(o => MapToOrderResponseDto(o)).ToList();
+
+            var pageCount = (int)Math.Ceiling((double)totalCount / pageSize);
+
+            return new PagedResponseDto<OrderResponseDto>
+            {
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                PageCount = pageCount,
+                TotalItemCount = totalCount,
+                Items = mappedOrders
+            };
         }
 
         private OrderResponseDto MapToOrderResponseDto(Order order)
@@ -209,6 +231,54 @@ namespace AMB.Application.Services
                         CreatedDate = oi.CreatedDate
                     }).ToList() ?? new()
             };
+        }
+
+        public async Task UpdateDraftOrderAsync(UpdateDraftOrderDto dto)
+        {
+            var validator = _serviceProvider.GetRequiredService<IValidator<UpdateDraftOrderDto>>();
+            await validator.ValidateAndThrowAsync(dto);
+
+            // Verify all menu items exist
+            var menuItemIds = dto.Items.Select(i => i.MenuItemId).ToList();
+            var menuItems = await _menuItemRepository.GetByIdsAsync(menuItemIds);
+
+            if (menuItems.Count != menuItemIds.Count)
+            {
+                var foundIds = menuItems.Select(m => m.Id).ToList();
+                var missingIds = menuItemIds.Except(foundIds).ToList();
+                throw new InvalidOperationException($"Menu items not found: {string.Join(", ", missingIds)}");
+            }
+
+            // Update the draft order
+            var updated = await _orderRepository.UpdateDraftOrderItemsAsync(dto.OrderId, dto.Items);
+            if (!updated)
+            {
+                throw new InvalidOperationException("Failed to update draft order");
+            }
+
+        }
+
+        public async Task RemoveItemFromOrderAsync(int orderId, int menuItemId)
+        {
+            // Validate order exists and is draft
+            var order = await _orderRepository.GetByIdAsync(orderId);
+            if (order == null)
+                throw new KeyNotFoundException($"Order with ID {orderId} not found");
+
+            if ((OrderStatus)order.OrderStatus != OrderStatus.Draft)
+                throw new InvalidOperationException("Can only remove items from draft orders");
+
+            // Check if item exists in order
+            var orderWithItems = await _orderRepository.GetByIdAsync(orderId, new OrderQueryOptions { IncludeItems = true });
+            var itemExists = orderWithItems?.OrderItems?.Any(oi => oi.MenuItemId == menuItemId) ?? false;
+
+            if (!itemExists)
+                throw new InvalidOperationException($"Item with ID {menuItemId} not found in order");
+
+            // Remove the item
+            var updated = await _orderRepository.RemoveItemFromOrderAsync(orderId, menuItemId);
+            if (!updated)
+                throw new InvalidOperationException("Failed to remove item from order");
         }
     }
 }

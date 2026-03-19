@@ -133,5 +133,72 @@ namespace AMB.API.Controllers
 
             return Ok(response);
         }
+
+        [HttpGet]
+        public async Task<ActionResult<BaseResponseDto<PagedResponseDto<OrderResponseDto>>>> SearchOrders(
+            [FromQuery] SearchOrderRequestDto dto)
+        {
+            var result = await _orderService.SearchOrdersAsync(dto);
+
+            var response = new BaseResponseDto<PagedResponseDto<OrderResponseDto>>(
+                result,
+                "Orders retrieved successfully"
+            );
+
+            return Ok(response);
+        }
+
+        // Update a draft order (add/remove items)
+        [HttpPut("{id}/items")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(BaseResponseDto<object>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(BaseResponseDto<object>), StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<BaseResponseDto<OrderResponseDto>>> UpdateDraftOrder(
+            int id,
+            [FromBody] UpdateDraftOrderDto dto)
+        {
+            if (id != dto.OrderId)
+            {
+                return BadRequest(new BaseResponseDto<OrderResponseDto>(
+                    "ID mismatch",
+                    new List<string> { "URL ID does not match request body ID" }
+                ));
+            }
+
+            await _orderService.UpdateDraftOrderAsync(dto);
+
+            return NoContent();
+        }
+
+        // Remove an item from a draft order
+        [HttpDelete("{orderId}/items/{menuItemId}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(BaseResponseDto<object>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(BaseResponseDto<object>), StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<BaseResponseDto<OrderResponseDto>>> RemoveItemFromOrder(
+            int orderId,
+            int menuItemId)
+        {
+            try
+            {
+                await _orderService.RemoveItemFromOrderAsync(orderId, menuItemId);
+
+                return NoContent();
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new BaseResponseDto<OrderResponseDto>(
+                    ex.Message,
+                    new List<string> { ex.Message }
+                ));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new BaseResponseDto<OrderResponseDto>(
+                    ex.Message,
+                    new List<string> { ex.Message }
+                )  );
+            }
+        }
     }
 }

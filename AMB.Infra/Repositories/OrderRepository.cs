@@ -3,6 +3,7 @@ using AMB.Domain.Entities;
 using AMB.Domain.Enums;
 using AMB.Infra.DBContexts;
 using Microsoft.EntityFrameworkCore;
+using AMB.Application.Dtos;
 
 namespace AMB.Infra.Repositories
 {
@@ -145,6 +146,225 @@ namespace AMB.Infra.Repositories
                     .ThenInclude(oi => oi.MenuItem)
                 .Include(o => o.Table)
                 .FirstOrDefaultAsync(o => o.Id == id && o.Status == 1);
+        }
+        public async Task<(List<Order> Items, int TotalCount)> SearchOrdersAsync(SearchOrderRequestDto request)
+        {
+            var pageNumber = request.PageNumber <= 0 ? 1 : request.PageNumber;
+            var pageSize = request.PageSize <= 0 ? 10 : request.PageSize;
+
+            IQueryable<Order> query = _context.Orders
+                .AsNoTracking()
+                .Where(o => o.Status == 1)
+                .Include(o => o.OrderItems!)
+                    .ThenInclude(oi => oi.MenuItem)
+                .Include(o => o.Table);
+
+            // Filter by category
+            if (!string.IsNullOrWhiteSpace(request.Category))
+            {
+                if (request.Category.Equals("ongoing", StringComparison.OrdinalIgnoreCase))
+                {
+                    var ongoingStatuses = new[]
+                    {
+                (int)OrderStatus.SentToKDS,
+                (int)OrderStatus.Preparing,
+                (int)OrderStatus.OnHold
+            };
+
+                    query = query.Where(o => ongoingStatuses.Contains(o.OrderStatus));
+                }
+                else if (request.Category.Equals("completed", StringComparison.OrdinalIgnoreCase))
+                {
+                    var completedStatuses = new[]
+                    {
+                (int)OrderStatus.Served,
+                (int)OrderStatus.Cancelled
+            };
+
+                    query = query.Where(o => completedStatuses.Contains(o.OrderStatus));
+                }
+            }
+
+            // Filter by exact status
+            if (request.Status.HasValue)
+            {
+                query = query.Where(o => o.OrderStatus == (int)request.Status.Value);
+            }
+
+            // Filter by order number
+            if (!string.IsNullOrWhiteSpace(request.OrderNumber))
+            {
+                query = query.Where(o => o.OrderNumber.Contains(request.OrderNumber));
+            }
+
+            // Filter by table name
+            if (!string.IsNullOrWhiteSpace(request.TableName))
+            {
+                query = query.Where(o => o.Table != null && o.Table.TableName.Contains(request.TableName));
+            }
+
+            // Filter by date range
+            if (request.OrderDateFrom.HasValue)
+            {
+                query = query.Where(o => o.CreatedDate >= request.OrderDateFrom.Value);
+            }
+
+            if (request.OrderDateTo.HasValue)
+            {
+                query = query.Where(o => o.CreatedDate <= request.OrderDateTo.Value);
+            }
+
+            // Sorting
+            query = request.SortField?.ToLower() switch
+            {
+                "ordernumber" => request.SortOrder == -1
+                    ? query.OrderByDescending(o => o.OrderNumber)
+                    : query.OrderBy(o => o.OrderNumber),
+
+                "tablename" => request.SortOrder == -1
+                    ? query.OrderByDescending(o => o.Table != null ? o.Table.TableName : "")
+                    : query.OrderBy(o => o.Table != null ? o.Table.TableName : ""),
+
+                "createddate" => request.SortOrder == -1
+                    ? query.OrderByDescending(o => o.CreatedDate)
+                    : query.OrderBy(o => o.CreatedDate),
+
+                "orderstatus" => request.SortOrder == -1
+                    ? query.OrderByDescending(o => o.OrderStatus)
+                    : query.OrderBy(o => o.OrderStatus),
+
+                _ => query.OrderByDescending(o => o.CreatedDate)
+            };
+
+            var totalCount = await query.CountAsync();
+
+            var items = await query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return (items, totalCount);
+        }
+
+        public async Task<bool> UpdateDraftOrderItemsAsync(int orderId, List<OrderItemDto> items)
+        {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+
+            try
+            {
+                var order = await _context.Orders
+                    .Include(o => o.OrderItems)
+                    .FirstOrDefaultAsync(o => o.Id == orderId);
+
+                if (order == null) return false;
+
+                // Get menu items for pricing
+                var menuItemIds = items.Select(i => i.MenuItemId).ToList();
+                var menuItems = await _context.MenuItems
+                    .Where(m => menuItemIds.Contains(m.Id))
+                    .ToDictionaryAsync(m => m.Id, m => m.Price);
+
+                // Group items by MenuItemId from request (combine duplicates)
+                var requestItems = items.GroupBy(i => i.MenuItemId)
+                    .Select(g => new
+                    {
+                        MenuItemId = g.Key,
+                        Quantity = g.Sum(i => i.Quantity),
+                        SpecialInstructions = string.Join("; ", g.Select(i => i.SpecialInstructions).Where(s => !string.IsNullOrEmpty(s)))
+                    })
+                    .ToList();
+
+                // Track items to remove (those with quantity = 0)
+                var itemsToRemove = new List<OrderItem>();
+
+                // Update existing items or add new ones
+                foreach (var requestItem in requestItems)
+                {
+                    var existingItem = order.OrderItems
+                        .FirstOrDefault(oi => oi.MenuItemId == requestItem.MenuItemId);
+
+                    if (requestItem.Quantity <= 0)
+                    {
+                        // If quantity is 0 remove the item
+                        if (existingItem != null)
+                        {
+                            itemsToRemove.Add(existingItem);
+                        }
+                        // If it doesn't exist, just ignore
+                        continue;
+                    }
+
+                    if (existingItem != null)
+                    {
+                        // Update existing item quantity and instructions
+                        existingItem.Quantity = requestItem.Quantity;
+                        existingItem.SpecialInstructions = requestItem.SpecialInstructions;
+                        existingItem.UpdatedDate = DateTime.UtcNow;
+                    }
+                    else
+                    {
+                        // Add new item
+                        order.OrderItems.Add(new OrderItem
+                        {
+                            OrderId = orderId,
+                            MenuItemId = requestItem.MenuItemId,
+                            SpecialInstructions = requestItem.SpecialInstructions,
+                            Quantity = requestItem.Quantity,
+                            UnitPrice = menuItems[requestItem.MenuItemId],
+                            Status = 1,
+                            CreatedDate = DateTime.UtcNow
+                        });
+                    }
+                }
+
+                // Remove items with quantity 0
+                if (itemsToRemove.Any())
+                {
+                    _context.OrderItems.RemoveRange(itemsToRemove);
+                }
+
+                order.UpdatedDate = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+                return true;
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+
+        public async Task<bool> RemoveItemFromOrderAsync(int orderId, int menuItemId)
+        {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+
+            try
+            {
+                var orderItem = await _context.OrderItems
+                    .FirstOrDefaultAsync(oi => oi.OrderId == orderId && oi.MenuItemId == menuItemId);
+
+                if (orderItem == null) return false;
+
+                _context.OrderItems.Remove(orderItem);
+
+                var order = await _context.Orders.FindAsync(orderId);
+                if (order != null)
+                {
+                    order.UpdatedDate = DateTime.UtcNow;
+                }
+
+                await _context.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+                return true;
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
     }
 }

@@ -36,8 +36,7 @@ namespace AMB.Application.Validators
                         .GreaterThan(0).WithMessage("Invalid menu item");
 
                     item.RuleFor(i => i.Quantity)
-                        .GreaterThan(0).WithMessage("Quantity must be at least 1")
-                        .LessThanOrEqualTo(100).WithMessage("Quantity cannot exceed 100");
+                        .GreaterThan(0).WithMessage("Quantity must be at least 1");
                 });
 
             // No duplicate menu items

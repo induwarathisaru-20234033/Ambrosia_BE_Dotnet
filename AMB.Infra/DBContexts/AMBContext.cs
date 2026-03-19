@@ -30,11 +30,7 @@ namespace AMB.Infra.DBContexts
         public DbSet<Table> Tables { get; set; }
         public DbSet<TableCanvasShape> TableCanvasShapes { get; set; }
         public DbSet<CalenderExclusion> CalenderExclusions { get; set; }
-
-        // Menu Item
         public DbSet<MenuItem> MenuItems { get; set; }
-
-        //Reservation Entities
         public DbSet<BookingSlot> BookingSlots { get; set; }
         public DbSet<CustomerDetail> CustomerDetails { get; set; }
         public DbSet<Reservation> Reservations { get; set; }
@@ -43,6 +39,9 @@ namespace AMB.Infra.DBContexts
         public DbSet<Currency> Currencies { get; set; }
         public DbSet<PurchaseRequest> PurchaseRequests { get; set; }
         public DbSet<PurchaseRequestItem> PurchaseRequestItems { get; set; }
+        public DbSet<GoodReceiptNote> GoodReceiptNotes { get; set; }
+        public DbSet<GRNItem> GRNItems { get; set; }
+        public DbSet<StockTransaction> StockTransactions { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }
 
@@ -61,9 +60,7 @@ namespace AMB.Infra.DBContexts
             modelBuilder.Entity<Table>().ToTable(nameof(Tables));
             modelBuilder.Entity<TableCanvasShape>().ToTable(nameof(TableCanvasShapes));
             modelBuilder.Entity<CalenderExclusion>().ToTable(nameof(CalenderExclusions));
-
             modelBuilder.Entity<MenuItem>().ToTable(nameof(MenuItems));
-
             modelBuilder.Entity<BookingSlot>().ToTable(nameof(BookingSlots));
             modelBuilder.Entity<CustomerDetail>().ToTable(nameof(CustomerDetails));
             modelBuilder.Entity<Reservation>().ToTable(nameof(Reservations));
@@ -72,6 +69,9 @@ namespace AMB.Infra.DBContexts
             modelBuilder.Entity<Currency>().ToTable(nameof(Currencies));
             modelBuilder.Entity<PurchaseRequest>().ToTable(nameof(PurchaseRequests));
             modelBuilder.Entity<PurchaseRequestItem>().ToTable(nameof(PurchaseRequestItems));
+            modelBuilder.Entity<GoodReceiptNote>().ToTable(nameof(GoodReceiptNotes));
+            modelBuilder.Entity<GRNItem>().ToTable(nameof(GRNItems));
+            modelBuilder.Entity<StockTransaction>().ToTable(nameof(StockTransactions));
 
             // Add Order tables
             modelBuilder.Entity<Order>().ToTable(nameof(Orders));
@@ -237,6 +237,34 @@ namespace AMB.Infra.DBContexts
             modelBuilder.Entity<PurchaseRequestItem>()
                 .Property(item => item.Price)
                 .HasPrecision(18, 2);
+
+            modelBuilder.Entity<GoodReceiptNote>()
+                .HasMany(grn => grn.GRNItems)
+                .WithOne(item => item.GoodReceiptNote)
+                .HasForeignKey(item => item.GRNId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<GoodReceiptNote>()
+                .HasOne(grn => grn.PurchaseRequest)
+                .WithMany()
+                .HasForeignKey(grn => grn.PurchaseRequestId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<GRNItem>()
+                .HasOne(item => item.PRItem)
+                .WithMany()
+                .HasForeignKey(item => item.PRItemId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<GRNItem>()
+                .Property(item => item.TotalPrice)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<StockTransaction>()
+                .HasOne(transaction => transaction.InventoryItem)
+                .WithMany()
+                .HasForeignKey(transaction => transaction.InventoryItemId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             // Order configurations - MOVED INSIDE OnModelCreating
             modelBuilder.Entity<Order>()
