@@ -34,5 +34,19 @@ namespace AMB.API.Controllers
 
             return Ok(items);
         }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateMenuItem(int id, [FromBody] UpdateMenuItemDto dto)
+        {
+            try
+            {
+                var updatedItem = await _menuService.UpdateMenuItem(id, dto);
+                return Ok(updatedItem);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
     }
 }
