@@ -168,7 +168,8 @@ namespace AMB.Infra.Repositories
                     {
                 (int)OrderStatus.SentToKDS,
                 (int)OrderStatus.Preparing,
-                (int)OrderStatus.OnHold
+                (int)OrderStatus.OnHold,
+                (int)OrderStatus.Ready
             };
 
                     query = query.Where(o => ongoingStatuses.Contains(o.OrderStatus));
