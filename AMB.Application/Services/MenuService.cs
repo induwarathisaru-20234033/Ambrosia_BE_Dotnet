@@ -64,5 +64,29 @@ namespace AMB.Application.Services
                 IsAvailable = x.IsAvailable
             }).ToList();
         }
+
+        public async Task<MenuItemDto> UpdateMenuItem(int id, UpdateMenuItemDto dto)
+        {
+            var entity = await _menuRepository.GetByIdAsync(id);
+
+            if (entity == null)
+            {
+                throw new KeyNotFoundException($"Menu item with ID {id} not found");
+            }
+
+            entity.Price = dto.Price;
+            entity.IsAvailable = dto.IsAvailable;
+
+            await _menuRepository.UpdateAsync(entity);
+
+            return new MenuItemDto
+            {
+                Id = entity.Id,
+                Name = entity.Name,
+                Price = entity.Price,
+                Category = entity.Category,
+                IsAvailable = entity.IsAvailable
+            };
+        }
     }
 }
