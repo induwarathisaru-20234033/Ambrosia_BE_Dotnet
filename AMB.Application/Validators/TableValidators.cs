@@ -1,4 +1,5 @@
 ﻿using AMB.Application.Dtos;
+using AMB.Domain.Enums;
 using FluentValidation;
 
 namespace AMB.Application.Validators
@@ -23,6 +24,41 @@ namespace AMB.Application.Validators
                 .GreaterThan(0)
                 .WithMessage("Table Capacity must be greater than zero");
 
+        }
+    }
+
+    public class SaveTableFloorMapValidator : AbstractValidator<SaveTableFloorMapRequestDto>
+    {
+        public SaveTableFloorMapValidator()
+        {
+            RuleFor(x => x.Shapes)
+                .NotNull()
+                .WithMessage("Shapes collection is required.");
+
+            RuleForEach(x => x.Shapes)
+                .SetValidator(new TableFloorMapShapeValidator());
+        }
+    }
+
+    public class TableFloorMapShapeValidator : AbstractValidator<TableFloorMapShapeRequestDto>
+    {
+        public TableFloorMapShapeValidator()
+        {
+            RuleFor(x => x.Type)
+                .Must(value => Enum.IsDefined(typeof(ShapeType), value))
+                .WithMessage("Invalid shape type.");
+
+            RuleFor(x => x.Width)
+                .GreaterThan(0)
+                .WithMessage("Width must be greater than zero.");
+
+            RuleFor(x => x.Height)
+                .GreaterThan(0)
+                .WithMessage("Height must be greater than zero.");
+
+            RuleFor(x => x.Fill)
+                .NotEmpty()
+                .WithMessage("Fill is required.");
         }
     }
 }
