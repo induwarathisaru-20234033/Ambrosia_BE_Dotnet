@@ -344,5 +344,17 @@ namespace AMB.Tests.Mocks
 
             return Task.FromResult(!existsInRoles && !existsInCustomRoles);
         }
+
+        public Task<RoleAssignedEmployeesDto?> GetAssignedEmployeesByRoleAsync(int roleId, bool isCustomRole = false)
+        {
+            return Task.FromResult<RoleAssignedEmployeesDto?>(new RoleAssignedEmployeesDto
+            {
+                RoleId = roleId,
+                IsCustomRole = isCustomRole,
+                RoleCode = string.Empty,
+                RoleName = string.Empty,
+                AssignedEmployees = new List<AssignedRoleEmployeeDto>()
+            });
+        }
     }
 }
