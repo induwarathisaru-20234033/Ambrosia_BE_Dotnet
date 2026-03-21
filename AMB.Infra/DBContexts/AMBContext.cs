@@ -45,6 +45,8 @@ namespace AMB.Infra.DBContexts
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }
         public DbSet<ReservationWaiterAssignment> ReservationWaiterAssignments { get; set; }
+        public DbSet<GoodIssueNote> GoodIssueNotes { get; set; }
+        public DbSet<GIItem> GIItems { get; set; }
         public DbSet<WastageRecord> WastageRecords { get; set; }
         public DbSet<WastageEntryItem> WastageEntryItems { get; set; }
 
@@ -75,6 +77,8 @@ namespace AMB.Infra.DBContexts
             modelBuilder.Entity<GoodReceiptNote>().ToTable(nameof(GoodReceiptNotes));
             modelBuilder.Entity<GRNItem>().ToTable(nameof(GRNItems));
             modelBuilder.Entity<StockTransaction>().ToTable(nameof(StockTransactions));
+            modelBuilder.Entity<GoodIssueNote>().ToTable(nameof(GoodIssueNotes));
+            modelBuilder.Entity<GIItem>().ToTable(nameof(GIItems));
             modelBuilder.Entity<WastageRecord>().ToTable(nameof(WastageRecords));
             modelBuilder.Entity<WastageEntryItem>().ToTable(nameof(WastageEntryItems));
 
@@ -286,6 +290,18 @@ namespace AMB.Infra.DBContexts
                 .HasForeignKey(transaction => transaction.InventoryItemId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<GoodIssueNote>()
+                .HasMany(note => note.GIItems)
+                .WithOne(item => item.GoodIssueNote)
+                .HasForeignKey(item => item.GoodIssueNoteId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<GIItem>()
+                .HasOne(item => item.InventoryItem)
+                .WithMany()
+                .HasForeignKey(item => item.InventoryItemId)
+                .OnDelete(DeleteBehavior.Restrict);
+                
             modelBuilder.Entity<WastageRecord>()
                 .HasMany(record => record.WastageEntryItems)
                 .WithOne(item => item.WastageRecord)
