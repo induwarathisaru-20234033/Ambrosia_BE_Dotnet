@@ -192,5 +192,35 @@ namespace AMB.API.Controllers
                 ));
             }
         }
+
+        [HttpGet("{id}/assigned-employees")]
+        public async Task<ActionResult<BaseResponseDto<RoleAssignedEmployeesDto>>> GetAssignedEmployeesByRole( int id, [FromQuery] bool isCustomRole = false)
+        {
+            try
+            {
+                var result = await _roleService.GetAssignedEmployeesByRoleAsync(id, isCustomRole);
+
+                return Ok(new BaseResponseDto<RoleAssignedEmployeesDto>(
+                    result,
+                    "Assigned employees retrieved successfully"
+                ));
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new BaseResponseDto<RoleAssignedEmployeesDto>(
+                    ex.Message,
+                    new List<string> { ex.Message }
+                ));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving assigned employees for role {RoleId}", id);
+
+                return StatusCode(500, new BaseResponseDto<RoleAssignedEmployeesDto>(
+                    "Failed to retrieve assigned employees",
+                    new List<string> { "Internal server error" }
+                ));
+            }
+        }
     }
 }
