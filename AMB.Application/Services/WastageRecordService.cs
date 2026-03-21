@@ -25,7 +25,7 @@ namespace AMB.Application.Services
 
             var wastageRecord = new WastageRecord
             {
-                WastageEntryNumber = await GenerateUniqueWastageEntryNumberAsync(),
+                WastageEntryNumber = GenerateUniqueWastageEntryNumber(),
                 EntryDate = request.EntryDate,
                 RecordedBy = request.RecordedBy,
                 GeneralNotes = request.GeneralNotes,
@@ -61,9 +61,8 @@ namespace AMB.Application.Services
             };
         }
 
-        private async Task<string> GenerateUniqueWastageEntryNumberAsync()
+        private string GenerateUniqueWastageEntryNumber()
         {
-            // TODO: Implement unique number generation logic (e.g., based on date/time or sequence)
             return $"WSTG-{DateTime.UtcNow:yyyyMMddHHmmssfff}";
         }
     }
