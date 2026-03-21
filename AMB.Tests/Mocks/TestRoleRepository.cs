@@ -2,7 +2,6 @@
 using AMB.Application.Interfaces.Repositories;
 using AMB.Application.Mappers;
 using AMB.Domain.Entities;
-using AMB.Domain.Enums;
 
 namespace AMB.Tests.Mocks
 {

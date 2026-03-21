@@ -9,6 +9,7 @@ namespace AMB.Tests.Mocks
         public Reservation? LastAddedReservation { get; private set; }
         public Reservation? LastUpdatedReservation { get; private set; }
         public Dictionary<int, Reservation> Reservations { get; } = new();
+        private readonly List<ReservationWaiterAssignment> _waiterAssignments = new();
         private int _nextId = 1;
 
         public Task<Reservation> AddReservationAsync(Reservation reservation)
@@ -183,9 +184,92 @@ namespace AMB.Tests.Mocks
             return Task.FromResult<Reservation?>(reservation);
         }
 
+        public Task<Reservation?> AssignWaiterAsync(int reservationId, int waiterId)
+        {
+            if (!Reservations.TryGetValue(reservationId, out var reservation))
+                return Task.FromResult<Reservation?>(null);
+
+            // Deactivate existing active assignment
+            var existing = _waiterAssignments
+                .FirstOrDefault(a => a.ReservationId == reservationId && a.Status == (int)EntityStatus.Active);
+            if (existing != null)
+            {
+                existing.Status = (int)EntityStatus.Inactive;
+                existing.UnassignedAt = DateTimeOffset.UtcNow;
+            }
+
+            _waiterAssignments.Add(new ReservationWaiterAssignment
+            {
+                Id = _waiterAssignments.Count + 1,
+                ReservationId = reservationId,
+                WaiterId = waiterId,
+                AssignedAt = DateTimeOffset.UtcNow,
+                Status = (int)EntityStatus.Active
+            });
+
+            reservation.AssignedWaiterId = waiterId;
+            LastUpdatedReservation = reservation;
+            return Task.FromResult<Reservation?>(reservation);
+        }
+
+        public Task<Reservation?> UnassignWaiterAsync(int reservationId)
+        {
+            if (!Reservations.TryGetValue(reservationId, out var reservation))
+                return Task.FromResult<Reservation?>(null);
+
+            var active = _waiterAssignments
+                .FirstOrDefault(a => a.ReservationId == reservationId && a.Status == (int)EntityStatus.Active);
+            if (active != null)
+            {
+                active.Status = (int)EntityStatus.Inactive;
+                active.UnassignedAt = DateTimeOffset.UtcNow;
+            }
+
+            reservation.AssignedWaiterId = null;
+            reservation.AssignedWaiter = null;
+            LastUpdatedReservation = reservation;
+            return Task.FromResult<Reservation?>(reservation);
+        }
+
+        public Task<List<Reservation>> GetUnassignedReservationsAsync(DateOnly date)
+        {
+            var result = Reservations.Values
+                .Where(r => r.AssignedWaiterId == null &&
+                            DateOnly.FromDateTime(r.ReservationDate.Date) == date &&
+                            r.Status == (int)EntityStatus.Active)
+                .ToList();
+            return Task.FromResult(result);
+        }
+
+        public Task<List<ReservationWaiterAssignment>> GetActiveWaiterAssignmentsAsync(DateOnly date)
+        {
+            var result = _waiterAssignments
+                .Where(a => a.Status == (int)EntityStatus.Active &&
+                            Reservations.TryGetValue(a.ReservationId, out var r) &&
+                            DateOnly.FromDateTime(r.ReservationDate.Date) == date)
+                .ToList();
+            return Task.FromResult(result);
+        }
+
+        public Task<List<Reservation>> GetCurrentAssignedReservationsAsync(DateTimeOffset fromDate)
+        {
+            var result = Reservations.Values
+                .Where(r => r.Status == (int)EntityStatus.Active &&
+                            r.AssignedWaiterId != null &&
+                            r.ReservationDate >= fromDate &&
+                            (r.ReservationStatus == (int)ReservationStatus.Booked ||
+                             r.ReservationStatus == (int)ReservationStatus.Arrived))
+                .OrderBy(r => r.ReservationDate)
+                .ToList();
+
+            return Task.FromResult(result);
+        }
+
         public IQueryable<Reservation> GetSearchQuery()
         {
-            throw new NotImplementedException();
+            return Reservations.Values
+                .Where(r => r.Status == (int)EntityStatus.Active)
+                .AsQueryable();
         }
     }
 }

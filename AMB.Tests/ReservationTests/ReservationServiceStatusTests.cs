@@ -1,3 +1,4 @@
+using AMB.Application.Dtos;
 using AMB.Application.Services;
 using AMB.Domain.Entities;
 using AMB.Domain.Enums;
@@ -7,6 +8,237 @@ namespace AMB.Tests.ReservationTests
 {
     public class ReservationServiceStatusTests
     {
+        [Fact]
+        public async Task GetReservationsPagedAsync_WithReservationStatusFilter_ReturnsOnlyMatchingReservations()
+        {
+            var reservationRepository = new TestReservationRepository();
+            var configRepository = new TestConfigRepository();
+            var service = new ReservationService(reservationRepository, configRepository, new TestEmployeeRepository(), new TestEmailService());
+
+            reservationRepository.Reservations[1] = new Reservation
+            {
+                Id = 1,
+                ReservationCode = "RES-BOOKED",
+                PartySize = 2,
+                ReservationStatus = (int)ReservationStatus.Booked,
+                ReservationDate = new DateTimeOffset(2026, 3, 15, 18, 0, 0, TimeSpan.Zero),
+                Status = (int)EntityStatus.Active,
+                CreatedDate = new DateTimeOffset(2026, 3, 10, 10, 0, 0, TimeSpan.Zero),
+                CustomerDetail = new CustomerDetail { Name = "John", Email = "john@example.com", PhoneNumber = "0771111111" },
+                BookingSlot = new BookingSlot { Id = 1, StartTime = new TimeOnly(18, 0), EndTime = new TimeOnly(20, 0) },
+                Table = new Table { Id = 1, TableName = "T1", Capacity = 4 }
+            };
+
+            reservationRepository.Reservations[2] = new Reservation
+            {
+                Id = 2,
+                ReservationCode = "RES-ARRIVED",
+                PartySize = 4,
+                ReservationStatus = (int)ReservationStatus.Arrived,
+                ReservationDate = new DateTimeOffset(2026, 3, 15, 19, 0, 0, TimeSpan.Zero),
+                Status = (int)EntityStatus.Active,
+                CreatedDate = new DateTimeOffset(2026, 3, 11, 10, 0, 0, TimeSpan.Zero),
+                CustomerDetail = new CustomerDetail { Name = "Jane", Email = "jane@example.com", PhoneNumber = "0772222222" },
+                BookingSlot = new BookingSlot { Id = 2, StartTime = new TimeOnly(19, 0), EndTime = new TimeOnly(21, 0) },
+                Table = new Table { Id = 2, TableName = "T2", Capacity = 4 }
+            };
+
+            var result = await service.GetReservationsPagedAsync(new ReservationFilterRequestDto
+            {
+                ReservationStatus = (int)ReservationStatus.Arrived,
+                PageNumber = 1,
+                PageSize = 10
+            });
+
+            Assert.Single(result.Items);
+            Assert.Equal("RES-ARRIVED", result.Items[0].ReservationCode);
+            Assert.Equal((int)ReservationStatus.Arrived, result.Items[0].ReservationStatus);
+            Assert.Equal(1, result.TotalItemCount);
+        }
+
+        [Fact]
+        public async Task GetReservationsPagedAsync_WithPageSizeZero_ReturnsAllFilteredReservations()
+        {
+            var reservationRepository = new TestReservationRepository();
+            var configRepository = new TestConfigRepository();
+            var service = new ReservationService(reservationRepository, configRepository, new TestEmployeeRepository(), new TestEmailService());
+
+            reservationRepository.Reservations[1] = new Reservation
+            {
+                Id = 1,
+                ReservationCode = "RES-1",
+                PartySize = 2,
+                ReservationStatus = (int)ReservationStatus.Booked,
+                ReservationDate = new DateTimeOffset(2026, 3, 15, 18, 0, 0, TimeSpan.Zero),
+                Status = (int)EntityStatus.Active,
+                CreatedDate = new DateTimeOffset(2026, 3, 10, 10, 0, 0, TimeSpan.Zero),
+                CustomerDetail = new CustomerDetail { Name = "Alex", Email = "alex@example.com", PhoneNumber = "0771111111" },
+                BookingSlot = new BookingSlot { Id = 1, StartTime = new TimeOnly(18, 0), EndTime = new TimeOnly(20, 0) },
+                Table = new Table { Id = 1, TableName = "T1", Capacity = 4 }
+            };
+
+            reservationRepository.Reservations[2] = new Reservation
+            {
+                Id = 2,
+                ReservationCode = "RES-2",
+                PartySize = 3,
+                ReservationStatus = (int)ReservationStatus.Booked,
+                ReservationDate = new DateTimeOffset(2026, 3, 16, 18, 0, 0, TimeSpan.Zero),
+                Status = (int)EntityStatus.Active,
+                CreatedDate = new DateTimeOffset(2026, 3, 11, 10, 0, 0, TimeSpan.Zero),
+                CustomerDetail = new CustomerDetail { Name = "Alex", Email = "alex2@example.com", PhoneNumber = "0772222222" },
+                BookingSlot = new BookingSlot { Id = 2, StartTime = new TimeOnly(18, 0), EndTime = new TimeOnly(20, 0) },
+                Table = new Table { Id = 2, TableName = "T2", Capacity = 4 }
+            };
+
+            reservationRepository.Reservations[3] = new Reservation
+            {
+                Id = 3,
+                ReservationCode = "RES-3",
+                PartySize = 5,
+                ReservationStatus = (int)ReservationStatus.Cancelled,
+                ReservationDate = new DateTimeOffset(2026, 3, 17, 18, 0, 0, TimeSpan.Zero),
+                Status = (int)EntityStatus.Active,
+                CreatedDate = new DateTimeOffset(2026, 3, 12, 10, 0, 0, TimeSpan.Zero),
+                CustomerDetail = new CustomerDetail { Name = "Chris", Email = "chris@example.com", PhoneNumber = "0773333333" },
+                BookingSlot = new BookingSlot { Id = 3, StartTime = new TimeOnly(18, 0), EndTime = new TimeOnly(20, 0) },
+                Table = new Table { Id = 3, TableName = "T3", Capacity = 6 }
+            };
+
+            var result = await service.GetReservationsPagedAsync(new ReservationFilterRequestDto
+            {
+                ReservationStatus = (int)ReservationStatus.Booked,
+                PageNumber = 1,
+                PageSize = 0
+            });
+
+            Assert.Equal(2, result.Items.Count);
+            Assert.Equal(2, result.TotalItemCount);
+            Assert.Equal(0, result.PageSize);
+            Assert.Equal(1, result.PageCount);
+            Assert.All(result.Items, item => Assert.Equal((int)ReservationStatus.Booked, item.ReservationStatus));
+        }
+
+        [Fact]
+        public async Task AssignWaiterAsync_WithReservationIdsAndEmployeeId_AssignsWaiterToAllReservations()
+        {
+            var reservationRepository = new TestReservationRepository();
+            var configRepository = new TestConfigRepository();
+            var employeeRepository = new TestEmployeeRepository();
+
+            employeeRepository.Employees[7] = new Employee
+            {
+                Id = 7,
+                EmployeeId = "EMP-007",
+                FirstName = "John",
+                LastName = "Doe",
+                Username = "john.doe@example.com",
+                MobileNumber = "0770000000",
+                Address = "Address",
+                Status = (int)EntityStatus.Active
+            };
+
+            reservationRepository.Reservations[1] = new Reservation
+            {
+                Id = 1,
+                ReservationCode = "RES-1",
+                PartySize = 2,
+                ReservationStatus = (int)ReservationStatus.Booked,
+                ReservationDate = DateTimeOffset.UtcNow.AddHours(1),
+                Status = (int)EntityStatus.Active,
+                CustomerDetail = new CustomerDetail { Name = "A", Email = "a@example.com", PhoneNumber = "1" },
+                BookingSlot = new BookingSlot { Id = 1, StartTime = new TimeOnly(18, 0), EndTime = new TimeOnly(20, 0) },
+                Table = new Table { Id = 1, TableName = "T1", Capacity = 4 }
+            };
+
+            reservationRepository.Reservations[2] = new Reservation
+            {
+                Id = 2,
+                ReservationCode = "RES-2",
+                PartySize = 4,
+                ReservationStatus = (int)ReservationStatus.Booked,
+                ReservationDate = DateTimeOffset.UtcNow.AddHours(2),
+                Status = (int)EntityStatus.Active,
+                CustomerDetail = new CustomerDetail { Name = "B", Email = "b@example.com", PhoneNumber = "2" },
+                BookingSlot = new BookingSlot { Id = 2, StartTime = new TimeOnly(19, 0), EndTime = new TimeOnly(21, 0) },
+                Table = new Table { Id = 2, TableName = "T2", Capacity = 4 }
+            };
+
+            var service = new ReservationService(reservationRepository, configRepository, employeeRepository, new TestEmailService());
+
+            var result = await service.AssignWaiterAsync(new AssignWaiterRequestDto
+            {
+                ReservationIds = new List<int> { 1, 2 },
+                EmployeeId = 7
+            });
+
+            Assert.Equal(2, result.Count);
+            Assert.All(result, reservation => Assert.Equal(7, reservation.AssignedWaiterId));
+            Assert.Equal(7, reservationRepository.Reservations[1].AssignedWaiterId);
+            Assert.Equal(7, reservationRepository.Reservations[2].AssignedWaiterId);
+        }
+
+        [Fact]
+        public async Task UnassignWaiterAsync_WithReservationIdsAndEmployeeId_UnassignsWaiterFromAllReservations()
+        {
+            var reservationRepository = new TestReservationRepository();
+            var configRepository = new TestConfigRepository();
+            var employeeRepository = new TestEmployeeRepository();
+
+            employeeRepository.Employees[7] = new Employee
+            {
+                Id = 7,
+                EmployeeId = "EMP-007",
+                FirstName = "John",
+                LastName = "Doe",
+                Username = "john.doe@example.com",
+                MobileNumber = "0770000000",
+                Address = "Address",
+                Status = (int)EntityStatus.Active
+            };
+
+            reservationRepository.Reservations[1] = new Reservation
+            {
+                Id = 1,
+                ReservationCode = "RES-1",
+                PartySize = 2,
+                ReservationStatus = (int)ReservationStatus.Booked,
+                ReservationDate = DateTimeOffset.UtcNow.AddHours(1),
+                AssignedWaiterId = 7,
+                Status = (int)EntityStatus.Active,
+                CustomerDetail = new CustomerDetail { Name = "A", Email = "a@example.com", PhoneNumber = "1" },
+                BookingSlot = new BookingSlot { Id = 1, StartTime = new TimeOnly(18, 0), EndTime = new TimeOnly(20, 0) },
+                Table = new Table { Id = 1, TableName = "T1", Capacity = 4 }
+            };
+
+            reservationRepository.Reservations[2] = new Reservation
+            {
+                Id = 2,
+                ReservationCode = "RES-2",
+                PartySize = 4,
+                ReservationStatus = (int)ReservationStatus.Booked,
+                ReservationDate = DateTimeOffset.UtcNow.AddHours(2),
+                AssignedWaiterId = 7,
+                Status = (int)EntityStatus.Active,
+                CustomerDetail = new CustomerDetail { Name = "B", Email = "b@example.com", PhoneNumber = "2" },
+                BookingSlot = new BookingSlot { Id = 2, StartTime = new TimeOnly(19, 0), EndTime = new TimeOnly(21, 0) },
+                Table = new Table { Id = 2, TableName = "T2", Capacity = 4 }
+            };
+
+            var service = new ReservationService(reservationRepository, configRepository, employeeRepository, new TestEmailService());
+
+            var result = await service.UnassignWaiterAsync(new AssignWaiterRequestDto
+            {
+                ReservationIds = new List<int> { 1, 2 },
+                EmployeeId = 7
+            });
+
+            Assert.Equal(2, result.Count);
+            Assert.All(result, reservation => Assert.Null(reservation.AssignedWaiterId));
+            Assert.Null(reservationRepository.Reservations[1].AssignedWaiterId);
+            Assert.Null(reservationRepository.Reservations[2].AssignedWaiterId);
+        }
+
         [Fact]
         public async Task CancelReservationAsync_WithBookedReservation_CancelsSuccessfully()
         {
@@ -47,7 +279,7 @@ namespace AMB.Tests.ReservationTests
             };
             reservationRepository.Reservations[1] = reservation;
 
-            var service = new ReservationService(reservationRepository, configRepository);
+            var service = new ReservationService(reservationRepository, configRepository, new TestEmployeeRepository(), new TestEmailService());
 
             // Act
             var result = await service.CancelReservationAsync(1);
@@ -92,7 +324,7 @@ namespace AMB.Tests.ReservationTests
             };
             reservationRepository.Reservations[1] = reservation;
 
-            var service = new ReservationService(reservationRepository, configRepository);
+            var service = new ReservationService(reservationRepository, configRepository, new TestEmployeeRepository(), new TestEmailService());
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<InvalidOperationException>(
@@ -107,7 +339,7 @@ namespace AMB.Tests.ReservationTests
             // Arrange
             var reservationRepository = new TestReservationRepository();
             var configRepository = new TestConfigRepository();
-            var service = new ReservationService(reservationRepository, configRepository);
+            var service = new ReservationService(reservationRepository, configRepository, new TestEmployeeRepository(), new TestEmailService());
 
             // Act
             var result = await service.CancelReservationAsync(999);
@@ -155,7 +387,7 @@ namespace AMB.Tests.ReservationTests
             };
             reservationRepository.Reservations[1] = reservation;
 
-            var service = new ReservationService(reservationRepository, configRepository);
+            var service = new ReservationService(reservationRepository, configRepository, new TestEmployeeRepository(), new TestEmailService());
 
             // Act
             var result = await service.MarkReservationAsArrivedAsync(1);
@@ -200,7 +432,7 @@ namespace AMB.Tests.ReservationTests
             };
             reservationRepository.Reservations[1] = reservation;
 
-            var service = new ReservationService(reservationRepository, configRepository);
+            var service = new ReservationService(reservationRepository, configRepository, new TestEmployeeRepository(), new TestEmailService());
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<InvalidOperationException>(
@@ -215,7 +447,7 @@ namespace AMB.Tests.ReservationTests
             // Arrange
             var reservationRepository = new TestReservationRepository();
             var configRepository = new TestConfigRepository();
-            var service = new ReservationService(reservationRepository, configRepository);
+            var service = new ReservationService(reservationRepository, configRepository, new TestEmployeeRepository(), new TestEmailService());
 
             // Act
             var result = await service.MarkReservationAsArrivedAsync(999);
@@ -264,7 +496,7 @@ namespace AMB.Tests.ReservationTests
             };
             reservationRepository.Reservations[1] = reservation;
 
-            var service = new ReservationService(reservationRepository, configRepository);
+            var service = new ReservationService(reservationRepository, configRepository, new TestEmployeeRepository(), new TestEmailService());
 
             // Act
             var result = await service.MarkReservationAsArrivedAsync(1);
@@ -315,7 +547,7 @@ namespace AMB.Tests.ReservationTests
             };
             reservationRepository.Reservations[1] = reservation;
 
-            var service = new ReservationService(reservationRepository, configRepository);
+            var service = new ReservationService(reservationRepository, configRepository, new TestEmployeeRepository(), new TestEmailService());
 
             // Act
             var result = await service.MarkReservationAsNoShowAsync(1);
@@ -360,7 +592,7 @@ namespace AMB.Tests.ReservationTests
             };
             reservationRepository.Reservations[1] = reservation;
 
-            var service = new ReservationService(reservationRepository, configRepository);
+            var service = new ReservationService(reservationRepository, configRepository, new TestEmployeeRepository(), new TestEmailService());
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<InvalidOperationException>(
@@ -397,7 +629,7 @@ namespace AMB.Tests.ReservationTests
             };
             reservationRepository.Reservations[1] = reservation;
 
-            var service = new ReservationService(reservationRepository, configRepository);
+            var service = new ReservationService(reservationRepository, configRepository, new TestEmployeeRepository(), new TestEmailService());
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<InvalidOperationException>(
@@ -412,7 +644,7 @@ namespace AMB.Tests.ReservationTests
             // Arrange
             var reservationRepository = new TestReservationRepository();
             var configRepository = new TestConfigRepository();
-            var service = new ReservationService(reservationRepository, configRepository);
+            var service = new ReservationService(reservationRepository, configRepository, new TestEmployeeRepository(), new TestEmailService());
 
             // Act
             var result = await service.MarkReservationAsNoShowAsync(999);
@@ -461,7 +693,7 @@ namespace AMB.Tests.ReservationTests
             };
             reservationRepository.Reservations[1] = reservation;
 
-            var service = new ReservationService(reservationRepository, configRepository);
+            var service = new ReservationService(reservationRepository, configRepository, new TestEmployeeRepository(), new TestEmailService());
 
             // Act
             var result = await service.MarkReservationAsNoShowAsync(1);
@@ -512,7 +744,7 @@ namespace AMB.Tests.ReservationTests
             };
             reservationRepository.Reservations[1] = reservation;
 
-            var service = new ReservationService(reservationRepository, configRepository);
+            var service = new ReservationService(reservationRepository, configRepository, new TestEmployeeRepository(), new TestEmailService());
 
             // Act - First mark as cancelled
             var cancelledResult = await service.CancelReservationAsync(1);
@@ -526,3 +758,4 @@ namespace AMB.Tests.ReservationTests
         }
     }
 }
+
