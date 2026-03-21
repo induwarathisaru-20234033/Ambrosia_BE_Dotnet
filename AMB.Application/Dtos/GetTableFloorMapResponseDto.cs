@@ -17,5 +17,6 @@ namespace AMB.Application.Dtos
         public double Rotation { get; set; }
         public string Fill { get; set; } = "hsl(0, 0%, 90%)";
         public int? AssignedTableId { get; set; }
+        public TableDto? AssignedTable { get; set; }
     }
 }
