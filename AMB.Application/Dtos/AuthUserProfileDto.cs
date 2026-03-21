@@ -21,5 +21,8 @@ namespace AMB.Application.Dtos
 
         [JsonPropertyName("picture")]
         public string? Picture { get; set; }
+
+        [JsonPropertyName("id")]
+        public int? EmployeeId { get; set; }
     }
 }
