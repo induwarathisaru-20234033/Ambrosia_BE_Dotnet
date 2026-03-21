@@ -2,6 +2,7 @@
 using AMB.Application.Interfaces.Repositories;
 using AMB.Application.Interfaces.Services;
 using AMB.Application.Mappers;
+using AMB.Domain.Constants;
 using AMB.Domain.Enums;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
@@ -36,6 +37,7 @@ namespace AMB.Application.Services
                 authUserId = await _authHelper.CreateUserAsync(request.Email, request.Password, $"{request.FirstName} {request.LastName}");
 
                 empModel.Status = (int)EntityStatus.Active;
+                empModel.IsOnline = false;
                 empModel.UserId = authUserId;
                 var emp = await _employeeRepository.AddAsync(empModel);
 
@@ -161,6 +163,86 @@ namespace AMB.Application.Services
             }
 
             return updatedEmployee?.ToEmployeeDto();
+        }
+
+        public async Task<EmployeeDto> UpdateEmployeeOnlineStatusAsync(UpdateEmployeeOnlineStatusRequestDto request)
+        {
+            if (request.Id <= 0)
+            {
+                throw new ArgumentException("Valid Employee Id is required.");
+            }
+
+            var updatedEmployee = await _employeeRepository.UpdateOnlineStatusAsync(request.Id, request.IsOnline);
+            if (updatedEmployee == null)
+            {
+                throw new KeyNotFoundException($"Employee with ID {request.Id} not found.");
+            }
+
+            return updatedEmployee.ToEmployeeDto();
+        }
+
+        public async Task<List<WaiterAllocationDto>> GetWaitersWithCurrentAllocationsAsync()
+        {
+            var reservationRepository = _serviceProvider.GetRequiredService<IReservationRepository>();
+            var fromDate = DateTimeOffset.UtcNow.Date;
+
+            var waiters = await _employeeRepository.GetActiveWaitersAsync();
+            var currentReservations = await reservationRepository.GetCurrentAssignedReservationsAsync(fromDate);
+
+            var reservationsByWaiter = currentReservations
+                .Where(r => r.AssignedWaiterId.HasValue)
+                .GroupBy(r => r.AssignedWaiterId!.Value)
+                .ToDictionary(group => group.Key, group => group.OrderBy(r => r.ReservationDate).ToList());
+
+            return waiters
+                .OrderBy(waiter => waiter.FirstName)
+                .ThenBy(waiter => waiter.LastName)
+                .Select(waiter =>
+                {
+                    reservationsByWaiter.TryGetValue(waiter.Id, out var waiterReservations);
+                    waiterReservations ??= new List<AMB.Domain.Entities.Reservation>();
+
+                    return new WaiterAllocationDto
+                    {
+                        WaiterId = waiter.Id,
+                        EmployeeId = waiter.EmployeeId,
+                        FirstName = waiter.FirstName,
+                        LastName = waiter.LastName,
+                        FullName = $"{waiter.FirstName} {waiter.LastName}".Trim(),
+                        IsOnline = waiter.IsOnline,
+                        AllocatedReservationCount = waiterReservations.Count,
+                        AllocatedTableCount = waiterReservations
+                            .Where(r => r.Table != null)
+                            .Select(r => r.Table!.Id)
+                            .Distinct()
+                            .Count(),
+                        Reservations = waiterReservations
+                            .Select(r => new WaiterAllocatedReservationDto
+                            {
+                                ReservationId = r.Id,
+                                ReservationCode = r.ReservationCode,
+                                ReservationDate = r.ReservationDate,
+                                ReservationStatus = r.ReservationStatus,
+                                PartySize = r.PartySize,
+                                TableId = r.TableId,
+                                TableName = r.Table?.TableName ?? string.Empty
+                            })
+                            .ToList(),
+                        Tables = waiterReservations
+                            .Where(r => r.Table != null)
+                            .GroupBy(r => r.Table!.Id)
+                            .Select(group => group.First().Table!)
+                            .OrderBy(table => table.TableName)
+                            .Select(table => new WaiterAllocatedTableDto
+                            {
+                                TableId = table.Id,
+                                TableName = table.TableName,
+                                Capacity = table.Capacity
+                            })
+                            .ToList()
+                    };
+                })
+                .ToList();
         }
 
         public async Task AssignRolesAsync(AssignEmployeeRolesRequestDto request)
