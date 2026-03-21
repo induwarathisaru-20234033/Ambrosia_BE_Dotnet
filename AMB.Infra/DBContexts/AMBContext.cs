@@ -45,6 +45,8 @@ namespace AMB.Infra.DBContexts
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }
         public DbSet<ReservationWaiterAssignment> ReservationWaiterAssignments { get; set; }
+        public DbSet<GoodIssueNote> GoodIssueNotes { get; set; }
+        public DbSet<GIItem> GIItems { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -73,6 +75,8 @@ namespace AMB.Infra.DBContexts
             modelBuilder.Entity<GoodReceiptNote>().ToTable(nameof(GoodReceiptNotes));
             modelBuilder.Entity<GRNItem>().ToTable(nameof(GRNItems));
             modelBuilder.Entity<StockTransaction>().ToTable(nameof(StockTransactions));
+            modelBuilder.Entity<GoodIssueNote>().ToTable(nameof(GoodIssueNotes));
+            modelBuilder.Entity<GIItem>().ToTable(nameof(GIItems));
 
             // Add Order tables
             modelBuilder.Entity<Order>().ToTable(nameof(Orders));
@@ -280,6 +284,18 @@ namespace AMB.Infra.DBContexts
                 .HasOne(transaction => transaction.InventoryItem)
                 .WithMany()
                 .HasForeignKey(transaction => transaction.InventoryItemId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<GoodIssueNote>()
+                .HasMany(note => note.GIItems)
+                .WithOne(item => item.GoodIssueNote)
+                .HasForeignKey(item => item.GoodIssueNoteId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<GIItem>()
+                .HasOne(item => item.InventoryItem)
+                .WithMany()
+                .HasForeignKey(item => item.InventoryItemId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // Order configurations - MOVED INSIDE OnModelCreating
