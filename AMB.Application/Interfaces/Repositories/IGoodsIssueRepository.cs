@@ -9,5 +9,6 @@ namespace AMB.Application.Interfaces.Repositories
         Task<GoodIssueNote?> UpdateAsync(GoodIssueNote goodIssueNote);
         Task<List<InventoryItem>> GetInventoryItemsByIdsAsync(List<int> inventoryItemIds);
         Task<bool> ExistsByNumberAsync(string giNumber);
+        IQueryable<GoodIssueNote> GetSearchQuery();
     }
 }
