@@ -6,5 +6,7 @@ namespace AMB.Application.Interfaces.Services
     {
         Task<GoodIssueNoteDto> CreateGoodIssueNoteAsync(CreateGoodIssueNoteDto request);
         Task<GoodIssueNoteDto> UpdateGoodIssueNoteAsync(UpdateGoodIssueNoteDto request);
+        Task<GoodIssueNoteDto> GetGoodIssueNoteByIdAsync(int id);
+        Task<PaginatedResultDto<GoodIssueNoteDto>> GetGoodIssueNotesPagedAsync(GoodIssueNoteFilterRequestDto request);
     }
 }
