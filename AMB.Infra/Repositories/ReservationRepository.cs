@@ -25,6 +25,7 @@ namespace AMB.Infra.Repositories
                 .Include(r => r.CustomerDetail)
                 .Include(r => r.BookingSlot)
                 .Include(r => r.Table)
+                .Include(r => r.AssignedWaiter)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(r => r.Id == id && r.Status == (int)EntityStatus.Active);
         }
@@ -54,7 +55,14 @@ namespace AMB.Infra.Repositories
         {
             _context.Reservations.Add(reservation);
             await _context.SaveChangesAsync();
-            return reservation;
+
+            return await _context.Reservations
+                .Include(r => r.CustomerDetail)
+                .Include(r => r.BookingSlot)
+                .Include(r => r.Table)
+                .Include(r => r.AssignedWaiter)
+                .AsNoTracking()
+                .FirstAsync(r => r.Id == reservation.Id);
         }
 
         public async Task UpdateReservationAsync(Reservation reservation)
@@ -161,6 +169,110 @@ namespace AMB.Infra.Repositories
             return await UpdateReservationStatusAsync(reservationId, ReservationStatus.NoShow, noShowMarkedAt);
         }
 
+        public async Task<Reservation?> AssignWaiterAsync(int reservationId, int waiterId)
+        {
+            var reservation = await GetTrackedActiveReservationAsync(reservationId);
+            if (reservation == null) return null;
+
+            reservation.AssignedWaiterId = waiterId;
+
+            // Deactivate any existing active assignment for this reservation
+            var existingAssignment = await _context.ReservationWaiterAssignments
+                .FirstOrDefaultAsync(a => a.ReservationId == reservationId && a.Status == (int)EntityStatus.Active);
+
+            if (existingAssignment != null)
+            {
+                existingAssignment.Status = (int)EntityStatus.Inactive;
+                existingAssignment.UnassignedAt = DateTimeOffset.UtcNow;
+            }
+
+            // Add the new junction record
+            _context.ReservationWaiterAssignments.Add(new ReservationWaiterAssignment
+            {
+                ReservationId = reservationId,
+                WaiterId = waiterId,
+                AssignedAt = DateTimeOffset.UtcNow,
+                Status = (int)EntityStatus.Active
+            });
+
+            await _context.SaveChangesAsync();
+
+            return await _context.Reservations
+                .Include(r => r.CustomerDetail)
+                .Include(r => r.BookingSlot)
+                .Include(r => r.Table)
+                .Include(r => r.AssignedWaiter)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(r => r.Id == reservationId);
+        }
+
+        public async Task<Reservation?> UnassignWaiterAsync(int reservationId)
+        {
+            var reservation = await GetTrackedActiveReservationAsync(reservationId);
+            if (reservation == null) return null;
+
+            reservation.AssignedWaiterId = null;
+
+            // Deactivate the active junction record
+            var activeAssignment = await _context.ReservationWaiterAssignments
+                .FirstOrDefaultAsync(a => a.ReservationId == reservationId && a.Status == (int)EntityStatus.Active);
+
+            if (activeAssignment != null)
+            {
+                activeAssignment.Status = (int)EntityStatus.Inactive;
+                activeAssignment.UnassignedAt = DateTimeOffset.UtcNow;
+            }
+
+            await _context.SaveChangesAsync();
+
+            return await _context.Reservations
+                .Include(r => r.CustomerDetail)
+                .Include(r => r.BookingSlot)
+                .Include(r => r.Table)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(r => r.Id == reservationId);
+        }
+
+        public async Task<List<Reservation>> GetUnassignedReservationsAsync(DateOnly date)
+        {
+            return await _context.Reservations
+                .Include(r => r.CustomerDetail)
+                .Include(r => r.BookingSlot)
+                .Include(r => r.Table)
+                .Where(r => r.AssignedWaiterId == null &&
+                            DateOnly.FromDateTime(r.ReservationDate.Date) == date &&
+                            r.Status == (int)EntityStatus.Active)
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
+        public async Task<List<ReservationWaiterAssignment>> GetActiveWaiterAssignmentsAsync(DateOnly date)
+        {
+            return await _context.ReservationWaiterAssignments
+                .Include(a => a.Reservation)
+                .Include(a => a.Waiter)
+                .Where(a => a.Status == (int)EntityStatus.Active &&
+                            DateOnly.FromDateTime(a.Reservation.ReservationDate.Date) == date)
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
+        public async Task<List<Reservation>> GetCurrentAssignedReservationsAsync(DateTimeOffset fromDate)
+        {
+            return await _context.Reservations
+                .Include(r => r.CustomerDetail)
+                .Include(r => r.BookingSlot)
+                .Include(r => r.Table)
+                .Include(r => r.AssignedWaiter)
+                .Where(r => r.Status == (int)EntityStatus.Active &&
+                            r.AssignedWaiterId != null &&
+                            r.ReservationDate >= fromDate &&
+                            (r.ReservationStatus == (int)ReservationStatus.Booked ||
+                             r.ReservationStatus == (int)ReservationStatus.Arrived))
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
         private async Task<Reservation?> UpdateReservationStatusAsync(
             int reservationId,
             ReservationStatus targetStatus,
@@ -212,6 +324,7 @@ namespace AMB.Infra.Repositories
                 .Include(r => r.CustomerDetail)
                 .Include(r => r.BookingSlot)
                 .Include(r => r.Table)
+                .Include(r => r.AssignedWaiter)
                 .Where(r => r.Status == (int)EntityStatus.Active)
                 .AsNoTracking();
         }
