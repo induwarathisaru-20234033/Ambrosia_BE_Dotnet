@@ -18,6 +18,7 @@ namespace AMB.Application.Mappers
                 Username = dto.Username,
                 MobileNumber = dto.MobileNumber,
                 Address = dto.Address,
+                IsOnline = false,
             };
         }
 
@@ -52,6 +53,7 @@ namespace AMB.Application.Mappers
                 Username = entity.Username,
                 MobileNumber = entity.MobileNumber,
                 Address = entity.Address,
+                IsOnline = entity.IsOnline,
                 Status = entity.Status,
                 CreatedDate = entity.CreatedDate,
             };
