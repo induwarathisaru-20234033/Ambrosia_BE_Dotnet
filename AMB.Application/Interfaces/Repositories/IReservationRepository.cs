@@ -23,6 +23,11 @@ namespace AMB.Application.Interfaces.Repositories
         Task<Reservation?> MarkAsCancelledAsync(int reservationId, DateTimeOffset cancelledAt);
         Task<Reservation?> MarkAsArrivedAsync(int reservationId, DateTimeOffset arrivedAt);
         Task<Reservation?> MarkAsNoShowAsync(int reservationId, DateTimeOffset noShowMarkedAt);
+        Task<Reservation?> AssignWaiterAsync(int reservationId, int waiterId);
+        Task<Reservation?> UnassignWaiterAsync(int reservationId);
+        Task<List<Reservation>> GetUnassignedReservationsAsync(DateOnly date);
+        Task<List<ReservationWaiterAssignment>> GetActiveWaiterAssignmentsAsync(DateOnly date);
+        Task<List<Reservation>> GetCurrentAssignedReservationsAsync(DateTimeOffset fromDate);
         IQueryable<Reservation> GetSearchQuery();
     }
 }
