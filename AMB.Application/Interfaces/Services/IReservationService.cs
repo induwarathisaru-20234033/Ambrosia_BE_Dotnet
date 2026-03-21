@@ -19,5 +19,7 @@ namespace AMB.Application.Interfaces.Services
         Task<ReservationDto?> CancelReservationAsync(int reservationId);
         Task<ReservationDto?> MarkReservationAsArrivedAsync(int reservationId);
         Task<ReservationDto?> MarkReservationAsNoShowAsync(int reservationId);
+        Task<List<ReservationDto>> AssignWaiterAsync(AssignWaiterRequestDto request);
+        Task<List<ReservationDto>> UnassignWaiterAsync(AssignWaiterRequestDto request);
     }
 }
