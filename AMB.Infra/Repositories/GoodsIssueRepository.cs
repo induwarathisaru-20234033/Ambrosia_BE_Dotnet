@@ -217,5 +217,13 @@ namespace AMB.Infra.Repositories
                 .AsNoTracking()
                 .AnyAsync(note => note.GINumber == giNumber);
         }
+
+        public IQueryable<GoodIssueNote> GetSearchQuery()
+        {
+            return _context.GoodIssueNotes
+                .Include(note => note.GIItems)
+                .ThenInclude(giItem => giItem.InventoryItem)
+                .AsNoTracking();
+        }
     }
 }
