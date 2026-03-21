@@ -1,6 +1,5 @@
 ﻿using AMB.Application.Dtos;
 using AMB.Domain.Entities;
-using AMB.Domain.Enums;
 
 namespace AMB.Application.Mappers
 {
