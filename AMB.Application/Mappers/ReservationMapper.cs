@@ -23,7 +23,11 @@ namespace AMB.Application.Mappers
                 CancelledAt = entity.CancelledAt,
                 CustomerDetail = entity.CustomerDetail?.ToCustomerDetailDto(),
                 BookingSlot = entity.BookingSlot?.ToBookingSlotDto(),
-                Table = entity.Table?.ToTableDto()
+                Table = entity.Table?.ToTableDto(),
+                AssignedWaiterId = entity.AssignedWaiterId,
+                AssignedWaiterName = entity.AssignedWaiter != null
+                    ? $"{entity.AssignedWaiter.FirstName} {entity.AssignedWaiter.LastName}"
+                    : null
             };
         }
 

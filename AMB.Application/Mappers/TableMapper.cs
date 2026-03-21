@@ -74,7 +74,8 @@ namespace AMB.Application.Mappers
                     Height = shape.Height,
                     Rotation = shape.Rotation,
                     Fill = shape.Fill,
-                    AssignedTableId = shape.AssignedTableId
+                    AssignedTableId = shape.AssignedTableId,
+                    AssignedTable = shape.AssignedTable?.ToTableDto()
                 }).ToList()
             };
         }

@@ -1,5 +1,6 @@
 using AMB.Application.Interfaces.Repositories;
 using AMB.Domain.Entities;
+using AMB.Domain.Enums;
 
 namespace AMB.Tests.Mocks
 {
@@ -43,6 +44,28 @@ namespace AMB.Tests.Mocks
 
             Employees[employee.Id] = employee;
             return Task.FromResult<Employee?>(employee);
+        }
+
+        public Task<Employee?> UpdateOnlineStatusAsync(int id, bool isOnline)
+        {
+            if (!Employees.TryGetValue(id, out var employee))
+            {
+                return Task.FromResult<Employee?>(null);
+            }
+
+            employee.IsOnline = isOnline;
+            return Task.FromResult<Employee?>(employee);
+        }
+
+        public Task<List<Employee>> GetActiveWaitersAsync()
+        {
+            var result = Employees.Values
+                .Where(e => e.Status == (int)EntityStatus.Active &&
+                            (e.EmployeeRoleMaps?.Any(map =>
+                                map.Role != null && map.Role.RoleName == AMB.Domain.Constants.Role.WaiterRole) ?? false))
+                .ToList();
+
+            return Task.FromResult(result);
         }
 
         public Task<List<int>> GetExistingRoleIdsAsync(List<int> roleIds)

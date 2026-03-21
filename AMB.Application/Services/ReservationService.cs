@@ -5,6 +5,7 @@ using AMB.Application.Mappers;
 using AMB.Domain.Entities;
 using AMB.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,13 +17,19 @@ namespace AMB.Application.Services
     {
         private readonly IReservationRepository _reservationRepository;
         private readonly IConfigRepository _configRepository;
+        private readonly IEmployeeRepository _employeeRepository;
+        private readonly IEmailService _emailService;
 
         public ReservationService(
             IReservationRepository reservationRepository,
-            IConfigRepository configRepository)
+            IConfigRepository configRepository,
+            IEmployeeRepository employeeRepository,
+            IEmailService emailService)
         {
             _reservationRepository = reservationRepository;
             _configRepository = configRepository;
+            _employeeRepository = employeeRepository;
+            _emailService = emailService;
         }
 
         public async Task<ReservationDto> CreateReservationAsync(CreateReservationRequestDto request)
@@ -69,6 +76,24 @@ namespace AMB.Application.Services
             };
 
             var createdReservation = await _reservationRepository.AddReservationAsync(reservation);
+
+            if (createdReservation != null) 
+            {
+                var emailData = new
+                {
+                    CustomerName = createdReservation.CustomerDetail?.Name,
+                    createdReservation.ReservationCode,
+                    CustomerEmail = createdReservation.CustomerDetail?.Email
+                };
+
+                await _emailService.SendEmailAsync(
+                    to: createdReservation.CustomerDetail?.Email,
+                    subject: $"Your Reservation Confirmation: {createdReservation.ReservationCode}",
+                    templateName: "reservation-created",
+                    model: emailData
+                );
+            }
+
             return createdReservation.ToReservationDto();
         }
 
@@ -104,6 +129,9 @@ namespace AMB.Application.Services
             if (!string.IsNullOrEmpty(filter.ReservationCode))
                 query = query.Where(r => r.ReservationCode.Contains(filter.ReservationCode));
 
+            if (filter.ReservationStatus.HasValue)
+                query = query.Where(r => r.ReservationStatus == filter.ReservationStatus.Value);
+
             if (!string.IsNullOrEmpty(filter.CustomerName))
                 query = query.Where(r => r.CustomerDetail.Name.Contains(filter.CustomerName));
 
@@ -128,15 +156,32 @@ namespace AMB.Application.Services
             if (filter.CreatedDateTo.HasValue)
                 query = query.Where(r => r.CreatedDate <= filter.CreatedDateTo);
 
-            // Get total count for pagination
-            var totalCount = await query.CountAsync();
+            var supportsAsyncQuery = query.Provider is IAsyncQueryProvider;
 
-            // Apply pagination
-            var reservationEntities = await query
-                .OrderByDescending(r => r.CreatedDate)
-                .Skip((filter.PageNumber - 1) * filter.PageSize)
-                .Take(filter.PageSize)
-                .ToListAsync();
+            // Get total count for pagination
+            var totalCount = supportsAsyncQuery
+                ? await query.CountAsync()
+                : query.Count();
+
+            var orderedQuery = query.OrderByDescending(r => r.CreatedDate);
+
+            List<Reservation> reservationEntities;
+            if (filter.PageSize == 0)
+            {
+                reservationEntities = supportsAsyncQuery
+                    ? await orderedQuery.ToListAsync()
+                    : orderedQuery.ToList();
+            }
+            else
+            {
+                var pagedQuery = orderedQuery
+                    .Skip((filter.PageNumber - 1) * filter.PageSize)
+                    .Take(filter.PageSize);
+
+                reservationEntities = supportsAsyncQuery
+                    ? await pagedQuery.ToListAsync()
+                    : pagedQuery.ToList();
+            }
 
             // Map to DTO
             var reservations = reservationEntities
@@ -150,7 +195,9 @@ namespace AMB.Application.Services
                 TotalItemCount = totalCount,
                 PageNumber = filter.PageNumber,
                 PageSize = filter.PageSize,
-                PageCount = (int)Math.Ceiling((double)totalCount / filter.PageSize)
+                PageCount = filter.PageSize == 0
+                    ? (totalCount > 0 ? 1 : 0)
+                    : (int)Math.Ceiling((double)totalCount / filter.PageSize)
             };
         }
 
@@ -275,6 +322,97 @@ namespace AMB.Application.Services
             var datePart = DateTime.UtcNow.ToString("yyyyMMdd");
             var randomPart = Guid.NewGuid().ToString("N").Substring(0, 4).ToUpper();
             return $"RES-{datePart}-{randomPart}";
+        }
+
+        public async Task<List<ReservationDto>> AssignWaiterAsync(AssignWaiterRequestDto request)
+        {
+            if (request.EmployeeId <= 0)
+            {
+                throw new ArgumentException("Valid EmployeeId is required.");
+            }
+
+            var reservationIds = request.ReservationIds?
+                .Where(id => id > 0)
+                .Distinct()
+                .ToList() ?? new List<int>();
+
+            if (!reservationIds.Any())
+            {
+                throw new ArgumentException("At least one valid reservation id is required.");
+            }
+
+            var waiter = await _employeeRepository.GetByIdAsync(request.EmployeeId);
+            if (waiter == null)
+            {
+                throw new KeyNotFoundException($"Employee with ID {request.EmployeeId} not found.");
+            }
+
+            var updatedReservations = new List<ReservationDto>();
+
+            foreach (var reservationId in reservationIds)
+            {
+                var reservation = await _reservationRepository.GetReservationByIdAsync(reservationId);
+                if (reservation == null)
+                {
+                    throw new KeyNotFoundException($"Reservation with ID {reservationId} not found.");
+                }
+
+                var updated = await _reservationRepository.AssignWaiterAsync(reservationId, request.EmployeeId);
+                if (updated != null)
+                {
+                    updatedReservations.Add(updated.ToReservationDto());
+                }
+            }
+
+            return updatedReservations;
+        }
+
+        public async Task<List<ReservationDto>> UnassignWaiterAsync(AssignWaiterRequestDto request)
+        {
+            if (request.EmployeeId <= 0)
+            {
+                throw new ArgumentException("Valid EmployeeId is required.");
+            }
+
+            var reservationIds = request.ReservationIds?
+                .Where(id => id > 0)
+                .Distinct()
+                .ToList() ?? new List<int>();
+
+            if (!reservationIds.Any())
+            {
+                throw new ArgumentException("At least one valid reservation id is required.");
+            }
+
+            var employee = await _employeeRepository.GetByIdAsync(request.EmployeeId);
+            if (employee == null)
+            {
+                throw new KeyNotFoundException($"Employee with ID {request.EmployeeId} not found.");
+            }
+
+            var updatedReservations = new List<ReservationDto>();
+
+            foreach (var reservationId in reservationIds)
+            {
+                var reservation = await _reservationRepository.GetReservationByIdAsync(reservationId);
+                if (reservation == null)
+                {
+                    throw new KeyNotFoundException($"Reservation with ID {reservationId} not found.");
+                }
+
+                if (reservation.AssignedWaiterId != request.EmployeeId)
+                {
+                    throw new InvalidOperationException($"Reservation with ID {reservationId} is not assigned to employee with ID {request.EmployeeId}.");
+                }
+
+                var updated = await _reservationRepository.UnassignWaiterAsync(reservationId);
+                if (updated != null)
+                {
+                    updatedReservations.Add(updated.ToReservationDto());
+                }
+            }
+
+            return updatedReservations;
         }
     }
 }

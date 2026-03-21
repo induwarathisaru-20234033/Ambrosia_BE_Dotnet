@@ -2,7 +2,7 @@
 
 namespace AMB.Domain.Entities
 {
-    public class Role: BaseEntity
+    public class Role : BaseEntity
     {
         [StringLength(10)]
         public string RoleCode { get; set; }

@@ -44,6 +44,7 @@ namespace AMB.Infra.DBContexts
         public DbSet<StockTransaction> StockTransactions { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }
+        public DbSet<ReservationWaiterAssignment> ReservationWaiterAssignments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -76,6 +77,7 @@ namespace AMB.Infra.DBContexts
             // Add Order tables
             modelBuilder.Entity<Order>().ToTable(nameof(Orders));
             modelBuilder.Entity<OrderItem>().ToTable(nameof(OrderItems));
+            modelBuilder.Entity<ReservationWaiterAssignment>().ToTable(nameof(ReservationWaiterAssignments));
 
             modelBuilder.Entity<Employee>()
                 .HasIndex(e => e.EmployeeId)
@@ -151,6 +153,20 @@ namespace AMB.Infra.DBContexts
             modelBuilder.Entity<MenuItem>()
                 .Property(m => m.Price)
                 .HasPrecision(18, 2);
+
+            // Reservation relationships
+            // ReservationWaiterAssignment relationships
+            modelBuilder.Entity<ReservationWaiterAssignment>()
+                .HasOne(rwa => rwa.Reservation)
+                .WithMany(r => r.WaiterAssignments)
+                .HasForeignKey(rwa => rwa.ReservationId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ReservationWaiterAssignment>()
+                .HasOne(rwa => rwa.Waiter)
+                .WithMany()
+                .HasForeignKey(rwa => rwa.WaiterId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             // Reservation relationships
             modelBuilder.Entity<Reservation>()

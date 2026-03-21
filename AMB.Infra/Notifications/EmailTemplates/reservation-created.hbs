@@ -1,0 +1,158 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Reservation</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background-color: #fcfcfc;
+            color: #2d3436;
+            margin: 0;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .wrapper {
+            width: 100%;
+            table-layout: fixed;
+            background-color: #fcfcfc;
+            padding-bottom: 40px;
+        }
+
+        .container {
+            max-width: 600px;
+            background-color: #ffffff;
+            margin: 40px auto;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            border: 1px solid #eee;
+        }
+
+        /* Header & Logo Section */
+        .header {
+            background-color: #1a1a1a;
+            padding: 40px 20px;
+            text-align: center;
+            color: #D4AF37;
+        }
+
+            .header h1 {
+                margin: 0;
+                font-weight: 300;
+                letter-spacing: 4px;
+                text-transform: uppercase;
+                font-size: 24px;
+            }
+
+        .content {
+            padding: 40px 50px;
+            text-align: center;
+        }
+
+            .content h2 {
+                color: #1a1a1a;
+                font-size: 22px;
+                margin-bottom: 10px;
+            }
+
+            .content p {
+                color: #636e72;
+                font-size: 16px;
+                line-height: 1.8;
+            }
+
+        /* The "Embedded" Reservation Badge */
+        .reservation-card {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            padding: 30px;
+            border-radius: 16px;
+            margin: 30px 0;
+            border: 1px solid #D4AF37;
+            box-shadow: 0 8px 20px rgba(212, 175, 55, 0.15);
+        }
+
+        .label {
+            color: #D4AF37;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 2px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .code {
+            color: #ffffff;
+            font-size: 32px;
+            font-weight: 800;
+            letter-spacing: 6px;
+            margin: 0;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        .customer-info {
+            font-size: 14px;
+            color: #b2bec3;
+            margin-top: 15px;
+            border-top: 1px solid #444;
+            padding-top: 15px;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 12px;
+            color: #b2bec3;
+        }
+
+        .brand {
+            font-weight: bold;
+            color: #D4AF37;
+            letter-spacing: 1px;
+        }
+
+        /* Mobile adjustment */
+        @media screen and (max-width: 600px) {
+            .content {
+                padding: 30px 20px;
+            }
+
+            .code {
+                font-size: 26px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="container">
+            <div class="header">
+                <h1>AMBROSIA</h1>
+            </div>
+
+            <div class="content">
+                <h2>Reservation Confirmed</h2>
+                <p>Hello {{CustomerName}},<br>We are delighted to confirm your upcoming experience with us. Your booking is officially secured.</p>
+
+                <div class="reservation-card">
+                    <span class="label">Reservation Access Code</span>
+                    <div class="code">{{ReservationCode}}</div>
+                    <div class="customer-info">
+                        Registered to: {{CustomerEmail}}
+                    </div>
+                </div>
+
+                <p style="font-size: 14px;">Please present this code or your email upon arrival.</p>
+            </div>
+
+            <div class="footer">
+                <p>Thank you for choosing elegance.</p>
+                <p class="brand">Powered with Ambrosia</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

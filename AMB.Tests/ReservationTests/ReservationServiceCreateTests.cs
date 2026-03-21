@@ -27,7 +27,7 @@ namespace AMB.Tests.ReservationTests
             };
             configRepository.BookingSlots[1] = bookingSlot;
 
-            var service = new ReservationService(reservationRepository, configRepository);
+            var service = new ReservationService(reservationRepository, configRepository, new TestEmployeeRepository(), new TestEmailService());
 
             var request = new CreateReservationRequestDto
             {
@@ -120,7 +120,7 @@ namespace AMB.Tests.ReservationTests
             };
             reservationRepository.Reservations[1] = existingReservation;
 
-            var service = new ReservationService(reservationRepository, configRepository);
+            var service = new ReservationService(reservationRepository, configRepository, new TestEmployeeRepository(), new TestEmailService());
 
             var request = new CreateReservationRequestDto
             {
@@ -190,7 +190,7 @@ namespace AMB.Tests.ReservationTests
             };
             reservationRepository.Reservations[1] = existingReservation;
 
-            var service = new ReservationService(reservationRepository, configRepository);
+            var service = new ReservationService(reservationRepository, configRepository, new TestEmployeeRepository(), new TestEmailService());
 
             var request = new CreateReservationRequestDto
             {
@@ -228,7 +228,7 @@ namespace AMB.Tests.ReservationTests
             };
             configRepository.BookingSlots[1] = bookingSlot;
 
-            var service = new ReservationService(reservationRepository, configRepository);
+            var service = new ReservationService(reservationRepository, configRepository, new TestEmployeeRepository(), new TestEmailService());
 
             var request = new CreateReservationRequestDto
             {
@@ -252,3 +252,4 @@ namespace AMB.Tests.ReservationTests
         }
     }
 }
+

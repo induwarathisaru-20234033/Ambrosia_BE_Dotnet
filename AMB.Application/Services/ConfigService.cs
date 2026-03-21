@@ -15,11 +15,13 @@ namespace AMB.Application.Services
         private readonly IConfigRepository _configRepository;
         private readonly IReservationRepository _reservationRepository;
         private readonly IServiceProvider _serviceProvider;
+        private readonly ITableRepository _tableRepository;
 
-        public ConfigService(IConfigRepository configRepository, IServiceProvider serviceProvider, IReservationRepository reservationRepository)
+        public ConfigService(IConfigRepository configRepository, IServiceProvider serviceProvider, IReservationRepository reservationRepository, ITableRepository tableRepository)
         {
             _configRepository = configRepository;
             _serviceProvider = serviceProvider;
+            _tableRepository = tableRepository;
             _reservationRepository = reservationRepository;
         }
 
@@ -338,6 +340,8 @@ namespace AMB.Application.Services
             DateOnly? date = dateTime.HasValue ? DateOnly.FromDateTime(dateTime.Value.Date) : null;
             int? dayOfWeek = dateTime.HasValue ? (int)Enum.Parse<Day>(dateTime.Value.DayOfWeek.ToString()) : null;
 
+            var numberOfTables = (await _tableRepository.GetAllAsync()).Count;
+
             var bookingSlots = dayOfWeek.HasValue
                 ? await _configRepository.GetBookingSlotsByDayAsync(dayOfWeek.Value)
                 : await _configRepository.GetAllBookingSlotsAsync();
@@ -365,6 +369,7 @@ namespace AMB.Application.Services
                     StartTime = slot.StartTime,
                     EndTime = slot.EndTime,
                     Day = slot.Day,
+                    NumberOfTables = numberOfTables,
                     ExistingAllocations = allocationCount,
                     AllocatedTableIds = allocatedTableIds 
                 });

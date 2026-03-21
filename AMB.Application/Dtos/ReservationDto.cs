@@ -8,12 +8,12 @@ namespace AMB.Application.Dtos
         public DateTimeOffset ReservationDate { get; set; }
         public string? Occasion { get; set; }
         public string? SpecialRequests { get; set; }
-        
+
         // Customer details
         public string CustomerName { get; set; } = string.Empty;
         public string CustomerEmail { get; set; } = string.Empty;
         public string CustomerPhoneNumber { get; set; } = string.Empty;
-        
+
         // Slot and table selection
         public int BookingSlotId { get; set; }
         public int TableId { get; set; }
@@ -31,10 +31,18 @@ namespace AMB.Application.Dtos
         public DateTimeOffset? ArrivedAt { get; set; }
         public DateTimeOffset? NoShowMarkedAt { get; set; }
         public DateTimeOffset? CancelledAt { get; set; }
-        
+
         public CustomerDetailDto? CustomerDetail { get; set; }
         public BookingSlotDto? BookingSlot { get; set; }
         public TableDto? Table { get; set; }
+        public int? AssignedWaiterId { get; set; }
+        public string? AssignedWaiterName { get; set; }
+    }
+
+    public class AssignWaiterRequestDto
+    {
+        public List<int> ReservationIds { get; set; } = [];
+        public int EmployeeId { get; set; }
     }
 
     public class CustomerDetailDto
@@ -52,6 +60,7 @@ namespace AMB.Application.Dtos
         public TimeOnly StartTime { get; set; }
         public TimeOnly EndTime { get; set; }
         public int Day { get; set; }
+        public int NumberOfTables { get; set; }
         public int ExistingAllocations { get; set; }
         public List<int> AllocatedTableIds { get; set; } = [];
     }

@@ -42,6 +42,7 @@ namespace AMB.Infra.Repositories
         public async Task<List<TableCanvasShape>> GetTableFloorMapAsync()
         {
             return await _context.TableCanvasShapes
+                .Include(shape => shape.AssignedTable)
                 .Where(shape => shape.Status == (int)EntityStatus.Active)
                 .AsNoTracking()
                 .ToListAsync();

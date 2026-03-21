@@ -5,6 +5,7 @@ namespace AMB.Application.Dtos
     public class ReservationFilterRequestDto : BaseSearchRequestDto
     {
         public string? ReservationCode { get; set; }
+        public int? ReservationStatus { get; set; }
         public string? CustomerName { get; set; }
         public string? CustomerEmail { get; set; }
         public string? CustomerPhone { get; set; }

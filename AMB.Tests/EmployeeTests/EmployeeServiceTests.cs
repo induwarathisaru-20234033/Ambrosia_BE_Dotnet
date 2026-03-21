@@ -1,6 +1,8 @@
 using AMB.Application.Dtos;
+using AMB.Application.Interfaces.Repositories;
 using AMB.Application.Services;
 using AMB.Application.Validators;
+using AMB.Domain.Entities;
 using AMB.Domain.Enums;
 using AMB.Tests.Mocks;
 using FluentValidation;
@@ -59,6 +61,7 @@ namespace AMB.Tests.EmployeeTests
             Assert.Equal(request.Username, result.Username);
             Assert.Equal(request.MobileNumber, result.MobileNumber);
             Assert.Equal(request.Address, result.Address);
+            Assert.False(result.IsOnline);
         }
 
         [Fact]
@@ -271,6 +274,170 @@ namespace AMB.Tests.EmployeeTests
             Assert.Equal(3, repository.EmployeeRoleMaps.Count);
             Assert.Equal(2, repository.EmployeeRoleMaps.Count(x => x.RoleId.HasValue));
             Assert.Equal(1, repository.EmployeeRoleMaps.Count(x => x.CustomRoleId.HasValue));
+        }
+
+        [Fact]
+        public async Task UpdateEmployeeOnlineStatusAsync_WithExistingEmployee_UpdatesOnlineStatus()
+        {
+            var repository = new TestEmployeeRepository();
+            repository.Employees[7] = new AMB.Domain.Entities.Employee
+            {
+                Id = 7,
+                EmployeeId = "EMP-007",
+                FirstName = "John",
+                LastName = "Doe",
+                MobileNumber = "0770000000",
+                Username = "john.doe@example.com",
+                Email = "john.doe@example.com",
+                Address = "Address",
+                Status = 1,
+                IsOnline = false
+            };
+
+            var authHelper = new TestAuthHelper("auth-123");
+            var serviceProvider = new ServiceCollection()
+                .AddScoped<IValidator<CreateEmployeeRequestDto>, CreateEmployeeValidator>()
+                .AddScoped<IValidator<UpdateEmployeeRequestDto>, UpdateEmployeeValidator>()
+                .BuildServiceProvider();
+
+            var service = new EmployeeService(repository, serviceProvider, authHelper);
+
+            var result = await service.UpdateEmployeeOnlineStatusAsync(new UpdateEmployeeOnlineStatusRequestDto
+            {
+                Id = 7,
+                IsOnline = true
+            });
+
+            Assert.True(result.IsOnline);
+            Assert.True(repository.Employees[7].IsOnline);
+        }
+
+        [Fact]
+        public async Task UpdateEmployeeOnlineStatusAsync_WithMissingEmployee_ThrowsKeyNotFoundException()
+        {
+            var repository = new TestEmployeeRepository();
+            var authHelper = new TestAuthHelper("auth-123");
+            var serviceProvider = new ServiceCollection()
+                .AddScoped<IValidator<CreateEmployeeRequestDto>, CreateEmployeeValidator>()
+                .AddScoped<IValidator<UpdateEmployeeRequestDto>, UpdateEmployeeValidator>()
+                .BuildServiceProvider();
+
+            var service = new EmployeeService(repository, serviceProvider, authHelper);
+
+            await Assert.ThrowsAsync<KeyNotFoundException>(() =>
+                service.UpdateEmployeeOnlineStatusAsync(new UpdateEmployeeOnlineStatusRequestDto
+                {
+                    Id = 999,
+                    IsOnline = true
+                }));
+        }
+
+        [Fact]
+        public async Task GetWaitersWithCurrentAllocationsAsync_ReturnsWaitersWithReservationsAndTables()
+        {
+            var employeeRepository = new TestEmployeeRepository();
+            var reservationRepository = new TestReservationRepository();
+
+            employeeRepository.Employees[1] = new Employee
+            {
+                Id = 1,
+                EmployeeId = "EMP-001",
+                FirstName = "Ava",
+                LastName = "Fernando",
+                Username = "ava.fernando@example.com",
+                MobileNumber = "0711111111",
+                Address = "Address 1",
+                Status = (int)EntityStatus.Active,
+                IsOnline = true,
+                EmployeeRoleMaps = new List<EmployeeRoleMap>
+                {
+                    new EmployeeRoleMap
+                    {
+                        Role = new Role { RoleName = AMB.Domain.Constants.Role.WaiterRole }
+                    }
+                }
+            };
+
+            employeeRepository.Employees[2] = new Employee
+            {
+                Id = 2,
+                EmployeeId = "EMP-002",
+                FirstName = "Ben",
+                LastName = "Silva",
+                Username = "ben.silva@example.com",
+                MobileNumber = "0722222222",
+                Address = "Address 2",
+                Status = (int)EntityStatus.Active,
+                IsOnline = false,
+                EmployeeRoleMaps = new List<EmployeeRoleMap>
+                {
+                    new EmployeeRoleMap
+                    {
+                        Role = new Role { RoleName = AMB.Domain.Constants.Role.WaiterRole }
+                    }
+                }
+            };
+
+            reservationRepository.Reservations[101] = new Reservation
+            {
+                Id = 101,
+                ReservationCode = "RES-101",
+                PartySize = 4,
+                ReservationStatus = (int)ReservationStatus.Arrived,
+                ReservationDate = DateTimeOffset.UtcNow.AddHours(1),
+                AssignedWaiterId = 1,
+                TableId = 11,
+                Table = new Table { Id = 11, TableName = "T1", Capacity = 4 },
+                Status = (int)EntityStatus.Active
+            };
+
+            reservationRepository.Reservations[102] = new Reservation
+            {
+                Id = 102,
+                ReservationCode = "RES-102",
+                PartySize = 2,
+                ReservationStatus = (int)ReservationStatus.Booked,
+                ReservationDate = DateTimeOffset.UtcNow.AddHours(2),
+                AssignedWaiterId = 1,
+                TableId = 12,
+                Table = new Table { Id = 12, TableName = "T2", Capacity = 2 },
+                Status = (int)EntityStatus.Active
+            };
+
+            reservationRepository.Reservations[103] = new Reservation
+            {
+                Id = 103,
+                ReservationCode = "RES-103",
+                PartySize = 6,
+                ReservationStatus = (int)ReservationStatus.Cancelled,
+                ReservationDate = DateTimeOffset.UtcNow.AddHours(3),
+                AssignedWaiterId = 2,
+                TableId = 13,
+                Table = new Table { Id = 13, TableName = "T3", Capacity = 6 },
+                Status = (int)EntityStatus.Active
+            };
+
+            var authHelper = new TestAuthHelper("auth-123");
+            var serviceProvider = new ServiceCollection()
+                .AddScoped<IValidator<CreateEmployeeRequestDto>, CreateEmployeeValidator>()
+                .AddScoped<IValidator<UpdateEmployeeRequestDto>, UpdateEmployeeValidator>()
+                .AddScoped<IReservationRepository>(_ => reservationRepository)
+                .BuildServiceProvider();
+
+            var service = new EmployeeService(employeeRepository, serviceProvider, authHelper);
+
+            var result = await service.GetWaitersWithCurrentAllocationsAsync();
+
+            Assert.Equal(2, result.Count);
+
+            var ava = result.Single(r => r.WaiterId == 1);
+            Assert.Equal(2, ava.AllocatedReservationCount);
+            Assert.Equal(2, ava.AllocatedTableCount);
+            Assert.Equal(new[] { "T1", "T2" }, ava.Tables.Select(t => t.TableName).ToArray());
+
+            var ben = result.Single(r => r.WaiterId == 2);
+            Assert.Equal(0, ben.AllocatedReservationCount);
+            Assert.Equal(0, ben.AllocatedTableCount);
         }
     }
 }

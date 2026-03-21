@@ -48,6 +48,17 @@ namespace AMB.API.Controllers
             return Ok(new BaseResponseDto<EmployeeDto>(result, "Employee retrieved successfully"));
         }
 
+        [HttpGet("waiters/current-allocations")]
+        public async Task<ActionResult<BaseResponseDto<List<WaiterAllocationDto>>>> GetWaitersWithCurrentAllocations()
+        {
+            var result = await _employeeService.GetWaitersWithCurrentAllocationsAsync();
+
+            return Ok(new BaseResponseDto<List<WaiterAllocationDto>>(
+                result,
+                "Waiters with current allocations retrieved successfully"
+            ));
+        }
+
         [HttpPut("{id}")]
         public async Task<ActionResult<BaseResponseDto<EmployeeDto>>> UpdateEmployee(int id, [FromBody] UpdateEmployeeRequestDto dto)
         {
@@ -57,7 +68,16 @@ namespace AMB.API.Controllers
             return Ok(new BaseResponseDto<EmployeeDto>(result, "Employee updated successfully"));
         }
 
-        [HttpPost("assign-roles")]
+        [HttpPatch("{id}/online-status")]
+        public async Task<ActionResult<BaseResponseDto<EmployeeDto>>> UpdateEmployeeOnlineStatus(int id, [FromBody] UpdateEmployeeOnlineStatusRequestDto dto)
+        {
+            dto.Id = id;
+            var result = await _employeeService.UpdateEmployeeOnlineStatusAsync(dto);
+
+            return Ok(new BaseResponseDto<EmployeeDto>(result, "Employee online status updated successfully"));
+        }
+
+        [HttpPatch("assign-roles")]
         public async Task<ActionResult<BaseResponseDto<object>>> AssignRoles([FromBody] AssignEmployeeRolesRequestDto request)
         {
             await _employeeService.AssignRolesAsync(request);
