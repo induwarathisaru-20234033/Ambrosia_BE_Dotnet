@@ -98,6 +98,9 @@ builder.Services.AddScoped<IPurchaseRequestService, PurchaseRequestService>();
 builder.Services.AddScoped<IGoodReceiptNoteRepository, GoodReceiptNoteRepository>();
 builder.Services.AddScoped<IGoodReceiptNoteService, GoodReceiptNoteService>();
 
+builder.Services.AddScoped<IGoodsIssueRepository, GoodsIssueRepository>();
+builder.Services.AddScoped<IGoodsIssueService, GoodsIssueService>();
+
 builder.Services.AddValidatorsFromAssemblyContaining<CreateEmployeeValidator>();
 
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
