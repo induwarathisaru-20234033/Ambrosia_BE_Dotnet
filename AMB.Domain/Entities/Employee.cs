@@ -2,7 +2,7 @@
 
 namespace AMB.Domain.Entities
 {
-    public class Employee: BaseEntity
+    public class Employee : BaseEntity
     {
         public string EmployeeId { get; set; }
 
@@ -24,6 +24,8 @@ namespace AMB.Domain.Entities
 
         [StringLength(250)]
         public string Address { get; set; }
+
+        public bool IsOnline { get; set; }
 
         public List<EmployeeRoleMap>? EmployeeRoleMaps { get; set; }
     }
