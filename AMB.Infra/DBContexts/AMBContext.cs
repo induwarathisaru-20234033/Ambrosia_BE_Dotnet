@@ -301,7 +301,7 @@ namespace AMB.Infra.DBContexts
                 .WithMany()
                 .HasForeignKey(item => item.InventoryItemId)
                 .OnDelete(DeleteBehavior.Restrict);
-
+                
             modelBuilder.Entity<WastageRecord>()
                 .HasMany(record => record.WastageEntryItems)
                 .WithOne(item => item.WastageRecord)
