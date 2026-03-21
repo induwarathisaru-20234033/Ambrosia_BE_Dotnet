@@ -10,5 +10,6 @@ namespace AMB.Application.Interfaces.Services
         Task<PaginatedResultDto<RoleDto>> GetAllRolesAsync(RoleFilterRequestDto filter);
         Task UpdateRoleAsync(EditRoleRequestDto request);
         Task<RoleDetailDto> GetRoleByIdAsync(int id, bool includePermissions = false, bool includeFeatures = false);
+        Task<RoleAssignedEmployeesDto> GetAssignedEmployeesByRoleAsync(int roleId, bool isCustomRole = false);
     }
 }
