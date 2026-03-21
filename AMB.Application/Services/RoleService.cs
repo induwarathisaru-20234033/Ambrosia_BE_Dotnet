@@ -205,5 +205,25 @@ namespace AMB.Application.Services
 
         }
 
+        public async Task<RoleAssignedEmployeesDto> GetAssignedEmployeesByRoleAsync(int roleId, bool isCustomRole = false)
+        {
+            if (roleId <= 0)
+            {
+                throw new ArgumentException("Valid role id is required.");
+            }
+
+            var result = await _roleRepository.GetAssignedEmployeesByRoleAsync(roleId, isCustomRole);
+
+            if (result == null)
+            {
+                throw new KeyNotFoundException(
+                    isCustomRole
+                        ? $"Custom role with ID {roleId} not found."
+                        : $"Role with ID {roleId} not found."
+                );
+            }
+
+            return result;
+        }
     }
 }
