@@ -61,6 +61,58 @@ namespace AMB.Application.Services
             };
         }
 
+        public async Task<WastageRecordDto> UpdateWastageRecordAsync(UpdateWastageRecordDto request)
+        {
+            var existing = await _wastageRecordRepository.GetByIdAsync(request.Id);
+            if (existing == null)
+            {
+                throw new KeyNotFoundException($"Wastage record with ID {request.Id} not found.");
+            }
+            if (request.Items == null || request.Items.Count == 0)
+            {
+                throw new ArgumentException("At least one wastage entry item is required.");
+            }
+            var wastageRecord = new WastageRecord
+            {
+                Id = request.Id,
+                WastageEntryNumber = existing.WastageEntryNumber,
+                EntryDate = request.EntryDate,
+                RecordedBy = request.RecordedBy,
+                GeneralNotes = request.GeneralNotes,
+                WastageEntryItems = request.Items.Select(item => new WastageEntryItem
+                {
+                    ItemNo = item.ItemNo,
+                    WastageType = item.WastageType,
+                    Quantity = item.Quantity,
+                    Reason = item.Reason,
+                    InventoryItemId = item.InventoryItemId
+                }).ToList()
+            };
+            var result = await _wastageRecordRepository.UpdateAsync(wastageRecord);
+            if (result == null)
+            {
+                throw new KeyNotFoundException($"Wastage record with ID {request.Id} not found after update.");
+            }
+            return new WastageRecordDto
+            {
+                Id = result.Id,
+                WastageEntryNumber = result.WastageEntryNumber,
+                EntryDate = result.EntryDate,
+                RecordedBy = result.RecordedBy,
+                GeneralNotes = result.GeneralNotes,
+                Items = result.WastageEntryItems.Select(e => new WastageEntryItemDto
+                {
+                    Id = e.Id,
+                    ItemNo = e.ItemNo,
+                    WastageType = e.WastageType,
+                    Quantity = e.Quantity,
+                    Reason = e.Reason,
+                    InventoryItemId = e.InventoryItemId,
+                    InventoryItemName = e.InventoryItem?.ItemName ?? string.Empty
+                }).ToList()
+            };
+        }
+
         private string GenerateUniqueWastageEntryNumber()
         {
             return $"WSTG-{DateTime.UtcNow:yyyyMMddHHmmssfff}";
