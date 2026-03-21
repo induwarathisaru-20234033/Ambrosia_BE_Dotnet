@@ -197,5 +197,21 @@ namespace AMB.API.Controllers
             var response = new BaseResponseDto<ReservationDto>(reservation, "Reservation marked as no-show");
             return Ok(response);
         }
+
+        [HttpPatch("assign-waiter")]
+        public async Task<ActionResult<BaseResponseDto<List<ReservationDto>>>> AssignWaiter([FromBody] AssignWaiterRequestDto dto)
+        {
+            var reservations = await _reservationService.AssignWaiterAsync(dto);
+            var response = new BaseResponseDto<List<ReservationDto>>(reservations, "Waiter assigned successfully");
+            return Ok(response);
+        }
+
+        [HttpPatch("unassign-waiter")]
+        public async Task<ActionResult<BaseResponseDto<List<ReservationDto>>>> UnassignWaiter([FromBody] AssignWaiterRequestDto dto)
+        {
+            var reservations = await _reservationService.UnassignWaiterAsync(dto);
+            var response = new BaseResponseDto<List<ReservationDto>>(reservations, "Waiter unassigned successfully");
+            return Ok(response);
+        }
     }
 }
