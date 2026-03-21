@@ -25,5 +25,14 @@ namespace AMB.API.Controllers
             var response = new BaseResponseDto<WastageRecordDto>(result, "Wastage record created successfully!");
             return Ok(response);
         }
+
+        [HttpPatch("{id:int}")]
+        public async Task<ActionResult<BaseResponseDto<WastageRecordDto>>> Update(int id, [FromBody] UpdateWastageRecordDto request)
+        {
+            request.Id = id;
+            var result = await _wastageRecordService.UpdateWastageRecordAsync(request);
+            var response = new BaseResponseDto<WastageRecordDto>(result, "Wastage record updated successfully!");
+            return Ok(response);
+        }
     }
 }
