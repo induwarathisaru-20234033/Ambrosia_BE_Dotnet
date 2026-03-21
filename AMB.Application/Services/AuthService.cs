@@ -114,6 +114,12 @@ namespace AMB.Application.Services
                 throw new InvalidOperationException("Failed to read user profile response.");
             }
 
+            if (!string.IsNullOrWhiteSpace(profile.Subject))
+            {
+                var employee = await _employeeRepository.GetByUserIDAsync(profile.Subject);
+                profile.EmployeeId = employee?.Id;
+            }
+
             return profile;
         }
 
