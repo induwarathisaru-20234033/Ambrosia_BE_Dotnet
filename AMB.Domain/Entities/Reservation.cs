@@ -30,5 +30,12 @@
         // Foreign key to Table (the specific table assigned)
         public int TableId { get; set; }
         public virtual Table Table { get; set; } = null!;
+
+        // Foreign key to Assign Waiter (nullable — null means no waiter assigned)
+        public int? AssignedWaiterId { get; set; }
+        public virtual Employee? AssignedWaiter { get; set; }
+
+        // All waiter assignment records (active + historical) for this reservation
+        public virtual ICollection<ReservationWaiterAssignment> WaiterAssignments { get; set; } = new List<ReservationWaiterAssignment>();
     }
 }
