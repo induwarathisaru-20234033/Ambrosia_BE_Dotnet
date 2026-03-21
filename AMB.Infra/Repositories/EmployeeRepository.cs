@@ -66,10 +66,40 @@ namespace AMB.Infra.Repositories
             existingEmployee.MobileNumber = employee.MobileNumber;
             existingEmployee.Address = employee.Address;
             existingEmployee.Status = employee.Status;
+            existingEmployee.IsOnline = employee.IsOnline;
 
             _context.Employees.Update(existingEmployee);
             await _context.SaveChangesAsync();
             return existingEmployee;
+        }
+
+        public async Task<Employee?> UpdateOnlineStatusAsync(int id, bool isOnline)
+        {
+            var existingEmployee = await _context.Employees.FirstOrDefaultAsync(e => e.Id == id);
+            if (existingEmployee == null)
+            {
+                return null;
+            }
+
+            existingEmployee.IsOnline = isOnline;
+
+            _context.Employees.Update(existingEmployee);
+            await _context.SaveChangesAsync();
+            return existingEmployee;
+        }
+
+        public async Task<List<Employee>> GetActiveWaitersAsync()
+        {
+            return await _context.Employees
+                .Include(e => e.EmployeeRoleMaps!)
+                .ThenInclude(erm => erm.Role)
+                .Where(e => e.Status == (int)EntityStatus.Active &&
+                            e.EmployeeRoleMaps != null &&
+                            e.EmployeeRoleMaps.Any(map =>
+                                map.Role != null &&
+                                map.Role.RoleName == AMB.Domain.Constants.Role.WaiterRole))
+                .AsNoTracking()
+                .ToListAsync();
         }
 
         public async Task<List<int>> GetExistingRoleIdsAsync(List<int> roleIds)
