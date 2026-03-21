@@ -100,6 +100,8 @@ builder.Services.AddScoped<IGoodReceiptNoteService, GoodReceiptNoteService>();
 
 builder.Services.AddScoped<IGoodsIssueRepository, GoodsIssueRepository>();
 builder.Services.AddScoped<IGoodsIssueService, GoodsIssueService>();
+builder.Services.AddScoped<IWastageRecordRepository, WastageRecordRepository>();
+builder.Services.AddScoped<IWastageRecordService, WastageRecordService>();
 
 builder.Services.AddValidatorsFromAssemblyContaining<CreateEmployeeValidator>();
 
