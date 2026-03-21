@@ -3,7 +3,6 @@ using AMB.Application.Interfaces.Repositories;
 using AMB.Application.Services;
 using AMB.Application.Validators;
 using AMB.Domain.Entities;
-using AMB.Domain.Enums;
 using AMB.Tests.Mocks;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
