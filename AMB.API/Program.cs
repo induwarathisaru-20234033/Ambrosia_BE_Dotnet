@@ -1,20 +1,23 @@
 using AMB.API.Filters;
 using AMB.API.Middlewares;
 using AMB.Application.Dtos;
+using AMB.Application.Interfaces;
 using AMB.Application.Interfaces.Repositories;
 using AMB.Application.Interfaces.Services;
 using AMB.Application.Services;
 using AMB.Application.Validators;
+using AMB.Infra.BackgroundServices;
 using AMB.Infra.DBContexts;
 using AMB.Infra.Identity;
+using AMB.Infra.Notifications;
 using AMB.Infra.Repositories;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Resend;
 using System.Text;
-using AMB.Application.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -101,6 +104,20 @@ builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 
 builder.Services.AddScoped<IMenuItemRepository, MenuItemRepository>();
+
+builder.Services.AddTransient<IEmailService, ResendEmailService>();
+
+builder.Services.AddHostedService<GlobalWaiterAssignmentService>();
+
+builder.Services.Configure<ResendClientOptions>(o =>
+{
+    o.ApiToken =
+        builder.Configuration["Resend_API_Token"] ??
+        Environment.GetEnvironmentVariable("Resend_API_Token") ??
+        string.Empty;
+});
+
+builder.Services.AddTransient<IResend, ResendClient>();
 
 builder.Services.AddAuthentication(options =>
 {
