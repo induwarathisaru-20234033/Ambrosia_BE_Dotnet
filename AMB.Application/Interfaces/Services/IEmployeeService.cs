@@ -9,6 +9,8 @@ namespace AMB.Application.Interfaces.Services
         Task<PagedResponseDto<EmployeeDto>> GetEmployeesAsync(EmployeeFilterRequestDto filter);
         Task<EmployeeDto> GetEmployeeByIdAsync(int id);
         Task<EmployeeDto?> UpdateEmployeeAsync(UpdateEmployeeRequestDto request);
+        Task<EmployeeDto> UpdateEmployeeOnlineStatusAsync(UpdateEmployeeOnlineStatusRequestDto request);
+        Task<List<WaiterAllocationDto>> GetWaitersWithCurrentAllocationsAsync();
         Task AssignRolesAsync(AssignEmployeeRolesRequestDto request);
 
     }
