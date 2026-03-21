@@ -203,5 +203,85 @@ namespace AMB.Infra.Repositories
                 throw;
             }
         }
+
+        public async Task<RoleAssignedEmployeesDto?> GetAssignedEmployeesByRoleAsync(int roleId, bool isCustomRole = false)
+        {
+            if (isCustomRole)
+            {
+                var customRole = await _context.CustomRoles
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(r => r.Id == roleId);
+
+                if (customRole == null)
+                {
+                    return null;
+                }
+
+                var assignedEmployees = await _context.EmployeeRoleMaps
+                    .Where(erm => erm.CustomRoleId == roleId)
+                    .Include(erm => erm.Employee)
+                    .Where(erm => erm.Employee != null)
+                    .Select(erm => new AssignedRoleEmployeeDto
+                    {
+                        Id = erm.Employee!.Id,
+                        EmployeeId = erm.Employee.EmployeeId,
+                        FirstName = erm.Employee.FirstName,
+                        LastName = erm.Employee.LastName,
+                        Username = erm.Employee.Username,
+                        Email = erm.Employee.Email,
+                        MobileNumber = erm.Employee.MobileNumber,
+                        IsOnline = erm.Employee.IsOnline,
+                        Status = erm.Employee.Status
+                    })
+                    .Distinct()
+                    .ToListAsync();
+
+                return new RoleAssignedEmployeesDto
+                {
+                    RoleId = customRole.Id,
+                    RoleCode = customRole.RoleCode,
+                    RoleName = customRole.RoleName,
+                    IsCustomRole = true,
+                    AssignedEmployees = assignedEmployees
+                };
+            }
+
+            var role = await _context.Roles
+                .AsNoTracking()
+                .FirstOrDefaultAsync(r => r.Id == roleId);
+
+            if (role == null)
+            {
+                return null;
+            }
+
+            var employees = await _context.EmployeeRoleMaps
+                .Where(erm => erm.RoleId == roleId)
+                .Include(erm => erm.Employee)
+                .Where(erm => erm.Employee != null)
+                .Select(erm => new AssignedRoleEmployeeDto
+                {
+                    Id = erm.Employee!.Id,
+                    EmployeeId = erm.Employee.EmployeeId,
+                    FirstName = erm.Employee.FirstName,
+                    LastName = erm.Employee.LastName,
+                    Username = erm.Employee.Username,
+                    Email = erm.Employee.Email,
+                    MobileNumber = erm.Employee.MobileNumber,
+                    IsOnline = erm.Employee.IsOnline,
+                    Status = erm.Employee.Status
+                })
+                .Distinct()
+                .ToListAsync();
+
+            return new RoleAssignedEmployeesDto
+            {
+                RoleId = role.Id,
+                RoleCode = role.RoleCode,
+                RoleName = role.RoleName,
+                IsCustomRole = false,
+                AssignedEmployees = employees
+            };
+        }
     }
 }
