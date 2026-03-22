@@ -34,5 +34,20 @@ namespace AMB.API.Controllers
             var response = new BaseResponseDto<WastageRecordDto>(result, "Wastage record updated successfully!");
             return Ok(response);
         }
+        [HttpGet]
+        public async Task<ActionResult<BaseResponseDto<IEnumerable<WastageRecordDto>>>> GetAll()
+        {
+            var result = await _wastageRecordService.GetAllWastageRecordsAsync();
+            var response = new BaseResponseDto<IEnumerable<WastageRecordDto>>(result, "Wastage records retrieved successfully!");
+            return Ok(response);
+        }
+
+        [HttpGet("{id:int}")]
+        public async Task<ActionResult<BaseResponseDto<WastageRecordDto>>> GetById(int id)
+        {
+            var result = await _wastageRecordService.GetWastageRecordByIdAsync(id);
+            var response = new BaseResponseDto<WastageRecordDto>(result, "Wastage record retrieved successfully!");
+            return Ok(response);
+        }
     }
 }
