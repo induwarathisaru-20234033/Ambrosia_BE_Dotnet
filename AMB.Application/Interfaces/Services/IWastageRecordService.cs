@@ -7,6 +7,7 @@ namespace AMB.Application.Interfaces.Services
     {
         Task<WastageRecordDto> CreateWastageRecordAsync(CreateWastageRecordDto request);
         Task<WastageRecordDto> UpdateWastageRecordAsync(UpdateWastageRecordDto request);
-        // Additional methods (get, update, etc.) can be added here later
+        Task<IEnumerable<WastageRecordDto>> GetAllWastageRecordsAsync();
+        Task<WastageRecordDto> GetWastageRecordByIdAsync(int id);
     }
 }
