@@ -122,5 +122,12 @@ namespace AMB.Infra.Repositories
             await _context.SaveChangesAsync();
             return existing;
         }
+        public async Task<IEnumerable<WastageRecord>> GetAllAsync()
+        {
+            return await _context.WastageRecords
+                .Include(w => w.WastageEntryItems)
+                    .ThenInclude(i => i.InventoryItem)
+                .ToListAsync();
+        }
     }
 }

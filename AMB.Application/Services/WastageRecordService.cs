@@ -117,5 +117,41 @@ namespace AMB.Application.Services
         {
             return $"WSTG-{DateTime.UtcNow:yyyyMMddHHmmssfff}";
         }
+
+        public async Task<IEnumerable<WastageRecordDto>> GetAllWastageRecordsAsync()
+        {
+            var records = await _wastageRecordRepository.GetAllAsync();
+            return records.Select(MapToDto);
+        }
+
+        public async Task<WastageRecordDto> GetWastageRecordByIdAsync(int id)
+        {
+            var record = await _wastageRecordRepository.GetByIdAsync(id);
+            if (record == null)
+                throw new KeyNotFoundException($"Wastage record with ID {id} not found.");
+
+            return MapToDto(record);
+        }
+        private static WastageRecordDto MapToDto(WastageRecord record)
+        {
+            return new WastageRecordDto
+            {
+                Id = record.Id,
+                WastageEntryNumber = record.WastageEntryNumber,
+                EntryDate = record.EntryDate,
+                RecordedBy = record.RecordedBy,
+                GeneralNotes = record.GeneralNotes,
+                Items = record.WastageEntryItems.Select(e => new WastageEntryItemDto
+                {
+                    Id = e.Id,
+                    ItemNo = e.ItemNo,
+                    WastageType = e.WastageType,
+                    Quantity = e.Quantity,
+                    Reason = e.Reason,
+                    InventoryItemId = e.InventoryItemId,
+                    InventoryItemName = e.InventoryItem?.ItemName ?? string.Empty
+                }).ToList()
+            };
+        }
     }
 }
