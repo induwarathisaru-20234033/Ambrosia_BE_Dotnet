@@ -5,7 +5,7 @@ namespace AMB.Application.Dtos
         public string? GRNNumber { get; set; }
         public string? Supplier { get; set; }
         public string? ReceivedBy { get; set; }
-        public int? PurchaseRequestId { get; set; }
+        public int? GRNStatus { get; set; }
         public DateTimeOffset? ReceivedDateFrom { get; set; }
         public DateTimeOffset? ReceivedDateTo { get; set; }
     }

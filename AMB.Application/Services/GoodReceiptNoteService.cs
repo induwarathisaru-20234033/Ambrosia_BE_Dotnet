@@ -196,9 +196,9 @@ namespace AMB.Application.Services
                 query = query.Where(grn => grn.ReceivedBy.Contains(request.ReceivedBy));
             }
 
-            if (request.PurchaseRequestId.HasValue)
+            if (request.GRNStatus.HasValue)
             {
-                query = query.Where(grn => grn.PurchaseRequestId == request.PurchaseRequestId.Value);
+                query = query.Where(grn => grn.GRNStatus == request.GRNStatus.Value);
             }
 
             if (request.ReceivedDateFrom.HasValue)
