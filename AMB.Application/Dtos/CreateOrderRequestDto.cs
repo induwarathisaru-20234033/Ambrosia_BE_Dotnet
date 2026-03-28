@@ -3,6 +3,7 @@
     public class CreateOrderRequestDto
     {
         public int? TableId { get; set; }
+        public int? ReservationId { get; set; }
         public List<OrderItemDto> Items { get; set; } = new();
         public bool IsDraft { get; set; } // true = Draft, false = Fire
     }
