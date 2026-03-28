@@ -235,9 +235,9 @@ namespace AMB.Application.Services
             };
         }
 
-        public async Task UpdateDraftOrderAsync(UpdateDraftOrderDto dto)
+        public async Task UpdateDraftOrderAsync(UpdateOrderRequestDto dto)
         {
-            var validator = _serviceProvider.GetRequiredService<IValidator<UpdateDraftOrderDto>>();
+            var validator = _serviceProvider.GetRequiredService<IValidator<UpdateOrderRequestDto>>();
             await validator.ValidateAndThrowAsync(dto);
 
             // Verify all menu items exist

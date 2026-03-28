@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace AMB.Application.Validators
 {
-    public class UpdateDraftOrderValidator : AbstractValidator<UpdateDraftOrderDto>
+    public class UpdateDraftOrderValidator : AbstractValidator<UpdateOrderRequestDto>
     {
         private readonly IServiceProvider _serviceProvider;
 

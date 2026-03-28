@@ -155,7 +155,7 @@ namespace AMB.API.Controllers
         [ProducesResponseType(typeof(BaseResponseDto<object>), StatusCodes.Status404NotFound)]
         public async Task<ActionResult<BaseResponseDto<OrderResponseDto>>> UpdateDraftOrder(
             int id,
-            [FromBody] UpdateDraftOrderDto dto)
+            [FromBody] UpdateOrderRequestDto dto)
         {
             if (id != dto.OrderId)
             {
