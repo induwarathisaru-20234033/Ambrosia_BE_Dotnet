@@ -29,5 +29,6 @@ namespace AMB.Application.Interfaces.Repositories
         Task<List<ReservationWaiterAssignment>> GetActiveWaiterAssignmentsAsync(DateOnly date);
         Task<List<Reservation>> GetCurrentAssignedReservationsAsync(DateTimeOffset fromDate);
         IQueryable<Reservation> GetSearchQuery();
+        Task<Reservation?> GetActiveReservationByTableGuidAsync(Guid tableGuid);
     }
 }
