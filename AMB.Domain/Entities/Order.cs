@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using AMB.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,6 +17,9 @@ namespace AMB.Domain.Entities
         public DateTimeOffset? SentToKitchenAt { get; set; }
 
         // Navigation properties
+        public int? ReservationId { get; set; }
+        public Reservation? Reservation { get; set; }
+        
         public Table? Table { get; set; }
         public List<OrderItem> OrderItems { get; set; } = new();
     }
