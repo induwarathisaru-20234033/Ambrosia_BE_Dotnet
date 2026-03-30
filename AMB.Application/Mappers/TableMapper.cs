@@ -1,4 +1,4 @@
-﻿using AMB.Application.Dtos;
+using AMB.Application.Dtos;
 using AMB.Domain.Entities;
 using AMB.Domain.Enums;
 using System;
@@ -20,6 +20,7 @@ namespace AMB.Application.Mappers
                 Capacity = dto.Capacity,
                 TableName = dto.TableName,
                 IsOnlineBookingEnabled = dto.IsOnlineBookingEnabled,
+                QrIdentifier = Guid.NewGuid()
             };
         }
 
@@ -33,6 +34,7 @@ namespace AMB.Application.Mappers
                 TableName = entity.TableName,
                 Capacity = entity.Capacity,
                 IsOnlineBookingEnabled = entity.IsOnlineBookingEnabled,
+                QrIdentifier = entity.QrIdentifier
             };
         }
 
