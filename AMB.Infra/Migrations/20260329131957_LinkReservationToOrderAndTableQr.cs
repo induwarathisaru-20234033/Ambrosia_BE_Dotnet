@@ -11,50 +11,65 @@ namespace AMB.Infra.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<Guid>(
-                name: "QrIdentifier",
-                table: "Tables",
-                type: "uniqueidentifier",
-                nullable: false,
-                defaultValue: new Guid("00000000-0000-0000-0000-000000000000"));
+            migrationBuilder.Sql(@"
+                IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='Tables' AND COLUMN_NAME='QrIdentifier')
+                BEGIN
+                    ALTER TABLE [Tables] ADD [QrIdentifier] uniqueidentifier NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000';
+                END
+            ");
 
-            migrationBuilder.AddColumn<int>(
-                name: "ReservationId",
-                table: "Orders",
-                type: "int",
-                nullable: true);
+            migrationBuilder.Sql(@"
+                IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='Orders' AND COLUMN_NAME='ReservationId')
+                BEGIN
+                    ALTER TABLE [Orders] ADD [ReservationId] int NULL;
+                END
+            ");
 
-            migrationBuilder.CreateIndex(
-                name: "IX_Orders_ReservationId",
-                table: "Orders",
-                column: "ReservationId");
+            migrationBuilder.Sql(@"
+                IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name='IX_Orders_ReservationId' AND object_id = OBJECT_ID('Orders'))
+                BEGIN
+                    CREATE INDEX [IX_Orders_ReservationId] ON [Orders] ([ReservationId]);
+                END
+            ");
 
-            migrationBuilder.AddForeignKey(
-                name: "FK_Orders_Reservations_ReservationId",
-                table: "Orders",
-                column: "ReservationId",
-                principalTable: "Reservations",
-                principalColumn: "Id");
+            migrationBuilder.Sql(@"
+                IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Orders_Reservations_ReservationId')
+                BEGIN
+                    ALTER TABLE [Orders] ADD CONSTRAINT [FK_Orders_Reservations_ReservationId] FOREIGN KEY ([ReservationId]) REFERENCES [Reservations] ([Id]);
+                END
+            ");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropForeignKey(
-                name: "FK_Orders_Reservations_ReservationId",
-                table: "Orders");
+            migrationBuilder.Sql(@"
+                IF EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Orders_Reservations_ReservationId')
+                BEGIN
+                    ALTER TABLE [Orders] DROP CONSTRAINT [FK_Orders_Reservations_ReservationId];
+                END
+            ");
 
-            migrationBuilder.DropIndex(
-                name: "IX_Orders_ReservationId",
-                table: "Orders");
+            migrationBuilder.Sql(@"
+                IF EXISTS (SELECT * FROM sys.indexes WHERE name='IX_Orders_ReservationId' AND object_id = OBJECT_ID('Orders'))
+                BEGIN
+                    DROP INDEX [IX_Orders_ReservationId] ON [Orders];
+                END
+            ");
 
-            migrationBuilder.DropColumn(
-                name: "QrIdentifier",
-                table: "Tables");
+            migrationBuilder.Sql(@"
+                IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='Orders' AND COLUMN_NAME='ReservationId')
+                BEGIN
+                    ALTER TABLE [Orders] DROP COLUMN [ReservationId];
+                END
+            ");
 
-            migrationBuilder.DropColumn(
-                name: "ReservationId",
-                table: "Orders");
+            migrationBuilder.Sql(@"
+                IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='Tables' AND COLUMN_NAME='QrIdentifier')
+                BEGIN
+                    ALTER TABLE [Tables] DROP COLUMN [QrIdentifier];
+                END
+            ");
         }
     }
 }

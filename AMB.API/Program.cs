@@ -17,7 +17,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Resend;
+using System.Linq;
 using System.Text;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -142,9 +144,45 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidateLifetime = true
     };
+})
+.AddJwtBearer("GuestBearer", options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidIssuer = builder.Configuration["Authentication:GuestIssuer"],
+        ValidateAudience = true,
+        ValidAudience = builder.Configuration["Authentication:GuestAudience"],
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Authentication:GuestSecret"] ?? "default_fallback_secret_key_if_missing")),
+        ValidateLifetime = true
+    };
+
+    options.Events = new Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"].FirstOrDefault();
+            var path = context.HttpContext.Request.Path;
+
+            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs/order-status"))
+            {
+                context.Token = accessToken;
+            }
+
+            return Task.CompletedTask;
+        }
+    };
 });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("GuestPolicy", policy =>
+    {
+        policy.AuthenticationSchemes.Add("GuestBearer");
+        policy.RequireRole("GuestUser");
+    });
+});
 
 builder.Services.AddCors(options =>
 {
@@ -165,6 +203,31 @@ builder.Services.AddCors(options =>
 builder.Services.AddScoped<IMenuRepository, MenuRepository>();
 builder.Services.AddScoped<IMenuService, MenuService>();
 
+builder.Services.AddScoped<IOrderingSessionService, OrderingSessionService>();
+
+builder.Services.AddSignalR();
+
+// Add Rate Limiting for public endpoints protecting against scraping
+builder.Services.AddRateLimiter(options =>
+{
+    options.GlobalLimiter = default;
+    options.AddPolicy("QrScanLimit", httpContext =>
+    {
+        var ip = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        return RateLimitPartition.GetFixedWindowLimiter(ip, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 20,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0
+        });
+    });
+    options.OnRejected = async (context, token) =>
+    {
+        context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+        await context.HttpContext.Response.WriteAsync("Too many scan requests. Please try again later.", cancellationToken: token);
+    };
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -175,11 +238,14 @@ app.UseHttpsRedirection();
 
 app.UseCors("AllowAll");
 
+app.UseRateLimiter();
+
 app.UseAuthentication();
 app.UseMiddleware<ActiveUserMiddleware>();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<AMB.Application.Hubs.OrderingHub>("/hubs/order-status");
 
 app.MapGet("/", () => "Ambrosia Backend is Live!");
 

@@ -1,9 +1,11 @@
 ﻿using AMB.Application.Dtos;
+using AMB.Application.Hubs;
 using AMB.Application.Interfaces.Repositories;
 using AMB.Application.Interfaces.Services;
 using AMB.Domain.Entities;
 using AMB.Domain.Enums;
 using FluentValidation;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace AMB.Application.Services
@@ -14,17 +16,20 @@ namespace AMB.Application.Services
         private readonly IMenuItemRepository _menuItemRepository;
         private readonly ITableRepository _tableRepository;
         private readonly IServiceProvider _serviceProvider;
+        private readonly IHubContext<OrderingHub>? _hubContext;
 
         public OrderService(
             IOrderRepository orderRepository,
             IMenuItemRepository menuItemRepository,
             ITableRepository tableRepository,
-            IServiceProvider serviceProvider)
+            IServiceProvider serviceProvider,
+            IHubContext<OrderingHub>? hubContext = null)
         {
             _orderRepository = orderRepository;
             _menuItemRepository = menuItemRepository;
             _tableRepository = tableRepository;
             _serviceProvider = serviceProvider;
+            _hubContext = hubContext;
         }
 
         public async Task<OrderResponseDto> CreateOrderAsync(CreateOrderRequestDto request)
@@ -64,7 +69,8 @@ namespace AMB.Application.Services
             {
                 OrderNumber = orderNumber,
                 TableId = request.TableId,
-                OrderStatus = request.IsDraft ? (int)AMB.Domain.Enums.OrderStatus.Draft:(int)AMB.Domain.Enums.OrderStatus.SentToKDS,
+                ReservationId = request.ReservationId,
+                OrderStatus = request.IsDraft ? (int)AMB.Domain.Enums.OrderStatus.Draft : (int)AMB.Domain.Enums.OrderStatus.SentToKDS,
                 SentToKitchenAt = request.IsDraft ? null : DateTime.UtcNow,
                 Status = 1,
                 OrderItems = request.Items.Select(item =>
@@ -76,7 +82,7 @@ namespace AMB.Application.Services
                         SpecialInstructions = item.SpecialInstructions,
                         Quantity = item.Quantity,
                         UnitPrice = menuItem.Price,
-                        Status = 1, 
+                        Status = 1,
                     };
                 }).ToList()
             };
@@ -108,6 +114,7 @@ namespace AMB.Application.Services
                 Id = order.Id,
                 OrderNumber = order.OrderNumber,
                 TableId = order.TableId,
+                ReservationId = order.ReservationId,
                 TableName = order.Table?.TableName,
                 OrderStatus = (OrderStatus)order.OrderStatus,
                 CreatedDate = order.CreatedDate,
@@ -124,7 +131,8 @@ namespace AMB.Application.Services
                         Quantity = oi.Quantity,
                         UnitPrice = oi.UnitPrice,
                         IsAvailable = oi.MenuItem?.IsAvailable ?? false,
-                        CreatedDate = oi.CreatedDate
+                        CreatedDate = oi.CreatedDate,
+                        ItemStatus = oi.ItemStatus.HasValue ? (OrderStatus?)oi.ItemStatus.Value : null
                     }).ToList() ?? new()
             };
         }
@@ -151,6 +159,18 @@ namespace AMB.Application.Services
                 throw new InvalidOperationException("Failed to send order to KDS");
             }
 
+            var updatedOrder = await _orderRepository.GetByIdAsync(dto.OrderId, new OrderQueryOptions
+            {
+                IncludeItems = true,
+                IncludeMenuItem = true,
+                IncludeTable = true
+            });
+
+            if (updatedOrder != null)
+            {
+                await BroadcastOrderUpdateAsync(updatedOrder);
+            }
+
             // Return updated order
             return await GetOrderByIdAsync(dto.OrderId);
         }
@@ -166,6 +186,18 @@ namespace AMB.Application.Services
             if (!updated)
             {
                 throw new InvalidOperationException($"Failed to update order status");
+            }
+
+            var updatedOrderEntity = await _orderRepository.GetByIdAsync(dto.OrderId, new OrderQueryOptions
+            {
+                IncludeItems = true,
+                IncludeMenuItem = true,
+                IncludeTable = true
+            });
+
+            if (updatedOrderEntity != null)
+            {
+                await BroadcastOrderUpdateAsync(updatedOrderEntity);
             }
 
             // Return updated order
@@ -214,6 +246,7 @@ namespace AMB.Application.Services
                 Id = order.Id,
                 OrderNumber = order.OrderNumber,
                 TableId = order.TableId,
+                ReservationId = order.ReservationId,
                 TableName = order.Table?.TableName,
                 OrderStatus = (OrderStatus)order.OrderStatus,
                 CreatedDate = order.CreatedDate,
@@ -230,9 +263,46 @@ namespace AMB.Application.Services
                         Quantity = oi.Quantity,
                         UnitPrice = oi.UnitPrice,
                         IsAvailable = oi.MenuItem?.IsAvailable ?? false,
-                        CreatedDate = oi.CreatedDate
+                        CreatedDate = oi.CreatedDate,
+                        ItemStatus = oi.ItemStatus.HasValue ? (OrderStatus?)oi.ItemStatus.Value : null
                     }).ToList() ?? new()
             };
+        }
+
+        private async Task BroadcastOrderUpdateAsync(Order order)
+        {
+            if (order == null || order.ReservationId == null || _hubContext == null)
+            {
+                return;
+            }
+
+            var items = order.OrderItems?.Select(oi => new
+            {
+                MenuItemId = oi.MenuItemId,
+                Name = oi.MenuItem?.Name ?? string.Empty,
+                ItemStatus = oi.ItemStatus.HasValue ? oi.ItemStatus.Value.ToString() : "Unknown",
+                Quantity = oi.Quantity
+            }).ToList();
+
+            var safeItems = items?.Cast<object>().ToList() ?? new List<object>();
+
+            var payload = new
+            {
+                order.OrderNumber,
+                OverallStatus = ((OrderStatus)order.OrderStatus).ToString(),
+                Items = safeItems
+            };
+
+            await _hubContext.Clients
+                .Group($"Reservation_{order.ReservationId}")
+                .SendAsync("ReceiveOrderUpdate", payload);
+
+            if (order.OrderStatus == (int)OrderStatus.Served || order.OrderStatus == (int)OrderStatus.Cancelled)
+            {
+                await _hubContext.Clients
+                    .Group($"Reservation_{order.ReservationId}")
+                    .SendAsync("SessionCompleted", new { ReservationId = order.ReservationId });
+            }
         }
 
         public async Task UpdateDraftOrderAsync(UpdateDraftOrderDto dto)

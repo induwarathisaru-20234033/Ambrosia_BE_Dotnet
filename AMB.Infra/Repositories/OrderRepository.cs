@@ -78,7 +78,7 @@ namespace AMB.Infra.Repositories
             }
 
             var lastNumber = int.Parse(lastOrderToday.OrderNumber.Split('-')[1]);
-            return $"{today}-{(lastNumber + 1):D3}";
+            return $"{today}-{lastNumber + 1:D3}";
         }
 
         public async Task<bool> SendDraftToKdsAsync(int orderId, int? tableId = null)
