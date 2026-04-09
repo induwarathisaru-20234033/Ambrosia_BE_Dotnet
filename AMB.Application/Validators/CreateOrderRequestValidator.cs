@@ -16,9 +16,6 @@ namespace AMB.Application.Validators
             // When firing order (not draft), validate table and items
             When(x => !x.IsDraft, () =>
             {
-                RuleFor(x => x.TableId)
-                    .NotNull().WithMessage("Please select a table")
-                    .MustAsync(BeValidAndActiveTable).WithMessage("Selected table is not available");
 
                 RuleFor(x => x.Items)
                     .NotEmpty().WithMessage("Please add at least one item to the order");
