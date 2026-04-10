@@ -11,5 +11,7 @@ namespace AMB.Application.Interfaces.Services
         Task UpdateRoleAsync(EditRoleRequestDto request);
         Task<RoleDetailDto> GetRoleByIdAsync(int id, bool includePermissions = false, bool includeFeatures = false);
         Task<RoleAssignedEmployeesDto> GetAssignedEmployeesByRoleAsync(int roleId, bool isCustomRole = false);
+        Task AssignRolesAsync(AssignRoleRequestDto request);
+        Task UnassignRolesAsync(AssignRoleRequestDto request);
     }
 }

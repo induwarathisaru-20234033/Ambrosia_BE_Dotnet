@@ -17,6 +17,8 @@ namespace AMB.Application.Interfaces.Repositories
         Task<bool> IsRoleCodeUniqueAsync(string roleCode, int? excludeId = null);
         Task<Role> UpdateWithPermissionsAsync(Role role, List<int> newPermissionIds);
         Task<RoleAssignedEmployeesDto?> GetAssignedEmployeesByRoleAsync(int roleId, bool isCustomRole = false);
+        Task AssignRolesAsync(int roleId, List<int> employeeIds);
+        Task UnassignRolesAsync(int roleId, List<int> employeeIds);
     }
     public class RoleQueryOptions
     {

@@ -225,5 +225,63 @@ namespace AMB.Application.Services
 
             return result;
         }
+        public async Task AssignRolesAsync(AssignRoleRequestDto request)
+        {
+            if (request.RoleId <= 0)
+            {
+                throw new ArgumentException("Valid Role is required.");
+            }
+
+            var employeeIds = request.EmployeeIds?
+                .Where(id => id > 0)
+                .Distinct()
+                .ToList() ?? new List<int>();
+
+            if (!employeeIds.Any())
+            {
+                throw new ArgumentException("At least one employee id is required.");
+            }
+
+            var role = await _roleRepository.GetByIdAsync(request.RoleId);
+            if (role == null)
+            {
+                throw new KeyNotFoundException($"Role with ID {request.RoleId} not found.");
+            }
+
+            // var existingRoleIds = await _employeeRepository.GetExistingRoleIdsAsync(roleIds);
+            // var missingRoleIds = roleIds.Except(existingRoleIds).ToList();
+            // if (missingRoleIds.Any())
+            // {
+            //     throw new KeyNotFoundException($"Invalid role ids: {string.Join(", ", missingRoleIds)}");
+            // }
+
+             await _roleRepository.AssignRolesAsync(request.RoleId, employeeIds);
+        }
+
+            public async Task UnassignRolesAsync(AssignRoleRequestDto request)
+            {
+                if (request.RoleId <= 0)
+                {
+                    throw new ArgumentException("Valid Role is required.");
+                }
+    
+                var employeeIds = request.EmployeeIds?
+                    .Where(id => id > 0)
+                    .Distinct()
+                    .ToList() ?? new List<int>();
+    
+                if (!employeeIds.Any())
+                {
+                    throw new ArgumentException("At least one employee id is required.");
+                }
+    
+                var role = await _roleRepository.GetByIdAsync(request.RoleId);
+                if (role == null)
+                {
+                    throw new KeyNotFoundException($"Role with ID {request.RoleId} not found.");
+                }
+    
+                await _roleRepository.UnassignRolesAsync(request.RoleId, employeeIds);
+            }
     }
 }
