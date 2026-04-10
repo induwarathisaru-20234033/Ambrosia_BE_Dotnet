@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,5 +13,6 @@ namespace AMB.Application.Dtos
         public int Capacity { get; set; }
         public bool IsOnlineBookingEnabled { get; set; }
         public int ExistingAllocations { get; set; }
+        public Guid QrIdentifier { get; set; }
     }
 }

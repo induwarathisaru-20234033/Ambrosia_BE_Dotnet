@@ -328,5 +328,17 @@ namespace AMB.Infra.Repositories
                 .Where(r => r.Status == (int)EntityStatus.Active)
                 .AsNoTracking();
         }
+
+        public async Task<Reservation?> GetActiveReservationByTableGuidAsync(Guid tableGuid)
+        {
+            return await _context.Reservations
+                .Include(r => r.CustomerDetail)
+                .Include(r => r.Table)
+                .Where(r => r.Table.QrIdentifier == tableGuid 
+                            && r.ReservationStatus == (int)ReservationStatus.Arrived
+                            && r.Status == (int)EntityStatus.Active)
+                .AsNoTracking()
+                .FirstOrDefaultAsync();
+        }
     }
 }

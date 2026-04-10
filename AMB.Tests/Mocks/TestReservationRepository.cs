@@ -271,5 +271,15 @@ namespace AMB.Tests.Mocks
                 .Where(r => r.Status == (int)EntityStatus.Active)
                 .AsQueryable();
         }
+
+        public Task<Reservation?> GetActiveReservationByTableGuidAsync(Guid tableGuid)
+        {
+            var reservation = Reservations.Values
+                .FirstOrDefault(r => r.Table != null 
+                                     && r.Table.QrIdentifier == tableGuid 
+                                     && r.ReservationStatus == (int)ReservationStatus.Arrived
+                                     && r.Status == (int)EntityStatus.Active);
+            return Task.FromResult(reservation);
+        }
     }
 }

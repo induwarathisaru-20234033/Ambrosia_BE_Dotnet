@@ -7,6 +7,7 @@ namespace AMB.Application.Dtos
         public int Id { get; set; }
         public string OrderNumber { get; set; } = string.Empty;
         public int? TableId { get; set; }
+        public int? ReservationId { get; set; }
         public string? TableName { get; set; }
         public OrderStatus OrderStatus { get; set; }
         public DateTimeOffset CreatedDate { get; set; }

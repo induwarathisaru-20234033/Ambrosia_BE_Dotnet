@@ -17,5 +17,8 @@ namespace AMB.Domain.Entities
 
         // Status for customer facing availability
         public bool IsOnlineBookingEnabled { get; set; }
+
+        // Unique identifier for QR code generation
+        public Guid QrIdentifier { get; set; } = Guid.NewGuid();
     }
 }

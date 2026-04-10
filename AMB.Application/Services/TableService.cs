@@ -1,4 +1,4 @@
-﻿using AMB.Application.Dtos;
+using AMB.Application.Dtos;
 using AMB.Application.Interfaces.Repositories;
 using AMB.Application.Interfaces.Services;
 using AMB.Application.Mappers;
@@ -125,7 +125,8 @@ namespace AMB.Application.Services
                     TableName = table.TableName,
                     Capacity = table.Capacity,
                     IsOnlineBookingEnabled = table.IsOnlineBookingEnabled,
-                    ExistingAllocations = allocationCount
+                    ExistingAllocations = allocationCount,
+                    QrIdentifier = table.QrIdentifier
                 });
             }
 
