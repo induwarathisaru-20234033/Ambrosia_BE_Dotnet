@@ -222,5 +222,27 @@ namespace AMB.API.Controllers
                 ));
             }
         }
+
+        [HttpPatch("assign-roles")]
+        public async Task<ActionResult<BaseResponseDto<object>>> AssignRoles([FromBody] AssignRoleRequestDto request)
+        {
+            await _roleService.AssignRolesAsync(request);
+
+            return Ok(new BaseResponseDto<object>(
+                null,
+                "Roles assigned successfully"
+            ));
+        }
+
+        [HttpPatch("unassign-roles")]
+        public async Task<ActionResult<BaseResponseDto<object>>> UnassignRoles([FromBody] AssignRoleRequestDto request)
+        {
+            await _roleService.UnassignRolesAsync(request);
+
+            return Ok(new BaseResponseDto<object>(
+                null,
+                "Roles unassigned successfully"
+            ));
+        }
     }
 }

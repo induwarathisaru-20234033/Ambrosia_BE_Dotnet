@@ -326,6 +326,25 @@ namespace AMB.Tests.Mocks
             });
         }
 
+        public int? LastAssignedRoleId { get; private set; }
+        public List<int>? LastAssignedEmployeeIds { get; private set; }
+        public int? LastUnassignedRoleId { get; private set; }
+        public List<int>? LastUnassignedEmployeeIds { get; private set; }
+
+        public Task AssignRolesAsync(int roleId, List<int> employeeIds)
+        {
+            LastAssignedRoleId = roleId;
+            LastAssignedEmployeeIds = employeeIds;
+            return Task.CompletedTask;
+        }
+
+        public Task UnassignRolesAsync(int roleId, List<int> employeeIds)
+        {
+            LastUnassignedRoleId = roleId;
+            LastUnassignedEmployeeIds = employeeIds;
+            return Task.CompletedTask;
+        }
+
         public Task<Role> DeleteAsync(Role role)
         {
             Roles.Remove(role.Id);

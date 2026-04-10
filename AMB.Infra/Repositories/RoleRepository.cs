@@ -2,6 +2,7 @@
 using AMB.Application.Interfaces.Repositories;
 using AMB.Application.Mappers;
 using AMB.Domain.Entities;
+using AMB.Domain.Enums;
 using AMB.Infra.DBContexts;
 using Microsoft.EntityFrameworkCore;
 
@@ -282,6 +283,30 @@ namespace AMB.Infra.Repositories
                 IsCustomRole = false,
                 AssignedEmployees = employees
             };
+        }
+        public async Task AssignRolesAsync(int roleId, List<int> employeeIds)
+        {
+
+            var systemRoleMaps = employeeIds.Select(employeeId => new EmployeeRoleMap
+            {
+                RoleId = roleId,
+                EmployeeId = employeeId,
+                CustomRoleId = null,
+                Status = (int)EntityStatus.Active
+            });
+
+
+            await _context.EmployeeRoleMaps.AddRangeAsync(systemRoleMaps);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task UnassignRolesAsync(int roleId, List<int> employeeIds)
+        {
+            var mapsToRemove = _context.EmployeeRoleMaps
+                .Where(x => x.RoleId == roleId && employeeIds.Contains(x.EmployeeId));
+
+            _context.EmployeeRoleMaps.RemoveRange(mapsToRemove);
+            await _context.SaveChangesAsync();
         }
     }
 }
